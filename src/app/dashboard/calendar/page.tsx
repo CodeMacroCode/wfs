@@ -13,6 +13,8 @@ function CalendarPageContent() {
   const searchParams = useSearchParams();
   const pathname = usePathname();
 
+  console.log("searchParams", searchParams);
+
   // Initialize state from URL or default to today
   const [currentDate, setCurrentDate] = useState(() => {
     const monthParam = searchParams.get('month');
