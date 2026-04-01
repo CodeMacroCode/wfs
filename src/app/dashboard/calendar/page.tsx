@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { CalendarHeader } from '@/components/calendar/CalendarHeader';
 import { CalendarGrid } from '@/components/calendar/CalendarGrid';
@@ -8,7 +8,7 @@ import { DetailsSidebar } from '@/components/calendar/DetailsSidebar';
 import { useCalendarMonth, useUpdateCalendarDay } from '@/hooks/queries/use-calendar-queries';
 import { addMonths, subMonths, format, parseISO, isValid } from 'date-fns';
 
-export default function CalendarPage() {
+function CalendarPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -160,5 +160,20 @@ export default function CalendarPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function CalendarPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex h-[calc(100vh-64px)] items-center justify-center bg-slate-50/20">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-teal-500/20 border-t-teal-500 rounded-full animate-spin" />
+          <p className="text-sm font-medium text-slate-500 animate-pulse">Initializing Calendar...</p>
+        </div>
+      </div>
+    }>
+      <CalendarPageContent />
+    </Suspense>
   );
 }
