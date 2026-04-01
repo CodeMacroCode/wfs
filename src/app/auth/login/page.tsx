@@ -59,12 +59,12 @@ export default function LoginPage() {
                 email: data.email,
                 password: data.password
             })
-
+            
             console.log("Login successful, redirecting to dashboard...")
             // Small delay to ensure cookies are processed by the browser before navigation
             // though router.push should handle it, this adds extra safety in some environments
             router.push("/dashboard")
-
+            
             // Allow navigation to start before triggering a refresh if needed
             // router.refresh() is removed here as it can sometimes interrupt push()
         } catch (err) {
@@ -83,13 +83,13 @@ export default function LoginPage() {
         <div className="relative h-dvh w-full flex items-center justify-center p-4 md:p-8 overflow-hidden">
             {/* Background Image */}
             <div className="absolute inset-0 z-0">
-                {/* <Image
+                <Image
                     src="/loginbg.webp"
                     alt="Background"
                     fill
                     className="object-cover"
                     priority
-                /> */}
+                />
                 <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" />
             </div>
 
@@ -234,7 +234,7 @@ export default function LoginPage() {
                                 &copy; {new Date().getFullYear()} Workforce Sync. All rights reserved.
                                 <br />
                                 Unauthorized use or reproduction of any content on this platform is prohibited.
-
+                                
                             </p>
                         </div>
                     </div>
