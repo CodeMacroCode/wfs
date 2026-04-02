@@ -83,13 +83,13 @@ export default function LoginPage() {
         <div className="relative h-dvh w-full flex items-center justify-center p-4 md:p-8 overflow-hidden">
             {/* Background Image */}
             <div className="absolute inset-0 z-0">
-                {/* <Image
+                <Image
                     src="/loginbg.webp"
                     alt="Background"
                     fill
                     className="object-cover"
                     priority
-                /> */}
+                />
                 <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" />
             </div>
 
