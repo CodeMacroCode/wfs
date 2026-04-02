@@ -18,11 +18,29 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
 
           script: |
-            cd ~/wfs
+                  cd ~/wfs
 
-            git pull origin main
-
-            bun install
-            bun run build
-
-            pm2 reload frontend-goel-enterprises
+                  echo "📂 Current directory:"
+                  pwd
+                  ls -la
+                
+                  echo "🔄 Pulling latest code..."
+                  git fetch origin
+                  git reset --hard origin/main
+                
+                  echo "📌 Latest commit:"
+                  git log -1
+                
+                  echo "📦 Installing deps..."
+                  bun install
+                
+                  echo "🧹 Cleaning old build..."
+                  rm -rf .next
+                
+                  echo "🏗 Building..."
+                  bun run build
+                
+                  echo "🚀 Restarting PM2..."
+                  pm2 restart frontend-goel-enterprises
+                
+                  echo "✅ Deployment done"
