@@ -1,19 +1,19 @@
 "use client"
 
-import * as React from "react"
-import { 
-  Users, 
-  UserCheck, 
-  Clock, 
-  Plus, 
-  Upload, 
+import {
+  Users,
+  UserCheck,
+  Clock,
+  Plus,
+  Upload,
   Calendar,
   MoreVertical,
   Search,
   Filter,
   ArrowRight
 } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { AttendanceUploadDialog } from "@/components/dashboard/attendance-upload-dialog"
+import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -116,6 +116,7 @@ const employees = [
 ]
 
 export default function DashboardPage() {
+
   return (
     <div className="flex flex-col gap-6 p-2 md:p-4">
       {/* Header */}
@@ -131,10 +132,17 @@ export default function DashboardPage() {
             <Plus className="h-4 w-4" />
             <span className="font-semibold text-sm">Mark Leave</span>
           </Button>
-          <Button variant="outline" className="border-gray-200 text-slate-700 bg-white hover:bg-gray-50 flex gap-2 h-10 px-4 rounded-xl shadow-sm transition-all active:scale-95">
-            <Upload className="h-4 w-4" />
-            <span className="font-semibold text-sm">Upload Attendance</span>
-          </Button>
+          <AttendanceUploadDialog 
+            trigger={
+              <Button
+                variant="outline"
+                className="border-gray-200 text-slate-700 bg-white hover:bg-gray-50 flex gap-2 h-10 px-4 rounded-xl shadow-sm transition-all active:scale-95"
+              >
+                <Upload className="h-4 w-4" />
+                <span className="font-semibold text-sm">Upload Attendance</span>
+              </Button>
+            }
+          />
           <Button className="bg-[#2dd4bf] hover:bg-[#26bba8] text-white font-bold text-sm flex gap-2 h-10 px-5 rounded-xl border-none shadow-sm transition-all active:scale-95">
             <span>New Employee</span>
           </Button>
@@ -251,43 +259,43 @@ export default function DashboardPage() {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={weeklyStats} margin={{ top: 0, right: 0, left: -20, bottom: 0 }} barGap={8}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis 
-                  dataKey="day" 
-                  axisLine={false} 
-                  tickLine={false} 
+                <XAxis
+                  dataKey="day"
+                  axisLine={false}
+                  tickLine={false}
                   tick={{ fill: "#94a3b8", fontSize: 11, fontWeight: 700 }}
                   dy={15}
                 />
-                <YAxis 
-                  axisLine={false} 
-                  tickLine={false} 
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
                   tick={{ fill: "#94a3b8", fontSize: 11, fontWeight: 700 }}
                   tickFormatter={(val) => `${val}%`}
                   domain={[0, 100]}
                 />
-                <Tooltip 
+                <Tooltip
                   cursor={{ fill: '#f8fafc' }}
                   contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontWeight: 'bold' }}
                 />
-                <Bar dataKey="present" fill="#e2f5e1" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="present" fill="#86efac" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="onLeave" fill="#2dd4bf" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="absent" fill="#0f4c3c" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
           <div className="flex items-center gap-8 mt-10 px-4">
-             <div className="flex items-center gap-2.5">
-                <div className="h-3 w-3 rounded-full bg-[#e2f5e1]" />
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">Present</span>
-             </div>
-             <div className="flex items-center gap-2.5">
-                <div className="h-3 w-3 rounded-full bg-[#2dd4bf]" />
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">On Leave</span>
-             </div>
-             <div className="flex items-center gap-2.5">
-                <div className="h-3 w-3 rounded-full bg-[#0f4c3c]" />
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">Absent</span>
-             </div>
+            <div className="flex items-center gap-2.5">
+              <div className="h-3 w-3 rounded-full bg-[#86efac]" />
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">Present</span>
+            </div>
+            <div className="flex items-center gap-2.5">
+              <div className="h-3 w-3 rounded-full bg-[#2dd4bf]" />
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">On Leave</span>
+            </div>
+            <div className="flex items-center gap-2.5">
+              <div className="h-3 w-3 rounded-full bg-[#0f4c3c]" />
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">Absent</span>
+            </div>
           </div>
         </Card>
 
@@ -300,7 +308,7 @@ export default function DashboardPage() {
             </button>
           </div>
           <p className="text-xs font-semibold text-slate-400 mb-8">Current workforce shift allocation.</p>
-          
+
           <div className="flex-1 relative min-h-[220px]">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -324,26 +332,26 @@ export default function DashboardPage() {
               </PieChart>
             </ResponsiveContainer>
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="text-3xl font-extrabold text-slate-900">1,250</span>
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">Total</span>
+              <span className="text-3xl font-extrabold text-slate-900">1,250</span>
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">Total</span>
             </div>
           </div>
 
           <div className="mt-8 space-y-4">
-             {shiftData.map((item, index) => (
-               <div key={`legend-${index}`} className="flex items-center justify-between group hover:bg-slate-50 p-2 -mx-2 rounded-xl transition-colors cursor-pointer">
-                 <div className="flex items-center gap-4">
-                   <div className="h-7 w-12 flex items-center justify-center rounded-lg text-[11px] font-black text-white shadow-sm" style={{ backgroundColor: item.color }}>
-                     {item.value}%
-                   </div>
-                   <span className="text-sm font-bold text-slate-700">{item.name}</span>
-                 </div>
-                 <div className="flex items-center gap-2">
-                    <span className="text-xs font-black text-slate-800">{item.count}</span>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Employees</span>
-                 </div>
-               </div>
-             ))}
+            {shiftData.map((item, index) => (
+              <div key={`legend-${index}`} className="flex items-center justify-between group hover:bg-slate-50 p-2 -mx-2 rounded-xl transition-colors cursor-pointer">
+                <div className="flex items-center gap-4">
+                  <div className="h-7 w-12 flex items-center justify-center rounded-lg text-[11px] font-black text-white shadow-sm" style={{ backgroundColor: item.color }}>
+                    {item.value}%
+                  </div>
+                  <span className="text-sm font-bold text-slate-700">{item.name}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-black text-slate-800">{item.count}</span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Employees</span>
+                </div>
+              </div>
+            ))}
           </div>
         </Card>
       </div>
@@ -353,25 +361,25 @@ export default function DashboardPage() {
         {/* Employee List Table */}
         <Card className="lg:col-span-2 border-none ring-1 ring-gray-100 shadow-none rounded-[28px] overflow-hidden flex flex-col min-h-[600px]">
           <div className="p-8 flex flex-col gap-6">
-             <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                    <h3 className="text-xl font-bold text-slate-900 font-heading">Employee List</h3>
-                    <p className="text-xs font-semibold text-slate-400">Manage your workforce directory.</p>
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <h3 className="text-xl font-bold text-slate-900 font-heading">Employee List</h3>
+                <p className="text-xs font-semibold text-slate-400">Manage your workforce directory.</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="relative group">
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-teal-500 transition-colors" />
+                  <Input
+                    placeholder="Search employee, ID, etc"
+                    className="pl-11 pr-4 h-11 w-64 bg-slate-50 border-none rounded-xl text-sm text-slate-600 focus:ring-2 focus:ring-teal-500/20 shadow-none transition-all"
+                  />
                 </div>
-                <div className="flex items-center gap-3">
-                    <div className="relative group">
-                      <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-teal-500 transition-colors" />
-                      <Input 
-                        placeholder="Search employee, ID, etc" 
-                        className="pl-11 pr-4 h-11 w-64 bg-slate-50 border-none rounded-xl text-sm text-slate-600 focus:ring-2 focus:ring-teal-500/20 shadow-none transition-all"
-                      />
-                    </div>
-                    <Button variant="outline" className="border-gray-200 text-slate-500 h-11 px-5 rounded-xl flex gap-2 font-bold text-sm bg-white hover:bg-gray-50 shadow-sm">
-                      <Filter className="h-4 w-4" />
-                      <span>Filter</span>
-                    </Button>
-                </div>
-             </div>
+                <Button variant="outline" className="border-gray-200 text-slate-500 h-11 px-5 rounded-xl flex gap-2 font-bold text-sm bg-white hover:bg-gray-50 shadow-sm">
+                  <Filter className="h-4 w-4" />
+                  <span>Filter</span>
+                </Button>
+              </div>
+            </div>
           </div>
 
           <div className="flex-1 overflow-x-auto">
@@ -392,11 +400,11 @@ export default function DashboardPage() {
                     <TableCell className="px-8 py-4">
                       <div className="flex items-center gap-3">
                         <div className="h-10 w-10 rounded-full bg-slate-100 border-2 border-white ring-1 ring-gray-100 flex items-center justify-center overflow-hidden shadow-sm transition-transform group-hover:scale-105">
-                           <img 
-                            src={`https://api.dicebear.com/9.x/initials/svg?seed=${emp.name}`} 
-                            alt={emp.name} 
+                          <img
+                            src={`https://api.dicebear.com/9.x/initials/svg?seed=${emp.name}`}
+                            alt={emp.name}
                             className="h-full w-full object-cover"
-                           />
+                          />
                         </div>
                         <div className="flex flex-col">
                           <span className="text-sm font-bold text-slate-900 group-hover:text-teal-600 transition-colors">{emp.name}</span>
@@ -411,17 +419,17 @@ export default function DashboardPage() {
                       </div>
                     </TableCell>
                     <TableCell className="px-6 py-4">
-                       <Badge variant="secondary" className="bg-slate-100 text-slate-500 border-none text-[10px] font-black capitalize px-2.5 py-1 rounded-lg">
+                      <Badge variant="secondary" className="bg-slate-100 text-slate-500 border-none text-[10px] font-black capitalize px-2.5 py-1 rounded-lg">
                         {emp.shift}
-                       </Badge>
+                      </Badge>
                     </TableCell>
                     <TableCell className="px-6 py-4 text-slate-700 font-bold text-[13px]">
                       {emp.date}
                     </TableCell>
                     <TableCell className="px-6 py-4">
                       <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100/50">
-                         <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                         <span className="text-[10px] font-black uppercase tracking-widest">{emp.status}</span>
+                        <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                        <span className="text-[10px] font-black uppercase tracking-widest">{emp.status}</span>
                       </div>
                     </TableCell>
                     <TableCell className="px-8 py-4 text-right">
@@ -435,20 +443,20 @@ export default function DashboardPage() {
             </Table>
           </div>
           <div className="p-8 border-t border-gray-50 flex items-center justify-between bg-white mt-auto">
-             <div className="text-[11px] font-bold text-slate-400">
-               Showing <span className="text-slate-900">1 to 5</span> of <span className="text-slate-900">12</span> entries
-             </div>
-             <div className="flex items-center gap-1.5">
-                <button className="h-9 w-9 rounded-xl flex items-center justify-center text-slate-300 pointer-events-none hover:bg-gray-50 group">
-                    <ArrowRight className="h-4 w-4 rotate-180" />
-                </button>
-                <button className="h-9 w-9 rounded-xl flex items-center justify-center bg-teal-500 text-white font-black text-xs shadow-lg shadow-teal-500/20 -translate-y-px">1</button>
-                <button className="h-9 w-9 rounded-xl flex items-center justify-center text-slate-400 font-black text-xs hover:bg-slate-50 transition-colors">2</button>
-                <button className="h-9 w-9 rounded-xl flex items-center justify-center text-slate-400 font-black text-xs hover:bg-slate-50 transition-colors">3</button>
-                <button className="h-9 w-9 rounded-xl flex items-center justify-center text-slate-400 hover:bg-slate-50 transition-all hover:translate-x-1 group">
-                    <ArrowRight className="h-4 w-4" />
-                </button>
-             </div>
+            <div className="text-[11px] font-bold text-slate-400">
+              Showing <span className="text-slate-900">1 to 5</span> of <span className="text-slate-900">12</span> entries
+            </div>
+            <div className="flex items-center gap-1.5">
+              <button className="h-9 w-9 rounded-xl flex items-center justify-center text-slate-300 pointer-events-none hover:bg-gray-50 group">
+                <ArrowRight className="h-4 w-4 rotate-180" />
+              </button>
+              <button className="h-9 w-9 rounded-xl flex items-center justify-center bg-teal-500 text-white font-black text-xs shadow-lg shadow-teal-500/20 -translate-y-px">1</button>
+              <button className="h-9 w-9 rounded-xl flex items-center justify-center text-slate-400 font-black text-xs hover:bg-slate-50 transition-colors">2</button>
+              <button className="h-9 w-9 rounded-xl flex items-center justify-center text-slate-400 font-black text-xs hover:bg-slate-50 transition-colors">3</button>
+              <button className="h-9 w-9 rounded-xl flex items-center justify-center text-slate-400 hover:bg-slate-50 transition-all hover:translate-x-1 group">
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            </div>
           </div>
         </Card>
 
@@ -471,18 +479,18 @@ export default function DashboardPage() {
                 </div>
                 <p className="text-xs text-slate-500 font-semibold leading-relaxed pr-2">{activity.description}</p>
                 <div className="flex items-center gap-2 mt-1 opacity-60 group-hover:opacity-100 transition-opacity">
-                   <div className="h-5 w-5 rounded-full bg-slate-100 border border-gray-100 flex items-center justify-center text-[9px] font-black text-slate-500 uppercase tracking-tighter">
-                     {activity.user.charAt(0)}
-                   </div>
-                   <span className="text-[10px] font-bold italic text-slate-400">by {activity.user}</span>
+                  <div className="h-5 w-5 rounded-full bg-slate-100 border border-gray-100 flex items-center justify-center text-[9px] font-black text-slate-500 uppercase tracking-tighter">
+                    {activity.user.charAt(0)}
+                  </div>
+                  <span className="text-[10px] font-bold italic text-slate-400">by {activity.user}</span>
                 </div>
               </div>
             ))}
           </div>
 
           <Button className="w-full mt-12 bg-slate-50 border border-slate-100 text-slate-500 font-black text-[11px] h-14 shadow-none hover:bg-slate-100 hover:text-slate-700 rounded-2xl group transition-all uppercase tracking-widest">
-             View All Activities
-             <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1.5" />
+            View All Activities
+            <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1.5" />
           </Button>
         </Card>
       </div>

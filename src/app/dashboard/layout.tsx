@@ -18,12 +18,27 @@ import {
 import { AuthService } from "@/services/auth-service"
 import { authStorage } from "@/lib/auth"
 import Image from "next/image"
+import { AttendanceProvider } from "@/components/providers/attendance-provider"
+import { useAttendanceUpload } from "@/hooks/use-attendance-upload"
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  return (
+    <AttendanceProvider>
+      <AttendanceLayoutInner>{children}</AttendanceLayoutInner>
+    </AttendanceProvider>
+  )
+}
+
+function AttendanceLayoutInner({ children }: { children: React.ReactNode }) {
+  const { 
+    handleGlobalDragEnter, 
+    handleGlobalDragOver, 
+    handleGlobalDragLeave 
+  } = useAttendanceUpload()
   const [username, setUsername] = React.useState("ADMIN")
 
   React.useEffect(() => {
@@ -32,10 +47,16 @@ export default function DashboardLayout({
       setUsername(user.username.toUpperCase())
     }
   }, [])
+
   return (
     <SidebarProvider>
       <AppSidebar />
-      <div className="flex flex-col flex-1 min-w-0 bg-[#f8fafc]">
+      <div 
+        className="flex flex-col flex-1 min-w-0 bg-[#f8fafc] relative"
+        onDragEnter={handleGlobalDragEnter}
+        onDragOver={handleGlobalDragOver}
+        onDragLeave={handleGlobalDragLeave}
+      >
         <header className="flex h-16 shrink-0 items-center justify-between border-b border-gray-100 bg-white px-6 sticky top-0 z-20">
           <div className="flex items-center gap-2 text-slate-500">
             <SidebarTrigger className="-ml-1 hover:bg-gray-100 hover:text-slate-900 transition-colors text-slate-500" />
@@ -46,17 +67,6 @@ export default function DashboardLayout({
           </div>
 
           <div className="flex items-center gap-4">
-
-
-            {/* <div className="relative">
-              <button className="text-slate-400 hover:text-white transition-colors p-2 rounded-full hover:bg-slate-800">
-                <Bell className="size-5" />
-              </button>
-              <span className="absolute top-2 right-2 flex h-2 w-2 rounded-full bg-red-500 border border-slate-900 shadow-sm" />
-            </div>
-
-            <Separator orientation="vertical" className="mx-1 h-6 bg-slate-700" /> */}
-
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-1 cursor-pointer rounded-full p-0.5 transition-colors hover:bg-gray-100 outline-none">
@@ -100,7 +110,6 @@ export default function DashboardLayout({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-
           </div>
         </header>
         <main className="flex-1 overflow-auto p-4">
