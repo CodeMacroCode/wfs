@@ -20,8 +20,9 @@ export const attendanceService = {
         },
       });
       toast.success('Attendance uploaded successfully');
-    } catch (error: any) {
-      const errorMessage = error?.data?.message || error?.message || 'Failed to upload attendance';
+    } catch (error) {
+      const apiError = error as { data?: { message?: string }; message?: string };
+      const errorMessage = apiError.data?.message || apiError.message || 'Failed to upload attendance';
       toast.error(errorMessage);
       throw error;
     }

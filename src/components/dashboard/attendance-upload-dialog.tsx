@@ -7,7 +7,6 @@ import {
   FileText, 
   X, 
   CheckCircle2, 
-  AlertCircle,
   Loader2
 } from "lucide-react"
 import {
@@ -20,7 +19,6 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Progress } from "@/components/ui/progress"
 import { useAttendanceUpload } from "@/hooks/use-attendance-upload"
 import { cn } from "@/lib/utils"
 
@@ -54,8 +52,7 @@ export function AttendanceUploadDialog({ trigger, open: controlledOpen, onOpenCh
     handleDragLeave,
     handleDrop,
     uploadFile,
-    clearFile,
-    setIsGlobalDragging
+    clearFile
   } = useAttendanceUpload()
 
   // Auto-open when a file is dragged over the page, and auto-close if pull back

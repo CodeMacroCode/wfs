@@ -12,6 +12,7 @@ import {
   Filter,
   ArrowRight
 } from "lucide-react"
+import Image from "next/image"
 import { AttendanceUploadDialog } from "@/components/dashboard/attendance-upload-dialog"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -400,9 +401,11 @@ export default function DashboardPage() {
                     <TableCell className="px-8 py-4">
                       <div className="flex items-center gap-3">
                         <div className="h-10 w-10 rounded-full bg-slate-100 border-2 border-white ring-1 ring-gray-100 flex items-center justify-center overflow-hidden shadow-sm transition-transform group-hover:scale-105">
-                          <img
+                          <Image
                             src={`https://api.dicebear.com/9.x/initials/svg?seed=${emp.name}`}
                             alt={emp.name}
+                            width={40}
+                            height={40}
                             className="h-full w-full object-cover"
                           />
                         </div>
