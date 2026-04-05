@@ -27,4 +27,12 @@ export const QUERY_KEYS = {
     all: ['productItems'] as const,
     rackWise: (rackId: string, params?: unknown) => [...QUERY_KEYS.productItems.all, 'rackWise', rackId, { params }] as const,
   },
+  attendancePolicies: {
+    all: ['attendancePolicies'] as const,
+    list: () => [...QUERY_KEYS.attendancePolicies.all, 'list'] as const,
+  },
+  attendance: {
+    all: ['attendance'] as const,
+    list: () => [...QUERY_KEYS.attendance.all, 'list'] as const,
+  },
 } as const;

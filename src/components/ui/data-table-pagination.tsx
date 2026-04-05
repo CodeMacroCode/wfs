@@ -51,12 +51,16 @@ export function DataTablePagination<TData>({
       <div className="flex items-center gap-2 order-2 sm:order-1">
         <span className="text-[14px] text-slate-500">Show</span>
         <Select
-          value={`${pageSize}`}
+          value={totalItems !== undefined && pageSize >= totalItems ? "all" : `${pageSize}`}
           onValueChange={(value) => {
-            table.setPageSize(Number(value))
+            if (value === "all") {
+              table.setPageSize(totalItems || 1000)
+            } else {
+              table.setPageSize(Number(value))
+            }
           }}
         >
-          <SelectTrigger className="h-9 w-[70px] border-slate-200 bg-white text-slate-700">
+          <SelectTrigger className="h-9 w-[75px] border-slate-200 bg-white text-slate-700">
             <SelectValue placeholder={pageSize} />
           </SelectTrigger>
           <SelectContent side="top">
@@ -65,6 +69,9 @@ export function DataTablePagination<TData>({
                 {size}
               </SelectItem>
             ))}
+            {totalItems !== undefined && (
+              <SelectItem value="all">All</SelectItem>
+            )}
           </SelectContent>
         </Select>
         <span className="text-[14px] text-slate-500">

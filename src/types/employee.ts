@@ -2,6 +2,7 @@ export type EmployeeRole = "user" | "hr" | "admin";
 
 export interface Employee {
   id: string;
+  namd: string;
   email: string;
   role: EmployeeRole;
   uniqueId: number;

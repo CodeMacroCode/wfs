@@ -1,11 +1,8 @@
 "use client"
 
 import * as React from "react"
-import { ColumnDef } from "@tanstack/react-table"
-import { DataTable } from "@/components/ui/data-table"
-import { Badge } from "@/components/ui/badge"
+import { RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Edit, Trash2, RefreshCw } from "lucide-react"
 import { useDataTable } from "@/hooks/use-data-table"
 import { useEmployeesQuery } from "@/hooks/queries/use-employees-query"
 import { Employee, EmployeeQueryParams } from "@/types/employee"
@@ -13,6 +10,7 @@ import { RegisterEmployeeDialog, EditEmployeeDialog } from "@/components/employe
 import { DeleteEmployeeDialog } from "@/components/employee/delete-employee-dialog"
 import { DataTableExport } from "@/components/ui/data-table-export"
 import { employeeService } from "@/services/employee-service"
+import { EmployeeTable, getEmployeeColumns } from "./employee-table"
 
 export default function EmployeeMaster() {
   const [editingEmployee, setEditingEmployee] = React.useState<Employee | null>(null)
@@ -31,76 +29,8 @@ export default function EmployeeMaster() {
 
   const { data, isLoading, refetch, isFetching } = useEmployeesQuery(apiParams as EmployeeQueryParams)
 
-  const columns: ColumnDef<Employee>[] = [
-    {
-      accessorKey: "uniqueId",
-      header: "Unique ID",
-      cell: ({ row }) => (
-        <span className="font-mono text-slate-500 text-[13px]">
-          #{row.original.uniqueId}
-        </span>
-      ),
-    },
-    {
-      accessorKey: "email",
-      header: "Email Address",
-      cell: ({ row }) => (
-        <div className="flex flex-col">
-          <span className="font-semibold text-slate-800">{row.original.email}</span>
-          {row.original.name && (
-            <span className="text-xs text-slate-400 capitalize">{row.original.name}</span>
-          )}
-        </div>
-      ),
-    },
-    {
-      accessorKey: "role",
-      header: "Role",
-      cell: ({ row }) => {
-        const role = row.original.role
-        const variant =
-          role === "admin"
-            ? "destructive"
-            : role === "hr"
-              ? "secondary"
-              : "outline"
-
-        return (
-          <Badge variant={variant} className="capitalize rounded-full px-3">
-            {role.toLowerCase().replace("_", " ")}
-          </Badge>
-        )
-      },
-    },
-    {
-      id: "actions",
-      header: "Actions",
-      cell: ({ row }) => {
-        const employee = row.original
-
-        return (
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className="text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-full h-8 w-8 p-0"
-              onClick={() => setEditingEmployee(employee)}
-            >
-              <Edit className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className="text-slate-400 hover:text-destructive hover:bg-destructive/5 rounded-full h-8 w-8 p-0"
-              onClick={() => setDeletingEmployeeId(employee.id)}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
-        )
-      },
-    },
-  ]
+  // Use a static version of columns for export (without actions)
+  const exportColumns = React.useMemo(() => getEmployeeColumns(), [])
 
   return (
     <div className="flex-1 space-y-4 p-8 pt-6">
@@ -123,7 +53,7 @@ export default function EmployeeMaster() {
             <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
           </Button>
           <DataTableExport
-            columns={columns}
+            columns={exportColumns}
             filename="employee_report"
             fetchData={() => employeeService.getAll({ ...apiParams, limit: "all" } as EmployeeQueryParams)}
           />
@@ -131,8 +61,7 @@ export default function EmployeeMaster() {
         </div>
       </div>
 
-      <DataTable
-        columns={columns}
+      <EmployeeTable
         data={data?.data || []}
         isLoading={isLoading}
         totalItems={data?.pagination?.total || 0}
@@ -140,11 +69,10 @@ export default function EmployeeMaster() {
         pagination={pagination}
         onPaginationChange={onPaginationChange}
         onSortingChange={onSortingChange}
-        searchKey="uniqueId"
-        searchPlaceholder="Search employee..."
-        searchValue={search}
+        search={search}
         onSearchChange={onSearchChange}
-        showSrNo={true}
+        onEdit={setEditingEmployee}
+        onDelete={setDeletingEmployeeId}
       />
 
       <EditEmployeeDialog

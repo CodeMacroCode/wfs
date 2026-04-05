@@ -80,7 +80,17 @@ export function DataTable<TData, TValue>({
   const [sorting, setSorting] = React.useState<SortingState>([])
 
   // Determine if we are using server-side pagination
-  const isServerSide = !!onPaginationChange && pagination !== undefined
+  const isServerSide = !!onPaginationChange && !!pagination
+
+  // Calculate the total number of pages if not explicitly provided
+  const effectivePageCount = React.useMemo(() => {
+    if (!isServerSide) return undefined
+    if (pageCount !== undefined) return pageCount
+    if (totalItems !== undefined && pagination?.pageSize) {
+      return Math.ceil(totalItems / pagination.pageSize) || 1
+    }
+    return -1
+  }, [isServerSide, pageCount, totalItems, pagination?.pageSize])
 
   const internalOnPaginationChange = React.useCallback(
     (updaterOrValue: Updater<PaginationState>) => {
@@ -141,11 +151,11 @@ export function DataTable<TData, TValue>({
       columnVisibility,
       rowSelection,
       columnFilters,
-      pagination: isServerSide ? pagination : undefined,
+      ...(isServerSide && pagination ? { pagination } : {}),
     },
     manualPagination: isServerSide,
     manualSorting: isServerSide,
-    pageCount: isServerSide ? pageCount : undefined,
+    pageCount: effectivePageCount,
     enableSorting,
     enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
