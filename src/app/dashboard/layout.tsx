@@ -37,7 +37,8 @@ function AttendanceLayoutInner({ children }: { children: React.ReactNode }) {
   const { 
     handleGlobalDragEnter, 
     handleGlobalDragOver, 
-    handleGlobalDragLeave 
+    handleGlobalDragLeave,
+    handleDrop 
   } = useAttendanceUpload()
   const [username, setUsername] = React.useState("ADMIN")
 
@@ -56,6 +57,7 @@ function AttendanceLayoutInner({ children }: { children: React.ReactNode }) {
         onDragEnter={handleGlobalDragEnter}
         onDragOver={handleGlobalDragOver}
         onDragLeave={handleGlobalDragLeave}
+        onDrop={handleDrop}
       >
         <header className="flex h-16 shrink-0 items-center justify-between border-b border-gray-100 bg-white px-6 sticky top-0 z-20">
           <div className="flex items-center gap-2 text-slate-500">

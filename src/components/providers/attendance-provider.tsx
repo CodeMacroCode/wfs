@@ -35,6 +35,31 @@ export function AttendanceProvider({ children }: { children: React.ReactNode }) 
   const [progress, setProgress] = React.useState(0)
   const dragCounter = React.useRef(0)
 
+  // Safety listener for window-level drag leave
+  React.useEffect(() => {
+    const handleWindowDragLeave = (event: DragEvent) => {
+      // If relatedTarget is null, it means we left the window entirely
+      if (!event.relatedTarget) {
+        setIsGlobalDragging(false)
+        dragCounter.current = 0
+      }
+    }
+
+    const handleWindowDrop = () => {
+      // Just in case a drop happens but isn't caught by React handlers
+      setIsGlobalDragging(false)
+      dragCounter.current = 0
+    }
+
+    window.addEventListener("dragleave", handleWindowDragLeave)
+    window.addEventListener("drop", handleWindowDrop)
+
+    return () => {
+      window.removeEventListener("dragleave", handleWindowDragLeave)
+      window.removeEventListener("drop", handleWindowDrop)
+    }
+  }, [])
+
   const validateFile = (file: File): boolean => {
     const allowedTypes = [
       'text/csv',
@@ -103,19 +128,16 @@ export function AttendanceProvider({ children }: { children: React.ReactNode }) 
 
   const handleDragOver = (event: React.DragEvent) => {
     event.preventDefault()
-    event.stopPropagation()
     setIsDragging(true)
   }
 
   const handleDragLeave = (event: React.DragEvent) => {
     event.preventDefault()
-    event.stopPropagation()
     setIsDragging(false)
   }
 
   const handleDrop = (event: React.DragEvent) => {
     event.preventDefault()
-    event.stopPropagation()
     setIsDragging(false)
     setIsGlobalDragging(false)
     dragCounter.current = 0
@@ -128,7 +150,6 @@ export function AttendanceProvider({ children }: { children: React.ReactNode }) 
 
   const handleGlobalDragEnter = (event: React.DragEvent) => {
     event.preventDefault()
-    event.stopPropagation()
     if (event.dataTransfer.types.includes("Files")) {
       dragCounter.current++
       if (dragCounter.current === 1) {
@@ -139,12 +160,10 @@ export function AttendanceProvider({ children }: { children: React.ReactNode }) 
 
   const handleGlobalDragOver = (event: React.DragEvent) => {
     event.preventDefault()
-    event.stopPropagation()
   }
 
   const handleGlobalDragLeave = (event: React.DragEvent) => {
     event.preventDefault()
-    event.stopPropagation()
     dragCounter.current--
     if (dragCounter.current <= 0) {
       dragCounter.current = 0
