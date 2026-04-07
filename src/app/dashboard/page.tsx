@@ -10,7 +10,12 @@ import {
   MoreVertical,
   Search,
   Filter,
-  ArrowRight
+  ArrowRight,
+  Zap,
+  Droplets,
+  Wifi,
+  FileText,
+  AlertCircle
 } from "lucide-react"
 import Image from "next/image"
 import { AttendanceUploadDialog } from "@/components/dashboard/attendance-upload-dialog"
@@ -55,56 +60,50 @@ const shiftData = [
   { name: "Night", value: 10, color: "#475569", count: 125 }
 ]
 
-const recentActivity = [
+const billAlerts = [
   {
     id: 1,
-    type: "onboarding",
-    title: "New Employee Onboarded",
-    description: "Sarah Jenkins joined as UI Designer",
-    time: "2 MINS AGO",
-    user: "HR Team",
-    icon: <Users className="h-4 w-4 text-emerald-500" />,
-    iconBg: "bg-emerald-50"
+    title: "Electricity Bill",
+    description: "Monthly consumption: 450 kWh. Pending for Sep 2035.",
+    amount: "₹4,250",
+    status: "Pending",
+    time: "DUE IN 3 DAYS",
+    icon: <Zap className="h-4 w-4 text-amber-500" />,
+    iconBg: "bg-amber-50",
+    color: "text-amber-600"
   },
   {
     id: 2,
-    type: "leave",
-    title: "Leave Request Approved",
-    description: "Mark Thompson (EMP-0231) - 2 days",
-    time: "45 MINS AGO",
-    user: "David Chen",
-    icon: <Calendar className="h-4 w-4 text-blue-500" />,
-    iconBg: "bg-blue-50"
+    title: "Water Utility",
+    description: "Quarterly maintenance and usage charge.",
+    amount: "₹850",
+    status: "Overdue",
+    time: "2 DAYS OVERDUE",
+    icon: <Droplets className="h-4 w-4 text-rose-500" />,
+    iconBg: "bg-rose-50",
+    color: "text-rose-600"
   },
   {
     id: 3,
-    type: "report",
-    title: "Attendance Report Exported",
-    description: "Monthly summary for June 2035",
-    time: "2 HOURS AGO",
-    user: "System",
-    icon: <UserCheck className="h-4 w-4 text-emerald-500" />,
-    iconBg: "bg-emerald-50"
+    title: "Internet Services",
+    description: "Fiber Optic - 100Mbps Unlimited Plan.",
+    amount: "₹1,199",
+    status: "Upcoming",
+    time: "DUE IN 12 DAYS",
+    icon: <Wifi className="h-4 w-4 text-blue-500" />,
+    iconBg: "bg-blue-50",
+    color: "text-blue-600"
   },
   {
     id: 4,
-    type: "shift",
-    title: "Shift Change Requested",
-    description: "Elena Rodriguez moved to Night Shift",
-    time: "5 HOURS AGO",
-    user: "Operations",
-    icon: <Clock className="h-4 w-4 text-amber-500" />,
-    iconBg: "bg-amber-50"
-  },
-  {
-    id: 5,
-    type: "punch",
-    title: "Missing Punch Log",
-    description: "3 employees missed checkout yesterday",
-    time: "YESTERDAY",
-    user: "System",
-    icon: <Clock className="h-4 w-4 text-amber-600" />,
-    iconBg: "bg-amber-100"
+    title: "Property Tax",
+    description: "Annual municipal property tax for Block A.",
+    amount: "₹12,400",
+    status: "Pending",
+    time: "DUE IN 15 DAYS",
+    icon: <FileText className="h-4 w-4 text-emerald-500" />,
+    iconBg: "bg-emerald-50",
+    color: "text-emerald-600"
   }
 ]
 
@@ -463,36 +462,40 @@ export default function DashboardPage() {
           </div>
         </Card>
 
-        {/* Recent Activity Feed */}
+        {/* Bill Payment Alerts */}
         <Card className="border-none ring-1 ring-gray-100 shadow-none rounded-[28px] flex flex-col p-8 bg-white overflow-hidden">
           <div className="flex flex-col gap-1 mb-10">
-            <h3 className="text-xl font-bold text-slate-900 font-heading">Recent Activity</h3>
-            <p className="text-xs font-semibold text-slate-400">Latest updates from the portal.</p>
+            <div className="flex items-center justify-between">
+              <h3 className="text-xl font-bold text-slate-900 font-heading">Bill Payment Alerts</h3>
+              <AlertCircle className="h-5 w-5 text-rose-500 animate-pulse" />
+            </div>
+            <p className="text-xs font-semibold text-slate-400">Pending and upcoming utility bills.</p>
           </div>
 
           <div className="flex-1 space-y-10 relative before:absolute before:left-[21px] before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-50">
-            {recentActivity.map((activity) => (
-              <div key={activity.id} className="relative pl-14 flex flex-col gap-1.5 group cursor-pointer">
-                <div className={`absolute left-0 top-0 h-11 w-11 rounded-full ${activity.iconBg} border-[5px] border-white flex items-center justify-center z-10 shadow-sm transition-transform group-hover:scale-110 duration-300`}>
-                  {activity.icon}
+            {billAlerts.map((bill) => (
+              <div key={bill.id} className="relative pl-14 flex flex-col gap-1.5 group cursor-pointer">
+                <div className={`absolute left-0 top-0 h-11 w-11 rounded-full ${bill.iconBg} border-[5px] border-white flex items-center justify-center z-10 shadow-sm transition-transform group-hover:scale-110 duration-300`}>
+                  {bill.icon}
                 </div>
                 <div className="flex items-start justify-between">
-                  <h4 className="text-[14px] font-bold text-slate-900 group-hover:text-teal-600 transition-colors">{activity.title}</h4>
-                  <span className="text-[9px] font-black text-slate-300 whitespace-nowrap ml-2 mt-1 tracking-tighter uppercase">{activity.time}</span>
+                  <h4 className="text-[14px] font-bold text-slate-900 group-hover:text-teal-600 transition-colors">{bill.title}</h4>
+                  <span className="text-[9px] font-black text-slate-300 whitespace-nowrap ml-2 mt-1 tracking-tighter uppercase">{bill.time}</span>
                 </div>
-                <p className="text-xs text-slate-500 font-semibold leading-relaxed pr-2">{activity.description}</p>
-                <div className="flex items-center gap-2 mt-1 opacity-60 group-hover:opacity-100 transition-opacity">
-                  <div className="h-5 w-5 rounded-full bg-slate-100 border border-gray-100 flex items-center justify-center text-[9px] font-black text-slate-500 uppercase tracking-tighter">
-                    {activity.user.charAt(0)}
+                <p className="text-xs text-slate-500 font-semibold leading-relaxed pr-2">{bill.description}</p>
+                <div className="flex items-center justify-between mt-1">
+                  <span className={`text-[13px] font-black ${bill.color}`}>{bill.amount}</span>
+                  <div className="flex items-center gap-1.5 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-100">
+                    <div className={`h-1 w-1 rounded-full ${bill.status === 'Overdue' ? 'bg-rose-500' : 'bg-amber-500'}`} />
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">{bill.status}</span>
                   </div>
-                  <span className="text-[10px] font-bold italic text-slate-400">by {activity.user}</span>
                 </div>
               </div>
             ))}
           </div>
 
           <Button className="w-full mt-12 bg-slate-50 border border-slate-100 text-slate-500 font-black text-[11px] h-14 shadow-none hover:bg-slate-100 hover:text-slate-700 rounded-2xl group transition-all uppercase tracking-widest">
-            View All Activities
+            Manage All Bills
             <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1.5" />
           </Button>
         </Card>
