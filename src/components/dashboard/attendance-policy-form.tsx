@@ -33,9 +33,9 @@ interface AttendancePolicyFormProps {
   isEdit?: boolean
 }
 
-export function AttendancePolicyForm({ 
+export function AttendancePolicyForm({
   initialValues,
-  onSubmit, 
+  onSubmit,
   isLoading,
   isEdit = false
 }: AttendancePolicyFormProps) {
@@ -58,7 +58,7 @@ export function AttendancePolicyForm({
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Policy Name</FormLabel>
+              <FormLabel>Shift Name</FormLabel>
               <FormControl>
                 <Input placeholder="General Shift" {...field} />
               </FormControl>
@@ -100,12 +100,12 @@ export function AttendancePolicyForm({
             name="overtimeThresholdMins"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>OT Threshold (Mins)</FormLabel>
+                <FormLabel>Buffer Time (Mins)</FormLabel>
                 <FormControl>
-                  <Input 
-                    type="number" 
-                    {...field} 
-                    onChange={(e) => field.onChange(e.target.valueAsNumber || 0)} 
+                  <Input
+                    type="number"
+                    {...field}
+                    onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
                   />
                 </FormControl>
                 <FormMessage />
@@ -119,9 +119,9 @@ export function AttendancePolicyForm({
               <FormItem>
                 <FormLabel>OT Hourly Rate</FormLabel>
                 <FormControl>
-                  <Input 
-                    type="number" 
-                    {...field} 
+                  <Input
+                    type="number"
+                    {...field}
                     onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
                   />
                 </FormControl>

@@ -32,10 +32,10 @@ const items = [
   { title: "Calendar", url: "/dashboard/calendar", icon: Calendar },
   { title: "Employees", url: "/dashboard/employee", icon: Users },
   { title: "Attendance", url: "/dashboard/attendance", icon: UserCheck },
+  { title: "Payroll Policies", url: "/dashboard/payroll-policies", icon: UserCheck },
   { title: "Attendance Policies", url: "/dashboard/attendance-policies", icon: UserCheck },
   { title: "Performance", url: "/dashboard/performance", icon: TrendingUp },
   { title: "Payroll", url: "/dashboard/payroll", icon: Banknote },
-  { title: "Payroll Policies", url: "/dashboard/payroll-policies", icon: UserCheck },
   { title: "Leave Management", url: "/dashboard/leave-management", icon: CalendarX },
   { title: "Recruitment", url: "/dashboard/recruitment", icon: Search },
 ]
