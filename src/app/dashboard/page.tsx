@@ -54,10 +54,10 @@ const weeklyStats = [
   { day: "Sun", present: 65, onLeave: 20, absent: 15 }
 ]
 
-const shiftData = [
-  { name: "General", value: 60, color: "#0f4c3a", count: 750 },
-  { name: "First Shift", value: 30, color: "#2dd4bf", count: 375 },
-  { name: "Night", value: 10, color: "#475569", count: 125 }
+const companyData = [
+  { name: "Fourtech", value: 55, color: "#0f4c3a", count: 688 },
+  { name: "Goel Enterprises", value: 35, color: "#2dd4bf", count: 437 },
+  { name: "Others", value: 10, color: "#475569", count: 125 }
 ]
 
 const billAlerts = [
@@ -108,11 +108,11 @@ const billAlerts = [
 ]
 
 const employees = [
-  { id: "EMP-0234", name: "Olivia Mason", role: "Marketing", subRole: "Executive Marketing", shift: "General", date: "28 Jun 35", status: "Active", avatar: "OM" },
-  { id: "EMP-0178", name: "Ethan Ray", role: "UI Designer", subRole: "Product Design", shift: "First Shift", date: "28 Jun 35", status: "Active", avatar: "ER" },
-  { id: "EMP-0289", name: "Mia Torres", role: "HR Officer", subRole: "Human Resources", shift: "General", date: "28 Jun 35", status: "Active", avatar: "MT" },
-  { id: "EMP-0291", name: "Daniel Cheung", role: "Compliance Specialist", subRole: "Operations", shift: "General", date: "28 Jun 35", status: "Active", avatar: "DC" },
-  { id: "EMP-0320", name: "Farah Nabila", role: "Customer Experience Lead", subRole: "Customer Service", shift: "Night", date: "28 Jun 35", status: "Active", avatar: "FN" }
+  { id: "EMP-0234", name: "Olivia Mason", role: "Marketing", subRole: "Executive Marketing", shift: "General", date: "28 Jun 35", company: "Fourtech", avatar: "OM" },
+  { id: "EMP-0178", name: "Ethan Ray", role: "UI Designer", subRole: "Product Design", shift: "First Shift", date: "28 Jun 35", company: "Goel Enterprises", avatar: "ER" },
+  { id: "EMP-0289", name: "Mia Torres", role: "HR Officer", subRole: "Human Resources", shift: "General", date: "28 Jun 35", company: "Fourtech", avatar: "MT" },
+  { id: "EMP-0291", name: "Daniel Cheung", role: "Compliance Specialist", subRole: "Operations", shift: "General", date: "28 Jun 35", company: "Goel Enterprises", avatar: "DC" },
+  { id: "EMP-0320", name: "Farah Nabila", role: "Customer Experience Lead", subRole: "Customer Service", shift: "Night", date: "28 Jun 35", company: "Fourtech", avatar: "FN" }
 ]
 
 export default function DashboardPage() {
@@ -299,21 +299,21 @@ export default function DashboardPage() {
           </div>
         </Card>
 
-        {/* Shift Distribution */}
+        {/* Company Distribution */}
         <Card className="border-none ring-1 ring-gray-100 shadow-none rounded-[28px] p-8 flex flex-col">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-xl font-bold text-slate-900 font-heading">Shift Distribution</h3>
+            <h3 className="text-xl font-bold text-slate-900 font-heading">Company Distribution</h3>
             <button className="text-slate-300 hover:text-slate-500 transition-colors">
               <MoreVertical className="h-5 w-5" />
             </button>
           </div>
-          <p className="text-xs font-semibold text-slate-400 mb-8">Current workforce shift allocation.</p>
+          <p className="text-xs font-semibold text-slate-400 mb-8">Employee count per organization.</p>
 
           <div className="flex-1 relative min-h-[220px]">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={shiftData}
+                  data={companyData}
                   cx="50%"
                   cy="50%"
                   innerRadius={75}
@@ -325,7 +325,7 @@ export default function DashboardPage() {
                   animationDuration={1500}
                   cornerRadius={6}
                 >
-                  {shiftData.map((entry, index) => (
+                  {companyData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
@@ -338,7 +338,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="mt-8 space-y-4">
-            {shiftData.map((item, index) => (
+            {companyData.map((item, index) => (
               <div key={`legend-${index}`} className="flex items-center justify-between group hover:bg-slate-50 p-2 -mx-2 rounded-xl transition-colors cursor-pointer">
                 <div className="flex items-center gap-4">
                   <div className="h-7 w-12 flex items-center justify-center rounded-lg text-[11px] font-black text-white shadow-sm" style={{ backgroundColor: item.color }}>
@@ -390,7 +390,7 @@ export default function DashboardPage() {
                   <TableHead className="text-[10px] font-black text-slate-400 uppercase px-6 py-5 tracking-widest">Job Title</TableHead>
                   <TableHead className="text-[10px] font-black text-slate-400 uppercase px-6 py-5 tracking-widest">Shift</TableHead>
                   <TableHead className="text-[10px] font-black text-slate-400 uppercase px-6 py-5 tracking-widest">Date</TableHead>
-                  <TableHead className="text-[10px] font-black text-slate-400 uppercase px-6 py-5 tracking-widest">Status</TableHead>
+                  <TableHead className="text-[10px] font-black text-slate-400 uppercase px-6 py-5 tracking-widest">Company</TableHead>
                   <TableHead className="text-[10px] font-black text-slate-400 uppercase px-8 py-5 tracking-widest text-right">Action</TableHead>
                 </TableRow>
               </TableHeader>
@@ -429,9 +429,8 @@ export default function DashboardPage() {
                       {emp.date}
                     </TableCell>
                     <TableCell className="px-6 py-4">
-                      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100/50">
-                        <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                        <span className="text-[10px] font-black uppercase tracking-widest">{emp.status}</span>
+                      <div className="flex flex-col">
+                        <span className="text-[13px] font-bold text-slate-700">{emp.company}</span>
                       </div>
                     </TableCell>
                     <TableCell className="px-8 py-4 text-right">
