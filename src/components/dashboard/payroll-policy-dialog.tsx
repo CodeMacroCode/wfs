@@ -60,7 +60,6 @@ export function PayrollPolicyDialog({ policy, trigger }: PayrollPolicyDialogProp
       <DialogTrigger asChild>
         {trigger || (
           <Button className="bg-[#2eb88a] hover:bg-[#259b74] text-white rounded-xl px-4 py-2 flex items-center gap-2 shadow-sm transition-all active:scale-95 border-none">
-            <Plus className="h-4 w-4" />
             Add Policy
           </Button>
         )}
@@ -75,6 +74,7 @@ export function PayrollPolicyDialog({ policy, trigger }: PayrollPolicyDialogProp
           </DialogDescription>
         </DialogHeader>
         <PayrollPolicyForm 
+          key={policy?._id || "new-policy"}
           initialValues={policy} 
           onSubmit={onSubmit} 
           isLoading={isLoading} 
