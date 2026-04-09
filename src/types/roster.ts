@@ -4,6 +4,7 @@ export interface Roster {
   _id: string;
   employeeId: string;
   employeeName: string;
+  companyName: string;
   shiftId: string;
   shiftName: string;
   startDate: string;

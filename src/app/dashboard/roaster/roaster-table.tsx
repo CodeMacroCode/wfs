@@ -41,6 +41,15 @@ export function RoasterTable({ data, isLoading }: RoasterTableProps) {
       header: "Employee ID",
     },
     {
+      accessorKey: "companyName",
+      header: "Company Name",
+      cell: ({ row }) => (
+        <div className="text-slate-600 font-medium">
+          {row.original.companyName}
+        </div>
+      ),
+    },
+    {
       accessorKey: "shiftName",
       header: "Assigned Shift",
       cell: ({ row }) => (

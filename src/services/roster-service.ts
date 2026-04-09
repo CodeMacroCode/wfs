@@ -7,6 +7,7 @@ let mockRosters: Roster[] = [
     _id: '1',
     employeeId: '101',
     employeeName: 'John Doe',
+    companyName: 'TechCorp Solutions',
     shiftId: 'shift1',
     shiftName: 'Morning Shift',
     startDate: '2026-04-10',
@@ -18,6 +19,7 @@ let mockRosters: Roster[] = [
     _id: '2',
     employeeId: '102',
     employeeName: 'Jane Smith',
+    companyName: 'Innovate Hub',
     shiftId: 'shift2',
     shiftName: 'Evening Shift',
     startDate: '2026-04-11',
@@ -52,6 +54,7 @@ export const rosterService = {
       _id: Math.random().toString(36).substr(2, 9),
       employeeId: empId,
       employeeName: `Employee ${empId}`, // Mock name
+      companyName: 'Assigned Company', // Mock name
       shiftId: data.shiftId,
       shiftName: 'Assigned Shift', // Mock name
       startDate: data.startDate,
