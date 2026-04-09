@@ -2,9 +2,9 @@
 
 import * as React from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import * as z from "zod"
-import { CalendarIcon, Check, ChevronsUpDown, Search, X } from "lucide-react"
+import { ChevronsUpDown, Search, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Form,
@@ -26,7 +26,6 @@ import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
   DropdownMenu,
-  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
@@ -69,7 +68,16 @@ export function RoasterForm({ onSubmit, isLoading }: RoasterFormProps) {
     },
   })
 
-  const selectedEmployeeIds = form.watch("employeeIds")
+  const selectedEmployeeIds = useWatch({
+    control: form.control,
+    name: "employeeIds",
+    defaultValue: []
+  })
+  
+  const startDate = useWatch({
+    control: form.control,
+    name: "startDate"
+  })
   
   const filteredEmployees = React.useMemo(() => {
     const employees = employeesData?.data || []
@@ -233,7 +241,7 @@ export function RoasterForm({ onSubmit, isLoading }: RoasterFormProps) {
                 <FormControl>
                   <Input 
                     type="date" 
-                    min={form.watch("startDate") || today}
+                    min={startDate || today}
                     {...field} 
                     className="rounded-xl border-slate-200"
                   />

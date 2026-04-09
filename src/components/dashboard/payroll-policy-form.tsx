@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useForm } from "react-hook-form"
+import { useForm, Resolver } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { Button } from "@/components/ui/button"
@@ -45,22 +45,7 @@ const formSchema = z.object({
   }),
 })
 
-type FormValues = {
-  name: string;
-  sundayPolicyActive: boolean;
-  heads: {
-    basic: number | undefined;
-    hra: number | undefined;
-    conveyance: number | undefined;
-    pfEmployee: number | undefined;
-    pfEmployer: number | undefined;
-    esiEmployee: number | undefined;
-    esiEmployer: number | undefined;
-    lwfEmployee: number | undefined;
-    lwfEmployer: number | undefined;
-    overtimeHourlyRate: number | undefined;
-  };
-}
+type FormValues = z.infer<typeof formSchema>
 
 interface PayrollPolicyFormProps {
   initialValues?: Partial<CreatePayrollPolicyDto>
@@ -76,7 +61,7 @@ export function PayrollPolicyForm({
   isEdit = false
 }: PayrollPolicyFormProps) {
   const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema) as any,
+    resolver: zodResolver(formSchema) as Resolver<FormValues>,
     defaultValues: {
       name: initialValues?.name || "",
       sundayPolicyActive: initialValues?.sundayPolicyActive ?? true,

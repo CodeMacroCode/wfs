@@ -29,7 +29,6 @@ interface PayrollPolicyTableProps {
 }
 
 export function PayrollPolicyTable({ data, isLoading }: PayrollPolicyTableProps) {
-  const [editingPolicy, setEditingPolicy] = React.useState<PayrollPolicy | null>(null)
   const [deletingPolicyId, setDeletingPolicyId] = React.useState<string | null>(null)
 
   const columns: ColumnDef<PayrollPolicy>[] = [

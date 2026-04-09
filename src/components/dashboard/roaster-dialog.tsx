@@ -27,7 +27,7 @@ export function RoasterDialog({ trigger }: RoasterDialogProps) {
     try {
       await assignMutation.mutateAsync(data)
       setOpen(false)
-    } catch (error) {
+    } catch {
       // Error handled by mutation toast or service
     }
   }

@@ -9,11 +9,10 @@ import {
   CheckCircle2, 
   XCircle, 
   AlertCircle,
-  MoreVertical,
   TrendingUp
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { DataTable } from "@/components/ui/data-table"
 import { Attendance } from "@/types/attendance"
 import { format } from "date-fns"

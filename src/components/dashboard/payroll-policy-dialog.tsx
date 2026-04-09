@@ -49,7 +49,7 @@ export function PayrollPolicyDialog({ policy, trigger }: PayrollPolicyDialogProp
         await createMutation.mutateAsync(data)
       }
       setOpen(false)
-    } catch (error) {
+    } catch {
       // Error handled by mutation toast
     }
   }
@@ -102,7 +102,7 @@ export function DeletePayrollPolicyDialog({
     try {
       await deleteMutation.mutateAsync(policyId)
       onOpenChange(false)
-    } catch (error) {
+    } catch {
       // Error handled by mutation toast
     }
   }
