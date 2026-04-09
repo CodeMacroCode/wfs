@@ -39,4 +39,8 @@ export const QUERY_KEYS = {
     all: ['payrollPolicies'] as const,
     list: () => [...QUERY_KEYS.payrollPolicies.all, 'list'] as const,
   },
+  rosters: {
+    all: ['rosters'] as const,
+    list: () => [...QUERY_KEYS.rosters.all, 'list'] as const,
+  },
 } as const;
