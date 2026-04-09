@@ -34,7 +34,7 @@ export function RegisterEmployeeDialog() {
           Add Employee
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[700px]">
         <DialogHeader>
           <DialogTitle>Register New Employee</DialogTitle>
         </DialogHeader>
@@ -66,16 +66,12 @@ export function EditEmployeeDialog({ employee, open, onOpenChange }: EditEmploye
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[700px]">
         <DialogHeader>
           <DialogTitle>Edit Employee Details</DialogTitle>
         </DialogHeader>
         <EmployeeForm
-          initialValues={{
-            name: employee.name || "",
-            email: employee.email,
-            role: employee.role,
-          }}
+          initialValues={employee}
           onSubmit={onSubmit}
           isLoading={isPending}
           isEdit={true}

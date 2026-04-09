@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { rosterService } from '@/services/roster-service';
 import { QUERY_KEYS } from '@/constants/query-keys';
-import { AssignRosterDto } from '@/types/roster';
+import { AssignRosterDto, AssignAttendancePolicyDto } from '@/types/roster';
 
 /**
  * Hook to fetch all rosters
@@ -38,5 +38,14 @@ export function useDeleteRosterMutation() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.rosters.all });
     },
+  });
+}
+
+/**
+ * Hook to assign attendance policy to multiple users
+ */
+export function useAssignAttendancePolicyMutation() {
+  return useMutation({
+    mutationFn: (data: AssignAttendancePolicyDto) => rosterService.assignAttendancePolicy(data),
   });
 }

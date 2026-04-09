@@ -1,4 +1,5 @@
-import { Roster, AssignRosterDto, RosterResponse } from '@/types/roster';
+import apiClient from '@/lib/api-client';
+import { Roster, AssignRosterDto, RosterResponse, AssignAttendancePolicyDto } from '@/types/roster';
 import { toast } from 'sonner';
 
 // Mock data for initial state
@@ -75,6 +76,20 @@ export const rosterService = {
     await new Promise(resolve => setTimeout(resolve, 500));
     mockRosters = mockRosters.filter(r => r._id !== id);
     toast.success('Roster entry deleted');
+  },
+
+  /**
+   * Assign attendance policy to users
+   */
+  assignAttendancePolicy: async (data: AssignAttendancePolicyDto): Promise<void> => {
+    try {
+      await apiClient.post<AssignAttendancePolicyDto, void>('/roster/assign-attendance-policy', data);
+      toast.success('Attendance policy assigned successfully');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to assign attendance policy';
+      toast.error(errorMessage);
+      throw error;
+    }
   }
 };
 

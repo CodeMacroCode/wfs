@@ -20,6 +20,7 @@ interface EmployeeTableProps {
     onSearchChange: (value: string) => void
     onEdit: (employee: Employee) => void
     onDelete: (id: string) => void
+    onView: (id: string) => void
 }
 
 const PasswordCell = ({ password }: { password?: string }) => {
@@ -48,9 +49,19 @@ const PasswordCell = ({ password }: { password?: string }) => {
 
 export const getEmployeeColumns = (
     onEdit?: (employee: Employee) => void,
-    onDelete?: (id: string) => void
+    onDelete?: (id: string) => void,
+    onView?: (id: string) => void
 ): ColumnDef<Employee>[] => {
     const cols: ColumnDef<Employee>[] = [
+        {
+            accessorKey: "empCode",
+            header: "EMP Code",
+            cell: ({ row }) => (
+                <span className="font-bold text-[#2eb88a]">
+                    {row.original.empCode}
+                </span>
+            ),
+        },
         {
             accessorKey: "uniqueId",
             header: "Unique ID",
@@ -64,27 +75,30 @@ export const getEmployeeColumns = (
             accessorKey: "name",
             header: "Name",
             cell: ({ row }) => (
-                <span className="font-mono text-slate-500 text-[13px]">
-                    {row.original.name}
-                </span>
-            ),
-        },
-        {
-            accessorKey: "email",
-            header: "Email Address",
-            cell: ({ row }) => (
-                <div className="flex flex-col">
-                    <span className="font-semibold text-slate-800">{row.original.email}</span>
-                    {row.original.name && (
-                        <span className="text-xs text-slate-400 capitalize">{row.original.name}</span>
+                <div className="flex flex-col items-start">
+                    <button 
+                        onClick={() => onView?.(row.original.id)}
+                        className="font-bold text-slate-800 hover:text-[#3CC3A3] hover:underline transition-all cursor-pointer text-left"
+                    >
+                        {row.original.name}
+                    </button>
+                    {row.original.designation && (
+                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{row.original.designation}</span>
                     )}
                 </div>
             ),
         },
         {
-            accessorKey: "password",
-            header: "Password",
-            cell: ({ row }) => <PasswordCell password={row.original.password} />,
+            accessorKey: "email",
+            header: "Contact Info",
+            cell: ({ row }) => (
+                <div className="flex flex-col">
+                    <span className="font-medium text-slate-600 truncate max-w-[150px]">{row.original.email}</span>
+                    {row.original.mobileNo && (
+                        <span className="text-xs text-slate-400">{row.original.mobileNo}</span>
+                    )}
+                </div>
+            ),
         },
         {
             accessorKey: "role",
@@ -116,6 +130,16 @@ export const getEmployeeColumns = (
 
                 return (
                     <div className="flex items-center gap-2">
+                        {onView && (
+                             <Button
+                                variant="ghost"
+                                size="icon-sm"
+                                className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-full h-8 w-8 p-0"
+                                onClick={() => onView(employee.id)}
+                            >
+                                <Eye className="h-4 w-4" />
+                            </Button>
+                        )}
                         {onEdit && (
                             <Button
                                 variant="ghost"
@@ -157,10 +181,11 @@ export function EmployeeTable({
     onSearchChange,
     onEdit,
     onDelete,
+    onView,
 }: EmployeeTableProps) {
     const columns = React.useMemo(
-        () => getEmployeeColumns(onEdit, onDelete),
-        [onEdit, onDelete]
+        () => getEmployeeColumns(onEdit, onDelete, onView),
+        [onEdit, onDelete, onView]
     )
 
     return (

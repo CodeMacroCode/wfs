@@ -64,6 +64,18 @@ export const employeeService = {
       throw error;
     }
   },
+
+  /**
+   * Get an employee by ID
+   */
+  getById: async (id: string): Promise<Employee> => {
+    try {
+      return await apiClient.get<void, Employee>(`/user/get/${id}`);
+    } catch (error: unknown) {
+      toast.error('Failed to fetch employee details');
+      throw error;
+    }
+  },
 };
 
 export default employeeService;

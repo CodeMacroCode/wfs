@@ -1,0 +1,187 @@
+"use client"
+
+import * as React from "react"
+import { useRouter } from "next/navigation"
+import {
+  Users,
+  Search as SearchIcon,
+  Calendar,
+  Briefcase,
+  Box,
+  TrendingUp,
+  FileText,
+  UserCheck,
+  Search
+} from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { cn } from "@/lib/utils"
+
+type Category = "Pages" | "Employees" | "Recruitment" | "Assets"
+
+interface SearchResult {
+  title: string
+  description: string
+  url: string
+  icon: any
+  category: Category
+}
+
+const SEARCH_DATA: SearchResult[] = [
+  // PAGES
+  { title: "Dashboard", description: "Overview and analytics", url: "/dashboard", icon: TrendingUp, category: "Pages" },
+  { title: "Employee Master", description: "Manage labor directory", url: "/dashboard/employee", icon: Users, category: "Pages" },
+  { title: "Recruitment", description: "Candidate tracking and onboarding", url: "/dashboard/recruitment", icon: Briefcase, category: "Pages" },
+  { title: "Asset Tracking", description: "Company equipment and maintenance", url: "/dashboard/asset-tracking", icon: Box, category: "Pages" },
+  { title: "Attendance", description: "Daily logs and clock-ins", url: "/dashboard/attendance", icon: UserCheck, category: "Pages" },
+  { title: "Payroll", description: "Salary and payments", url: "/dashboard/payroll", icon: FileText, category: "Pages" },
+  
+  // EMPLOYEES
+  { title: "Robert Fox", description: "Project Manager • Workforce Admin", url: "/dashboard/employee", icon: Users, category: "Employees" },
+  { title: "Sarah Conners", description: "HR Director • Human Resources", url: "/dashboard/employee", icon: Users, category: "Employees" },
+  { title: "David Miller", description: "Lead Developer • Tech Team", url: "/dashboard/employee", icon: Users, category: "Employees" },
+  
+  // RECRUITMENT
+  { title: "John Doe", description: "Senior React Developer • Selected", url: "/dashboard/recruitment", icon: Briefcase, category: "Recruitment" },
+  { title: "Jane Smith", description: "Product Designer • Pending Review", url: "/dashboard/recruitment", icon: Briefcase, category: "Recruitment" },
+  { title: "Alice Johnson", description: "Backend Engineer • Not Selected", url: "/dashboard/recruitment", icon: Briefcase, category: "Recruitment" },
+  
+  // ASSETS
+  { title: "MacBook Pro M2", description: "SN: MBP-99283-A • Issued to John Doe", url: "/dashboard/asset-tracking", icon: Box, category: "Assets" },
+  { title: "Industrial Safety Helmet", description: "SN: SH-8821 • Issued to Jane Smith", url: "/dashboard/asset-tracking", icon: Box, category: "Assets" },
+  { title: "Precision Laser Level", description: "SN: PLL-5542 • Under Maintenance", url: "/dashboard/asset-tracking", icon: Box, category: "Assets" },
+  { title: "Standard Uniform Set", description: "SN: U-1122 • Issued to Alice Johnson", url: "/dashboard/asset-tracking", icon: Box, category: "Assets" },
+]
+
+export function GlobalSearch() {
+  const [open, setOpen] = React.useState(false)
+  const [query, setQuery] = React.useState("")
+  const router = useRouter()
+
+  React.useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault()
+        setOpen((open) => !open)
+      }
+    }
+
+    document.addEventListener("keydown", down)
+    return () => document.removeEventListener("keydown", down)
+  }, [])
+
+  const onSelect = (url: string) => {
+    setOpen(false)
+    setQuery("")
+    router.push(url)
+  }
+
+  const results = React.useMemo(() => {
+    if (!query) return SEARCH_DATA.filter(item => item.category === "Pages")
+    
+    const lowerQuery = query.toLowerCase()
+    return SEARCH_DATA.filter(item => 
+      item.title.toLowerCase().includes(lowerQuery) || 
+      item.description.toLowerCase().includes(lowerQuery) ||
+      item.category.toLowerCase().includes(lowerQuery)
+    )
+  }, [query])
+
+  const groupedResults = results.reduce((acc, item) => {
+    if (!acc[item.category]) acc[item.category] = []
+    acc[item.category].push(item)
+    return acc
+  }, {} as Record<Category, SearchResult[]>)
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent showCloseButton={false} className="p-0 gap-0 sm:max-w-[600px] overflow-hidden border-none shadow-2xl bg-white/95 backdrop-blur-xl">
+        <DialogTitle className="sr-only">Global Search</DialogTitle>
+        <div className="flex items-center px-4 py-4 border-b border-slate-100 bg-white/50">
+          <SearchIcon className="h-5 w-5 text-slate-400 mr-3 shrink-0" />
+          <input
+            className="flex-1 bg-transparent border-none outline-none text-[16px] text-slate-900 placeholder:text-slate-400"
+            placeholder="Search anything... (Employees, Assets, Candidates, Pages)"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            autoFocus
+          />
+          <div className="flex items-center gap-1">
+             <kbd className="pointer-events-none hidden h-5 select-none items-center gap-1 rounded border bg-slate-50 px-1.5 font-mono text-[10px] font-medium text-slate-400 opacity-100 sm:flex">
+              <span className="text-xs">ESC</span>
+            </kbd>
+          </div>
+        </div>
+        
+        <div className="max-h-[450px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200">
+          {Object.entries(groupedResults).map(([category, items]) => (
+            <div key={category} className="p-2">
+              <div className="px-3 py-2 text-[11px] font-bold text-slate-400 uppercase tracking-widest flex items-center justify-between">
+                <span>{category}</span>
+                <span className="h-px flex-1 bg-slate-100 ml-3"></span>
+              </div>
+              <div className="space-y-0.5">
+                {items.map((item) => (
+                  <button
+                    key={item.title + item.url}
+                    onClick={() => onSelect(item.url)}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-all text-left group"
+                  >
+                    <div className={cn(
+                      "h-9 w-9 rounded-lg flex items-center justify-center transition-colors shadow-sm",
+                      category === "Pages" ? "bg-emerald-50 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white" :
+                      category === "Employees" ? "bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white" :
+                      category === "Recruitment" ? "bg-purple-50 text-purple-600 group-hover:bg-purple-600 group-hover:text-white" :
+                      "bg-indigo-50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white"
+                    )}>
+                      <item.icon className="h-5 w-5" />
+                    </div>
+                    <div className="flex-1 overflow-hidden">
+                      <div className="text-sm font-semibold text-slate-700 truncate">{item.title}</div>
+                      <div className="text-[12px] text-slate-400 truncate">{item.description}</div>
+                    </div>
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                       <kbd className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] text-slate-500">↵</kbd>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+
+          {results.length === 0 && (
+            <div className="py-20 text-center">
+              <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-slate-50 text-slate-400 mb-4">
+                <SearchIcon className="h-8 w-8" />
+              </div>
+              <p className="text-base font-medium text-slate-900">No results found for &quot;{query}&quot;</p>
+              <p className="text-sm text-slate-500 mt-1 max-w-[280px] mx-auto">
+                We couldn&apos;t find anything matching your search. Try searching for a name, asset ID, or a module title.
+              </p>
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center justify-between px-4 py-3 border-t border-slate-50 bg-slate-50/50">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1.5">
+              <kbd className="rounded border bg-white px-1.5 py-0.5 font-mono text-[10px] text-slate-500 shadow-sm">↑↓</kbd>
+              <span className="text-[10px] text-slate-400 font-medium">Navigate</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <kbd className="rounded border bg-white px-1.5 py-0.5 font-mono text-[10px] text-slate-500 shadow-sm">↵</kbd>
+              <span className="text-[10px] text-slate-400 font-medium">Select</span>
+            </div>
+          </div>
+          <div className="text-[10px] font-semibold text-[#3CC3A3] flex items-center gap-1">
+             <SearchIcon className="h-3 w-3" />
+             Workforce Sync Search
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}

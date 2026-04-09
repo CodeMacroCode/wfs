@@ -2,19 +2,19 @@
 
 import * as React from "react"
 import { ColumnDef } from "@tanstack/react-table"
-import { 
-  Clock, 
-  Pencil, 
-  ShieldCheck, 
-  TrendingUp, 
-  Trash2 
+import {
+  Clock,
+  Pencil,
+  ShieldCheck,
+  TrendingUp,
+  Trash2
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { DataTable } from "@/components/ui/data-table"
-import { 
-  EditAttendancePolicyDialog, 
-  DeleteAttendancePolicyDialog 
+import {
+  EditAttendancePolicyDialog,
+  DeleteAttendancePolicyDialog
 } from "@/components/dashboard/attendance-policy-dialog"
 import { AttendancePolicy } from "@/types/attendance-policy"
 
@@ -38,7 +38,6 @@ export function AttendancePolicyTable({ data, isLoading }: AttendancePolicyTable
           </div>
           <div className="flex flex-col">
             <span className="font-bold text-slate-900">{row.original.name}</span>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">ID: {row.original._id.slice(-8)}</span>
           </div>
         </div>
       ),

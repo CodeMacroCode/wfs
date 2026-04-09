@@ -117,7 +117,7 @@ export function RoasterForm({ onSubmit, isLoading }: RoasterFormProps) {
                   <span className="text-slate-400 text-sm py-1 px-2">No employees selected</span>
                 )}
                 {selectedEmployeeIds.map((id) => {
-                  const emp = employeesData?.data.find(e => String(e.uniqueId) === id)
+                  const emp = employeesData?.data.find(e => (e._id || e.id) === id)
                   return (
                     <Badge 
                       key={id} 
@@ -157,18 +157,18 @@ export function RoasterForm({ onSubmit, isLoading }: RoasterFormProps) {
                     <div className="p-1">
                       {filteredEmployees.map((employee) => (
                         <div
-                          key={employee.uniqueId}
+                          key={employee._id || employee.id}
                           className="flex items-center space-x-2 p-2 hover:bg-slate-100 rounded-lg cursor-pointer transition-colors"
-                          onClick={() => toggleEmployee(String(employee.uniqueId))}
+                          onClick={() => toggleEmployee(employee._id || employee.id)}
                         >
                           <Checkbox 
-                            checked={selectedEmployeeIds.includes(String(employee.uniqueId))}
-                            onCheckedChange={() => toggleEmployee(String(employee.uniqueId))}
+                            checked={selectedEmployeeIds.includes(employee._id || employee.id)}
+                            onCheckedChange={() => toggleEmployee(employee._id || employee.id)}
                             className="rounded-md"
                           />
                           <div className="flex flex-col">
                             <span className="text-sm font-medium">{employee.name || "Unnamed"}</span>
-                            <span className="text-xs text-slate-500">{employee.uniqueId}</span>
+                            <span className="text-xs text-slate-500">{employee.empCode}</span>
                           </div>
                         </div>
                       ))}

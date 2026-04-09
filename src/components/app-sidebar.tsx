@@ -39,6 +39,7 @@ const items = [
   { title: "Payroll", url: "/dashboard/payroll", icon: Banknote },
   { title: "Leave Management", url: "/dashboard/leave-management", icon: CalendarX },
   { title: "Recruitment", url: "/dashboard/recruitment", icon: Search },
+  { title: "Asset Tracking", url: "/dashboard/asset-tracking", icon: Search },
 ]
 
 function Logo({ collapsed }: { collapsed?: boolean }) {

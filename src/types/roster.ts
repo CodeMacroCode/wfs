@@ -20,6 +20,11 @@ export interface AssignRosterDto {
   endDate: string;
 }
 
+export interface AssignAttendancePolicyDto {
+  userIds: string[];
+  attendancePolicyId: string;
+}
+
 export interface RosterResponse {
   rosters: Roster[];
 }

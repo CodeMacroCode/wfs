@@ -12,8 +12,10 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { RoasterForm } from "./roaster-form"
-import { useAssignRosterMutation } from "@/hooks/queries/use-roster"
+import { useAssignAttendancePolicyMutation } from "@/hooks/queries/use-roster"
 import { AssignRosterDto } from "@/types/roster"
+import { useQueryClient } from "@tanstack/react-query"
+import { QUERY_KEYS } from "@/constants/query-keys"
 
 interface RoasterDialogProps {
   trigger?: React.ReactNode
@@ -21,11 +23,16 @@ interface RoasterDialogProps {
 
 export function RoasterDialog({ trigger }: RoasterDialogProps) {
   const [open, setOpen] = React.useState(false)
-  const assignMutation = useAssignRosterMutation()
+  const assignMutation = useAssignAttendancePolicyMutation()
+  const queryClient = useQueryClient()
 
   const onSubmit = async (data: AssignRosterDto) => {
     try {
-      await assignMutation.mutateAsync(data)
+      await assignMutation.mutateAsync({
+        userIds: data.employeeIds,
+        attendancePolicyId: data.shiftId
+      })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.rosters.all })
       setOpen(false)
     } catch {
       // Error handled by mutation toast or service

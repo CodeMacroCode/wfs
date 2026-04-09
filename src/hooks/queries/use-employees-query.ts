@@ -14,6 +14,17 @@ export function useEmployeesQuery(params?: EmployeeQueryParams) {
 }
 
 /**
+ * Hook to fetch a single employee by ID
+ */
+export function useEmployeeQuery(id: string | null) {
+  return useQuery({
+    queryKey: QUERY_KEYS.users.detail(id || ''),
+    queryFn: () => employeeService.getById(id!),
+    enabled: !!id,
+  });
+}
+
+/**
  * Hook to register a new employee
  */
 export function useRegisterEmployeeMutation() {

@@ -4,8 +4,9 @@ import * as React from "react"
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
 import { Separator } from "@/components/ui/separator"
-import { LogOut, User, Settings, KeyRound } from "lucide-react"
+import { LogOut, User, Settings, KeyRound, Search } from "lucide-react"
 import { DashboardBreadcrumbs } from "@/components/dashboard-breadcrumbs"
+import { GlobalSearch } from "@/components/global-search"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -69,6 +70,25 @@ function AttendanceLayoutInner({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="flex items-center gap-4">
+            <button 
+              onClick={() => {
+                const event = new KeyboardEvent('keydown', {
+                  key: 'k',
+                  metaKey: true,
+                  bubbles: true
+                });
+                document.dispatchEvent(event);
+              }}
+              className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-100 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-all text-sm group"
+              title="Search (⌘K)"
+            >
+              <Search className="h-4 w-4 group-hover:scale-110 transition-transform" />
+              <span>Search...</span>
+              <kbd className="hidden lg:inline-flex h-5 select-none items-center gap-1 rounded border bg-white px-1.5 font-mono text-[10px] font-medium opacity-100">
+                <span className="text-xs">⌘</span>K
+              </kbd>
+            </button>
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-1 cursor-pointer rounded-full p-0.5 transition-colors hover:bg-gray-100 outline-none">
@@ -117,6 +137,7 @@ function AttendanceLayoutInner({ children }: { children: React.ReactNode }) {
         <main className="flex-1 overflow-auto p-4">
           {children}
         </main>
+        <GlobalSearch />
       </div >
     </SidebarProvider >
   )
