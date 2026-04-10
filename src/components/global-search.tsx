@@ -5,13 +5,11 @@ import { useRouter } from "next/navigation"
 import {
   Users,
   Search as SearchIcon,
-  Calendar,
   Briefcase,
   Box,
   TrendingUp,
   FileText,
   UserCheck,
-  Search
 } from "lucide-react"
 import {
   Dialog,
@@ -26,7 +24,7 @@ interface SearchResult {
   title: string
   description: string
   url: string
-  icon: any
+  icon: React.ElementType
   category: Category
 }
 

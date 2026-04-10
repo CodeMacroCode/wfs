@@ -12,7 +12,6 @@ import {
   TrendingUp
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
 import { DataTable } from "@/components/ui/data-table"
 import { Attendance } from "@/types/attendance"
 import { format } from "date-fns"

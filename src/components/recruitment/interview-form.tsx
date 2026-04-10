@@ -36,7 +36,7 @@ const formSchema = z.object({
 
 interface InterviewFormProps {
   initialValues?: Partial<CreateInterviewDto & { status?: InterviewStatus }>
-  onSubmit: (data: any) => void
+  onSubmit: (data: z.infer<typeof formSchema>) => void
   isLoading?: boolean
   isEdit?: boolean
 }

@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Search, Plus, Filter, Download } from "lucide-react"
+import { Download } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Interview, CreateInterviewDto } from "@/types/recruitment"
 import { InterviewTable } from "@/components/recruitment/interview-table"

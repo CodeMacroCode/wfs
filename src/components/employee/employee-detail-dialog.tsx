@@ -233,7 +233,7 @@ export function EmployeeDetailDialog({ employeeId, open, onOpenChange }: Employe
   )
 }
 
-function SectionHeader({ icon: Icon, title, color }: { icon: any, title: string, color: string }) {
+function SectionHeader({ icon: Icon, title, color }: { icon: React.ElementType, title: string, color: string }) {
   return (
     <div className="bg-white border-b px-6 py-4 flex items-center gap-3">
       <div className={cn("p-2 rounded-lg bg-slate-50", color)}>
@@ -255,7 +255,7 @@ function DataItem({
 }: { 
   label: string, 
   value: string | number, 
-  icon?: any, 
+  icon?: React.ElementType, 
   isMono?: boolean, 
   highlight?: boolean,
   subValue?: string,

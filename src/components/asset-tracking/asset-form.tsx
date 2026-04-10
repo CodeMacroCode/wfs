@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { AssetType, AssetStatus, CreateAssetDto } from "@/types/asset"
+import { CreateAssetDto } from "@/types/asset"
 
 const formSchema = z.object({
   name: z.string().min(2, "Asset name is required"),
@@ -35,7 +35,7 @@ const formSchema = z.object({
 
 interface AssetFormProps {
   initialValues?: Partial<CreateAssetDto>
-  onSubmit: (data: any) => void
+  onSubmit: (data: z.infer<typeof formSchema>) => void
   isLoading?: boolean
   isEdit?: boolean
 }
@@ -46,17 +46,21 @@ export function AssetForm({
   isLoading,
   isEdit = false 
 }: AssetFormProps) {
+  const [now] = React.useState(() => Date.now())
+
+  const defaultValues = React.useMemo(() => ({
+    name: initialValues?.name || "",
+    type: initialValues?.type || "Other",
+    serialNumber: initialValues?.serialNumber || "",
+    issuedTo: initialValues?.issuedTo || "",
+    issueDate: initialValues?.issueDate || new Date(now).toISOString().split('T')[0],
+    status: initialValues?.status || "Issued",
+    nextMaintenanceDate: initialValues?.nextMaintenanceDate || new Date(now + 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+  }), [initialValues, now])
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: initialValues?.name || "",
-      type: initialValues?.type || "Other",
-      serialNumber: initialValues?.serialNumber || "",
-      issuedTo: initialValues?.issuedTo || "",
-      issueDate: initialValues?.issueDate || new Date().toISOString().split('T')[0],
-      status: initialValues?.status || "Issued",
-      nextMaintenanceDate: initialValues?.nextMaintenanceDate || new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    },
+    defaultValues,
   })
 
   return (

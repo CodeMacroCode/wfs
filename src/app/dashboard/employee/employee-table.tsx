@@ -5,7 +5,7 @@ import { ColumnDef, PaginationState, SortingState } from "@tanstack/react-table"
 import { DataTable } from "@/components/ui/data-table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Edit, Trash2, Eye, EyeOff } from "lucide-react"
+import { Edit, Trash2, Eye } from "lucide-react"
 import { Employee } from "@/types/employee"
 
 interface EmployeeTableProps {
@@ -21,30 +21,6 @@ interface EmployeeTableProps {
     onEdit: (employee: Employee) => void
     onDelete: (id: string) => void
     onView: (id: string) => void
-}
-
-const PasswordCell = ({ password }: { password?: string }) => {
-    const [show, setShow] = React.useState(false)
-
-    if (!password) {
-        return <span className="text-slate-300 italic text-xs">Not set</span>
-    }
-
-    return (
-        <div className="flex items-center gap-2 group/pass">
-            <span className="font-mono text-slate-500 text-[13px] min-w-[80px]">
-                {show ? password : "••••••••"}
-            </span>
-            <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 w-7 p-0 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-md transition-colors"
-                onClick={() => setShow(!show)}
-            >
-                {show ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-            </Button>
-        </div>
-    )
 }
 
 export const getEmployeeColumns = (

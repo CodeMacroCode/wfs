@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Plus, Filter, Download, LayoutGrid, List } from "lucide-react"
+import { Filter, Download, LayoutGrid, List } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Asset, AssetType, CreateAssetDto } from "@/types/asset"
 import { AssetTable } from "@/components/asset-tracking/asset-table"
