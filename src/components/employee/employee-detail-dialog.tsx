@@ -28,6 +28,7 @@ import {
   Mail
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { AcademicQualification, WorkExperience, FamilyMember } from "@/types/employee"
 
 interface EmployeeDetailDialogProps {
   employeeId: string | null
@@ -139,7 +140,7 @@ export function EmployeeDetailDialog({ employeeId, open, onOpenChange }: Employe
                       <div className="space-y-4">
                         <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Education</h4>
                         {employee.academicQualification && employee.academicQualification.length > 0 ? (
-                           employee.academicQualification.map((edu) => (
+                           employee.academicQualification.map((edu: AcademicQualification) => (
                              <div key={edu._id} className="relative pl-6 border-l-2 border-amber-100 pb-4 last:pb-0">
                                <div className="absolute -left-[5px] top-1 h-2 w-2 rounded-full bg-amber-400" />
                                <div className="text-sm font-bold text-slate-800">{edu.degree}</div>
@@ -151,7 +152,7 @@ export function EmployeeDetailDialog({ employeeId, open, onOpenChange }: Employe
                       <div className="space-y-4">
                         <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Work History</h4>
                         {employee.previousWorkExperience && employee.previousWorkExperience.length > 0 ? (
-                           employee.previousWorkExperience.map((exp) => (
+                           employee.previousWorkExperience.map((exp: WorkExperience) => (
                              <div key={exp._id} className="relative pl-6 border-l-2 border-slate-200 pb-4 last:pb-0">
                                <div className="absolute -left-[5px] top-1 h-2 w-2 rounded-full bg-slate-300" />
                                <div className="text-sm font-bold text-slate-800">{exp.role}</div>
@@ -195,7 +196,7 @@ export function EmployeeDetailDialog({ employeeId, open, onOpenChange }: Employe
                   <CardContent className="p-6">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                        {employee.familyDetails && employee.familyDetails.length > 0 ? (
-                         employee.familyDetails.map((member) => (
+                         employee.familyDetails.map((member: FamilyMember) => (
                            <div key={member._id} className="p-3 rounded-xl bg-slate-50 border border-slate-100">
                              <div className="text-sm font-bold text-slate-800">{member.name}</div>
                              <div className="text-[10px] text-slate-500 uppercase font-bold tracking-tight">{member.relation} • {member.age} yrs</div>

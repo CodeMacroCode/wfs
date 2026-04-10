@@ -8,12 +8,12 @@ export interface Interview {
   position: string;
   interviewDate: string;
   interviewer: string;
-  feedback: string;
+  feedback?: string;
   status: InterviewStatus;
   createdAt: string;
 }
 
-export type CreateInterviewDto = Omit<Interview, "id" | "createdAt" | "status">;
+export type CreateInterviewDto = Omit<Interview, "id" | "createdAt">;
 export type UpdateInterviewDto = Partial<CreateInterviewDto> & {
   status?: InterviewStatus;
 };

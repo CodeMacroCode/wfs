@@ -28,7 +28,7 @@ export function AddInterviewDialog({ open, onOpenChange, onAdd }: AddInterviewDi
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-125">
         <DialogHeader>
           <DialogTitle>Log New Interview</DialogTitle>
         </DialogHeader>
@@ -101,7 +101,7 @@ export function OnboardEmployeeDialog({ interview, open, onOpenChange }: Onboard
             mobileNo: interview.contact,
             designation: interview.position,
             interviewDate: interview.interviewDate,
-            competencyCriteriaMet: "Yes",
+            competencyMet: true,
             role: "user",
           }}
           onSubmit={onSubmit}

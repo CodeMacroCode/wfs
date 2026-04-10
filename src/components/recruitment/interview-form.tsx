@@ -31,12 +31,14 @@ const formSchema = z.object({
   interviewDate: z.string().min(1, "Date is required"),
   interviewer: z.string().min(2, "Interviewer name is required"),
   feedback: z.string().optional(),
-  status: z.enum(["Pending", "Selected", "Not Selected"] as const).default("Pending"),
+  status: z.enum(["Pending", "Selected", "Not Selected"] as const),
 })
+
+type InterviewFormValues = z.infer<typeof formSchema>
 
 interface InterviewFormProps {
   initialValues?: Partial<CreateInterviewDto & { status?: InterviewStatus }>
-  onSubmit: (data: z.infer<typeof formSchema>) => void
+  onSubmit: (data: InterviewFormValues) => void
   isLoading?: boolean
   isEdit?: boolean
 }
@@ -47,7 +49,7 @@ export function InterviewForm({
   isLoading,
   isEdit = false 
 }: InterviewFormProps) {
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<InterviewFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       candidateName: initialValues?.candidateName || "",

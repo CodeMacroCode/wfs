@@ -3,7 +3,8 @@ import {
   EmployeesResponse, 
   RegisterEmployeeDto, 
   UpdateEmployeeDto, 
-  EmployeeQueryParams 
+  EmployeeQueryParams,
+  Employee
 } from '@/types/employee';
 import { toast } from 'sonner';
 
