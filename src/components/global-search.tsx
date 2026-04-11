@@ -57,7 +57,18 @@ const SEARCH_DATA: SearchResult[] = [
 export function GlobalSearch() {
   const [open, setOpen] = React.useState(false)
   const [query, setQuery] = React.useState("")
+  const [selectedIndex, setSelectedIndex] = React.useState(0)
   const router = useRouter()
+  const inputRef = React.useRef<HTMLInputElement>(null)
+  const activeItemRef = React.useRef<HTMLButtonElement>(null)
+
+  React.useEffect(() => {
+    if (activeItemRef.current) {
+      activeItemRef.current.scrollIntoView({
+        block: "nearest",
+      })
+    }
+  }, [selectedIndex])
 
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -88,11 +99,46 @@ export function GlobalSearch() {
     )
   }, [query])
 
+  const suggestion = React.useMemo(() => {
+    if (!query || results.length === 0) return ""
+    const topResult = results[0].title
+    if (topResult.toLowerCase().startsWith(query.toLowerCase())) {
+      return query + topResult.slice(query.length)
+    }
+    return ""
+  }, [query, results])
+
+  React.useEffect(() => {
+    setSelectedIndex(0)
+  }, [query])
+
   const groupedResults = results.reduce((acc, item) => {
     if (!acc[item.category]) acc[item.category] = []
     acc[item.category].push(item)
     return acc
   }, {} as Record<Category, SearchResult[]>)
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "ArrowDown") {
+      e.preventDefault()
+      setSelectedIndex((prev) => (prev + 1) % results.length)
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault()
+      setSelectedIndex((prev) => (prev - 1 + results.length) % results.length)
+    } else if (e.key === "Enter") {
+      e.preventDefault()
+      if (results[selectedIndex]) {
+        onSelect(results[selectedIndex].url)
+      }
+    } else if (e.key === "Tab" || e.key === "ArrowRight") {
+      if (suggestion && query !== suggestion) {
+        e.preventDefault()
+        setQuery(suggestion)
+      }
+    } else if (e.key === "Escape") {
+      setOpen(false)
+    }
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -100,14 +146,27 @@ export function GlobalSearch() {
         <DialogTitle className="sr-only">Global Search</DialogTitle>
         <div className="flex items-center px-4 py-4 border-b border-slate-100 bg-white/50">
           <SearchIcon className="h-5 w-5 text-slate-400 mr-3 shrink-0" />
-          <input
-            className="flex-1 bg-transparent border-none outline-none text-[16px] text-slate-900 placeholder:text-slate-400"
-            placeholder="Search anything... (Employees, Assets, Candidates, Pages)"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            autoFocus
-          />
+          <div className="relative flex-1 flex items-center">
+            {suggestion && (
+              <div className="absolute inset-0 flex items-center pointer-events-none text-[16px] text-slate-300">
+                <span className="opacity-0">{query}</span>
+                <span>{suggestion.slice(query.length)}</span>
+              </div>
+            )}
+            <input
+              ref={inputRef}
+              className="flex-1 bg-transparent border-none outline-none text-[16px] text-slate-900 placeholder:text-slate-400 relative z-10"
+              placeholder="Search anything... (Employees, Assets, Candidates, Pages)"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={handleKeyDown}
+              autoFocus
+            />
+          </div>
           <div className="flex items-center gap-1">
+             <kbd className="pointer-events-none hidden h-5 select-none items-center gap-1 rounded border bg-slate-50 px-1.5 font-mono text-[10px] font-medium text-slate-400 opacity-100 sm:flex">
+              <span className="text-xs">TAB</span>
+            </kbd>
              <kbd className="pointer-events-none hidden h-5 select-none items-center gap-1 rounded border bg-slate-50 px-1.5 font-mono text-[10px] font-medium text-slate-400 opacity-100 sm:flex">
               <span className="text-xs">ESC</span>
             </kbd>
@@ -115,40 +174,59 @@ export function GlobalSearch() {
         </div>
         
         <div className="max-h-[450px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200">
-          {Object.entries(groupedResults).map(([category, items]) => (
-            <div key={category} className="p-2">
-              <div className="px-3 py-2 text-[11px] font-bold text-slate-400 uppercase tracking-widest flex items-center justify-between">
-                <span>{category}</span>
-                <span className="h-px flex-1 bg-slate-100 ml-3"></span>
+          {(() => {
+            let absoluteIndex = 0;
+            return Object.entries(groupedResults).map(([category, items]) => (
+              <div key={category} className="p-2">
+                <div className="px-3 py-2 text-[11px] font-bold text-slate-400 uppercase tracking-widest flex items-center justify-between">
+                  <span>{category}</span>
+                  <span className="h-px flex-1 bg-slate-100 ml-3"></span>
+                </div>
+                <div className="space-y-0.5">
+                  {items.map((item) => {
+                    const currentIndex = absoluteIndex++;
+                    const isActive = selectedIndex === currentIndex;
+                    return (
+                      <button
+                        key={item.title + item.url}
+                        ref={isActive ? activeItemRef : null}
+                        onClick={() => onSelect(item.url)}
+                        onMouseEnter={() => setSelectedIndex(currentIndex)}
+                        className={cn(
+                          "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left group",
+                          isActive ? "bg-slate-100" : "hover:bg-slate-50"
+                        )}
+                      >
+                        <div className={cn(
+                          "h-9 w-9 rounded-lg flex items-center justify-center transition-colors shadow-sm",
+                          isActive ? (
+                            category === "Pages" ? "bg-emerald-600 text-white" :
+                            category === "Employees" ? "bg-blue-600 text-white" :
+                            category === "Recruitment" ? "bg-purple-600 text-white" :
+                            "bg-indigo-600 text-white"
+                          ) : (
+                            category === "Pages" ? "bg-emerald-50 text-emerald-600" :
+                            category === "Employees" ? "bg-blue-50 text-blue-600" :
+                            category === "Recruitment" ? "bg-purple-50 text-purple-600" :
+                            "bg-indigo-50 text-indigo-600"
+                          )
+                        )}>
+                          <item.icon className={cn("h-5 w-5", isActive && "animate-in zoom-in-75 duration-300")} />
+                        </div>
+                        <div className="flex-1 overflow-hidden">
+                          <div className={cn("text-sm font-semibold truncate", isActive ? "text-slate-900" : "text-slate-700")}>{item.title}</div>
+                          <div className="text-[12px] text-slate-400 truncate">{item.description}</div>
+                        </div>
+                        <div className={cn("transition-opacity", isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100")}>
+                           <kbd className="rounded bg-white border shadow-sm px-1.5 py-0.5 font-mono text-[10px] text-slate-500">↵</kbd>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-              <div className="space-y-0.5">
-                {items.map((item) => (
-                  <button
-                    key={item.title + item.url}
-                    onClick={() => onSelect(item.url)}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-all text-left group"
-                  >
-                    <div className={cn(
-                      "h-9 w-9 rounded-lg flex items-center justify-center transition-colors shadow-sm",
-                      category === "Pages" ? "bg-emerald-50 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white" :
-                      category === "Employees" ? "bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white" :
-                      category === "Recruitment" ? "bg-purple-50 text-purple-600 group-hover:bg-purple-600 group-hover:text-white" :
-                      "bg-indigo-50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white"
-                    )}>
-                      <item.icon className="h-5 w-5" />
-                    </div>
-                    <div className="flex-1 overflow-hidden">
-                      <div className="text-sm font-semibold text-slate-700 truncate">{item.title}</div>
-                      <div className="text-[12px] text-slate-400 truncate">{item.description}</div>
-                    </div>
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                       <kbd className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] text-slate-500">↵</kbd>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
+            ));
+          })()}
 
           {results.length === 0 && (
             <div className="py-20 text-center">

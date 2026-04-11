@@ -10,50 +10,48 @@ export interface FamilyMember {
   name: string;
   relation: string;
   age: number;
-  _id: string;
+  _id?: string;
 }
 
 export interface AcademicQualification {
   degree: string;
   institute: string;
   year: string;
-  _id: string;
+  _id?: string;
 }
 
 export interface WorkExperience {
   company: string;
   role: string;
   years: string;
-  _id: string;
+  _id?: string;
 }
 
 export interface Employee {
   id: string;
-  _id?: string; // MongoDB ID if present in detail view
+  _id?: string;
   name: string;
   email: string;
   role: EmployeeRole;
   uniqueId: number;
   password?: string;
-  empCode: string;
   otherName?: string;
   category?: string;
-  gender: "Male" | "Female" | "Other";
-  fatherName: string; // Updated from fathersName
-  motherName: string; // Updated from mothersName
-  maritalStatus: "Single" | "Married" | "Divorced" | "Widowed";
+  gender: "male" | "female" | "other";
+  fatherName: string;
+  motherName: string;
+  maritalStatus: "single" | "married" | "divorced" | "widowed";
   spouseName?: string;
-  familyDetails?: FamilyMember[]; // Updated from string
+  familyDetails?: FamilyMember[];
   dob: string;
   bloodGroup: string;
-  emergencyContact: EmergencyContact; // Updated from string
+  emergencyContact: EmergencyContact;
   reference?: string;
-  academicQualification: AcademicQualification[]; // Updated from string
-  previousWorkExperience?: WorkExperience[]; // Updated from string (and renamed)
+  academicQualification: AcademicQualification[];
+  previousWorkExperience?: WorkExperience[];
   interviewDate?: string;
-  competencyMet: boolean; // Updated from competencyCriteriaMet (Yes/No)
+  competencyMet: boolean;
   designation: string;
-  workingHours: number; // Updated from string
   aadharNo: string;
   pfNo?: string;
   esiNo?: string;
@@ -81,7 +79,7 @@ export interface EmployeesResponse {
   pagination: PaginationInfo;
 }
 
-export interface RegisterEmployeeDto extends Omit<Employee, "id" | "uniqueId" | "_id"> {
+export interface RegisterEmployeeDto extends Omit<Employee, "id" | "_id"> {
   password?: string;
 }
 

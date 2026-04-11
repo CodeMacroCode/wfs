@@ -19,7 +19,6 @@ import {
   Calendar,
   Users,
   UserCheck,
-  TrendingUp,
   Banknote,
   CalendarX,
   Search,
@@ -34,12 +33,12 @@ const items = [
   { title: "Attendance", url: "/dashboard/attendance", icon: UserCheck },
   { title: "Payroll Policies", url: "/dashboard/payroll-policies", icon: UserCheck },
   { title: "Attendance Policies", url: "/dashboard/attendance-policies", icon: UserCheck },
-  { title: "Performance", url: "/dashboard/performance", icon: TrendingUp },
   { title: "Roaster", url: "/dashboard/roaster", icon: UserCheck },
-  { title: "Payroll", url: "/dashboard/payroll", icon: Banknote },
   { title: "Leave Management", url: "/dashboard/leave-management", icon: CalendarX },
   { title: "Recruitment", url: "/dashboard/recruitment", icon: Search },
   { title: "Asset Tracking", url: "/dashboard/asset-tracking", icon: Search },
+  { title: "Payroll", url: "/dashboard/payroll", icon: Banknote },
+  { title: "Company Master", url: "/dashboard/company-master", icon: Users },
 ]
 
 function Logo({ collapsed }: { collapsed?: boolean }) {

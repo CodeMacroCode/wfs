@@ -5,8 +5,9 @@ import { ColumnDef, PaginationState, SortingState } from "@tanstack/react-table"
 import { DataTable } from "@/components/ui/data-table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Edit, Trash2, Eye } from "lucide-react"
+import { Edit, Trash2 } from "lucide-react"
 import { Employee } from "@/types/employee"
+import { format } from "date-fns"
 
 interface EmployeeTableProps {
     data: Employee[]
@@ -20,59 +21,83 @@ interface EmployeeTableProps {
     onSearchChange: (value: string) => void
     onEdit: (employee: Employee) => void
     onDelete: (id: string) => void
-    onView: (id: string) => void
 }
 
 export const getEmployeeColumns = (
     onEdit?: (employee: Employee) => void,
     onDelete?: (id: string) => void,
-    onView?: (id: string) => void
 ): ColumnDef<Employee>[] => {
     const cols: ColumnDef<Employee>[] = [
         {
-            accessorKey: "empCode",
-            header: "EMP Code",
-            cell: ({ row }) => (
-                <span className="font-bold text-[#2eb88a]">
-                    {row.original.empCode}
-                </span>
-            ),
-        },
-        {
             accessorKey: "uniqueId",
-            header: "Unique ID",
+            header: "ID",
             cell: ({ row }) => (
-                <span className="font-mono text-slate-500 text-[13px]">
-                    #{row.original.uniqueId}
+                <span className="font-bold text-[#2eb88a] text-center">
+                    {row.original.uniqueId}
                 </span>
             ),
         },
         {
             accessorKey: "name",
-            header: "Name",
+            header: "Employee",
             cell: ({ row }) => (
-                <div className="flex flex-col items-start">
-                    <button 
-                        onClick={() => onView?.(row.original.id)}
-                        className="font-bold text-slate-800 hover:text-[#3CC3A3] hover:underline transition-all cursor-pointer text-left"
-                    >
-                        {row.original.name}
-                    </button>
-                    {row.original.designation && (
-                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{row.original.designation}</span>
-                    )}
+                <div className="flex flex-col items-center text-center">
+                    <span className="font-semibold text-slate-800">{row.original.name}</span>
                 </div>
             ),
+        },
+        {
+            accessorKey: "designation",
+            header: "Designation",
+            cell: ({row}) => (
+                <div className="flex items-center justify-center">
+                    <span className="text-sm text-slate-600 capitalize">{row.original.designation}</span>
+                </div>
+            )
         },
         {
             accessorKey: "email",
             header: "Contact Info",
             cell: ({ row }) => (
-                <div className="flex flex-col">
+                <div className="flex flex-col items-center text-center">
                     <span className="font-medium text-slate-600 truncate max-w-[150px]">{row.original.email}</span>
                     {row.original.mobileNo && (
                         <span className="text-xs text-slate-400">{row.original.mobileNo}</span>
                     )}
+                </div>
+            ),
+        },
+        {
+            accessorKey: "emergencyContact",
+            header: "Emergency Contact",
+            cell: ({ row }) => (
+                <div className="flex flex-col items-center text-center">
+                    <span className="text-sm text-slate-600 capitalize">{row.original.emergencyContact.name}</span>
+                    <span className="text-xs text-slate-400">{row.original.emergencyContact.phone}</span>
+                </div>
+            )
+        },
+        {
+            accessorKey: "gender",
+            header: "Gender / Blood",
+            cell: ({ row }) => (
+                <div className="flex flex-col items-center text-center">
+                    <span className="text-sm text-slate-600 capitalize">{row.original.gender}</span>
+                    <span className="text-[10px] font-bold text-rose-500">{row.original.bloodGroup}</span>
+                </div>
+            ),
+        },
+        {
+            accessorKey: "doj",
+            header: "Joining Date",
+            cell: ({ row }) => (
+                <div className="flex flex-col items-center text-center">
+                    <span className="text-sm font-medium text-slate-700">
+                        {row.original.doj ? format(new Date(row.original.doj), "dd MMM yyyy") : "N/A"}
+                    </span>
+                    <span className="text-[10px] text-slate-400 italic">
+                        {row.original.doj ? format(new Date(row.original.doj), "iii") : ""}
+                    </span>
                 </div>
             ),
         },
@@ -89,12 +114,45 @@ export const getEmployeeColumns = (
                             : "outline"
 
                 return (
-                    <Badge variant={variant} className="capitalize rounded-full px-3">
-                        {role.toLowerCase().replace("_", " ")}
-                    </Badge>
+                    <div className="flex items-center justify-center">
+                        <Badge variant={variant} className="capitalize rounded-full px-3 py-0 text-[10px]">
+                            {role.toLowerCase().replace("_", " ")}
+                        </Badge>
+                    </div>
                 )
             },
         },
+        {
+            accessorKey: "academicQualification",
+            header: "Academic Qualification",
+            cell: ({ row }) => {
+                const qualifications = row.original.academicQualification
+                if (!qualifications || qualifications.length === 0) {
+                    return <span className="text-sm text-slate-400">N/A</span>
+                }
+                return (
+                    <div className="flex flex-col items-center text-center">
+                        {qualifications.map((q, index) => (
+                            <div key={index} className="flex flex-col">
+                                <span className="text-sm text-slate-600 font-medium">{q.degree}</span>
+                                <span className="text-[10px] text-slate-400">{q.institute} ({q.year})</span>
+                            </div>
+                        ))}
+                    </div>
+                )
+            }
+        },
+        {
+            accessorKey: "maritalStatus",
+            header: "Marital Status",
+            cell: ({ row }) => (
+                <div className="flex items-center justify-center">
+                    <span className="text-sm text-slate-600 capitalize">{row.original.maritalStatus}</span>
+                </div>
+            ),
+        }
+        
+        
     ]
 
     if (onEdit || onDelete) {
@@ -105,17 +163,7 @@ export const getEmployeeColumns = (
                 const employee = row.original
 
                 return (
-                    <div className="flex items-center gap-2">
-                        {onView && (
-                             <Button
-                                variant="ghost"
-                                size="icon-sm"
-                                className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-full h-8 w-8 p-0"
-                                onClick={() => onView(employee.id)}
-                            >
-                                <Eye className="h-4 w-4" />
-                            </Button>
-                        )}
+                    <div className="flex items-center justify-center gap-2">
                         {onEdit && (
                             <Button
                                 variant="ghost"
@@ -157,11 +205,10 @@ export function EmployeeTable({
     onSearchChange,
     onEdit,
     onDelete,
-    onView,
 }: EmployeeTableProps) {
     const columns = React.useMemo(
-        () => getEmployeeColumns(onEdit, onDelete, onView),
-        [onEdit, onDelete, onView]
+        () => getEmployeeColumns(onEdit, onDelete),
+        [onEdit, onDelete]
     )
 
     return (

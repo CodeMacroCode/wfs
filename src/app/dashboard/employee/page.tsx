@@ -75,7 +75,6 @@ export default function EmployeeMaster() {
         onSearchChange={onSearchChange}
         onEdit={setEditingEmployee}
         onDelete={setDeletingEmployeeId}
-        onView={setViewingEmployeeId}
       />
 
       <EmployeeDetailDialog

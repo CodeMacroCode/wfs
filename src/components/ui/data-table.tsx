@@ -132,7 +132,7 @@ export function DataTable<TData, TValue>({
       cell: ({ row, table }) => {
         const { pagination } = table.getState()
         return (
-          <div className="text-slate-500 font-medium">
+          <div className="text-slate-500 font-medium text-center">
             {(pagination.pageIndex * pagination.pageSize) + row.index + 1}
           </div>
         )
@@ -218,7 +218,7 @@ export function DataTable<TData, TValue>({
                       key={header.id}
                       colSpan={header.colSpan}
                       className={cn(
-                        "text-white font-semibold h-14 text-[13px] tracking-tight text-left px-6 border-r border-white/20 last:border-r-0",
+                        "text-white font-semibold h-14 text-[13px] tracking-tight text-center px-6 border-r border-white/20 last:border-r-0",
                         "first:pl-8 last:pr-8"
                       )}
                     >

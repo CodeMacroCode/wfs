@@ -1,7 +1,6 @@
 "use client";
 
-import * as React from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
@@ -24,24 +23,96 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { RegisterEmployeeDto } from "@/types/employee";
 import { Separator } from "@/components/ui/separator";
+import { Plus, Trash2 } from "lucide-react";
+import { authStorage } from "@/lib/auth";
 
-const formSchema = z.object({
+const familyMemberSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  relation: z.string().min(1, "Relation is required"),
+  age: z.coerce.number().min(0, "Age must be positive"),
+  _id: z.string().optional(),
+});
+
+const academicQualificationSchema = z.object({
+  degree: z.string().min(1, "Degree is required"),
+  institute: z.string().min(1, "Institute is required"),
+  year: z.string().min(1, "Year is required"),
+  _id: z.string().optional(),
+});
+
+const workExperienceSchema = z.object({
+  company: z.string().min(1, "Company is required"),
+  role: z.string().min(1, "Role is required"),
+  years: z.string().min(1, "Years is required"),
+  _id: z.string().optional(),
+});
+
+export interface EmployeeFormValues {
+  name: string;
+  email: string;
+  password?: string;
+  role: "user" | "hr" | "admin";
+  uniqueId: number;
+  otherName?: string;
+  category?: string;
+  gender: "male" | "female" | "other";
+  fatherName: string;
+  motherName: string;
+  maritalStatus: "single" | "married" | "divorced" | "widowed";
+  familyDetails?: Array<{
+    name: string;
+    relation: string;
+    age: number;
+    _id?: string;
+  }>;
+  dob: string;
+  bloodGroup: string;
+  emergencyContact: {
+    name: string;
+    phone: string;
+    relation: string;
+  };
+  reference?: string;
+  academicQualification?: Array<{
+    degree: string;
+    institute: string;
+    year: string;
+    _id?: string;
+  }>;
+  previousWorkExperience?: Array<{
+    company: string;
+    role: string;
+    years: string;
+    _id?: string;
+  }>;
+  designation: string;
+  aadharNo: string;
+  pfNo?: string;
+  esiNo?: string;
+  doj: string;
+  doe?: string | null;
+  permanentAddress: string;
+  currentAddress: string;
+  mobileNo: string;
+  createdBy?: string;
+}
+
+const formSchema: z.ZodType<EmployeeFormValues, z.ZodType, any> = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
   password: z
     .string()
     .min(6, "Password must be at least 6 characters")
     .optional(),
-  role: z.enum(["user", "hr", "admin"] as const),
-  empCode: z.string().min(1, "EMP Code is required"),
+  role: z.enum(["user", "hr", "admin"]),
+  uniqueId: z.coerce.number().min(1, "Unique ID is required"),
   otherName: z.string().optional(),
   category: z.string().optional(),
-  gender: z.enum(["Male", "Female", "Other"] as const),
+  gender: z.enum(["male", "female", "other"]),
   fatherName: z.string().min(1, "Father's name is required"),
   motherName: z.string().min(1, "Mother's name is required"),
-  maritalStatus: z.enum(["Single", "Married", "Divorced", "Widowed"] as const),
-  spouseName: z.string().optional(),
-  familyDetails: z.string().optional(),
+  maritalStatus: z.enum(["single", "married", "divorced", "widowed"]),
+  familyDetails: z.array(familyMemberSchema).optional(),
   dob: z.string().min(1, "D.O.B is required"),
   bloodGroup: z.string().min(1, "Blood Group is required"),
   emergencyContact: z.object({
@@ -50,20 +121,18 @@ const formSchema = z.object({
     relation: z.string().min(1, "Relation is required"),
   }),
   reference: z.string().optional(),
-  academicQualification: z.string().min(1, "Qualification is required"),
-  previousWorkExperience: z.string().optional(),
-  interviewDate: z.string().optional(),
-  competencyMet: z.enum(["Yes", "No"] as const),
+  academicQualification: z.array(academicQualificationSchema).optional(),
+  previousWorkExperience: z.array(workExperienceSchema).optional(),
   designation: z.string().min(1, "Designation is required"),
-  workingHours: z.string().min(1, "Working hours are required"),
   aadharNo: z.string().min(1, "Aadhar No is required"),
   pfNo: z.string().optional(),
   esiNo: z.string().optional(),
   doj: z.string().min(1, "D.O.J is required"),
-  doe: z.string().optional(),
+  doe: z.string().optional().nullable(),
   permanentAddress: z.string().min(1, "Permanent address is required"),
   currentAddress: z.string().min(1, "Current address is required"),
   mobileNo: z.string().min(1, "Mobile No is required"),
+  createdBy: z.string().optional(),
 });
 
 interface EmployeeFormProps {
@@ -79,22 +148,23 @@ export function EmployeeForm({
   isLoading,
   isEdit = false,
 }: EmployeeFormProps) {
-  const form = useForm<z.infer<typeof formSchema>>({
+  const user = authStorage.getUser();
+
+  const form = useForm<EmployeeFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: initialValues?.name || "",
       email: initialValues?.email || "",
       password: initialValues?.password || (isEdit ? undefined : ""),
       role: initialValues?.role || "user",
-      empCode: initialValues?.empCode || "",
+      uniqueId: initialValues?.uniqueId || 0,
       otherName: initialValues?.otherName || "",
       category: initialValues?.category || "",
-      gender: initialValues?.gender || "Male",
+      gender: (initialValues?.gender?.toLowerCase() as "male" | "female" | "other") || "male",
       fatherName: initialValues?.fatherName || "",
       motherName: initialValues?.motherName || "",
-      maritalStatus: initialValues?.maritalStatus || "Single",
-      spouseName: initialValues?.spouseName || "",
-      familyDetails: initialValues?.familyDetails?.[0]?.name || "",
+      maritalStatus: (initialValues?.maritalStatus?.toLowerCase() as "single" | "married" | "divorced" | "widowed") || "single",
+      familyDetails: initialValues?.familyDetails || [],
       dob: initialValues?.dob || "",
       bloodGroup: initialValues?.bloodGroup || "",
       emergencyContact: {
@@ -103,66 +173,38 @@ export function EmployeeForm({
         relation: initialValues?.emergencyContact?.relation || "",
       },
       reference: initialValues?.reference || "",
-      academicQualification:
-        initialValues?.academicQualification?.[0]?.degree || "",
-      previousWorkExperience:
-        initialValues?.previousWorkExperience?.[0]?.role || "",
-      interviewDate: initialValues?.interviewDate || "",
-      competencyMet: initialValues?.competencyMet ? "Yes" : "No",
+      academicQualification: initialValues?.academicQualification || [{ degree: "", institute: "", year: "" }],
+      previousWorkExperience: initialValues?.previousWorkExperience || [],
       designation: initialValues?.designation || "",
-      workingHours: initialValues?.workingHours?.toString() || "",
       aadharNo: initialValues?.aadharNo || "",
       pfNo: initialValues?.pfNo || "",
       esiNo: initialValues?.esiNo || "",
       doj: initialValues?.doj || "",
-      doe: initialValues?.doe || "",
+      doe: initialValues?.doe || null,
       permanentAddress: initialValues?.permanentAddress || "",
       currentAddress: initialValues?.currentAddress || "",
       mobileNo: initialValues?.mobileNo || "",
+      createdBy: initialValues?.createdBy || user?.id || "",
     },
   });
 
+  const { fields: academicFields, append: appendAcademic, remove: removeAcademic } = useFieldArray({
+    control: form.control,
+    name: "academicQualification",
+  });
+
+  const { fields: experienceFields, append: appendExperience, remove: removeExperience } = useFieldArray({
+    control: form.control,
+    name: "previousWorkExperience",
+  });
+
+  const { fields: familyFields, append: appendFamily, remove: removeFamily } = useFieldArray({
+    control: form.control,
+    name: "familyDetails",
+  });
+
   const handleFormSubmit = (data: z.infer<typeof formSchema>) => {
-    const formattedData: RegisterEmployeeDto = {
-      ...data,
-      workingHours: Number(data.workingHours),
-      competencyMet: data.competencyMet === "Yes",
-      academicQualification: [
-        {
-          degree: data.academicQualification,
-          institute: "Standard",
-          year: new Date().getFullYear().toString(),
-          _id:
-            initialValues?.academicQualification?.[0]?._id ||
-            crypto.randomUUID().substring(0, 7),
-        },
-      ],
-      previousWorkExperience: data.previousWorkExperience
-        ? [
-            {
-              company: "Previous",
-              role: data.previousWorkExperience,
-              years: "0",
-              _id:
-                initialValues?.previousWorkExperience?.[0]?._id ||
-                crypto.randomUUID().substring(0, 7),
-            },
-          ]
-        : [],
-      familyDetails: data.familyDetails
-        ? [
-            {
-              name: data.familyDetails,
-              relation: "Family",
-              age: 0,
-              _id:
-                initialValues?.familyDetails?.[0]?._id ||
-                crypto.randomUUID().substring(0, 7),
-            },
-          ]
-        : [],
-    };
-    onSubmit(formattedData);
+    onSubmit(data as RegisterEmployeeDto);
   };
 
   return (
@@ -171,7 +213,7 @@ export function EmployeeForm({
         onSubmit={form.handleSubmit(handleFormSubmit)}
         className="space-y-6"
       >
-        <ScrollArea className="h-[60vh] pr-4">
+        <ScrollArea className="h-[65vh] pr-4">
           <div className="space-y-8">
             {/* Section 1: Professional Access */}
             <div className="space-y-4">
@@ -181,12 +223,12 @@ export function EmployeeForm({
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="empCode"
+                  name="uniqueId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>EMP CODE</FormLabel>
+                      <FormLabel>Unique ID (Manual)</FormLabel>
                       <FormControl>
-                        <Input placeholder="E101" {...field} />
+                        <Input type="number" placeholder="1001" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -199,7 +241,7 @@ export function EmployeeForm({
                     <FormItem>
                       <FormLabel>Designation</FormLabel>
                       <FormControl>
-                        <Input placeholder="Manager" {...field} />
+                        <Input placeholder="Developer" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -225,7 +267,7 @@ export function EmployeeForm({
                     <FormItem>
                       <FormLabel>D.O.E (Exit)</FormLabel>
                       <FormControl>
-                        <Input type="date" {...field} />
+                        <Input type="date" value={field.value || ""} onChange={field.onChange} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -252,19 +294,6 @@ export function EmployeeForm({
                           <SelectItem value="admin">Admin</SelectItem>
                         </SelectContent>
                       </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="workingHours"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Working Hours</FormLabel>
-                      <FormControl>
-                        <Input placeholder="9 AM - 6 PM" {...field} />
-                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -360,9 +389,9 @@ export function EmployeeForm({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="Male">Male</SelectItem>
-                          <SelectItem value="Female">Female</SelectItem>
-                          <SelectItem value="Other">Other</SelectItem>
+                          <SelectItem value="male">Male</SelectItem>
+                          <SelectItem value="female">Female</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -424,25 +453,12 @@ export function EmployeeForm({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="Single">Single</SelectItem>
-                          <SelectItem value="Married">Married</SelectItem>
-                          <SelectItem value="Divorced">Divorced</SelectItem>
-                          <SelectItem value="Widowed">Widowed</SelectItem>
+                          <SelectItem value="single">Single</SelectItem>
+                          <SelectItem value="married">Married</SelectItem>
+                          <SelectItem value="divorced">Divorced</SelectItem>
+                          <SelectItem value="widowed">Widowed</SelectItem>
                         </SelectContent>
                       </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="spouseName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Spouse Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="If married" {...field} />
-                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -491,7 +507,7 @@ export function EmployeeForm({
                     <FormItem>
                       <FormLabel>Mobile No</FormLabel>
                       <FormControl>
-                        <Input placeholder="+91..." {...field} />
+                        <Input placeholder="9876543210" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -537,19 +553,58 @@ export function EmployeeForm({
                   )}
                 />
               </div>
-              <FormField
-                control={form.control}
-                name="familyDetails"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Family Details</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Dependents, etc." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold text-slate-500 uppercase">Family Members</h4>
+                  <Button type="button" variant="outline" size="sm" onClick={() => appendFamily({ name: "", relation: "", age: 0 })}>
+                    <Plus className="h-4 w-4 mr-2" /> Add Member
+                  </Button>
+                </div>
+                {familyFields.map((field, index) => (
+                  <div key={field.id} className="grid grid-cols-3 gap-4 p-4 border rounded-xl relative bg-slate-50/50">
+                    <FormField
+                      control={form.control}
+                      name={`familyDetails.${index}.name`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-[10px]">Name</FormLabel>
+                          <FormControl><Input {...field} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name={`familyDetails.${index}.relation`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-[10px]">Relation</FormLabel>
+                          <FormControl><Input {...field} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <div className="flex gap-2 items-end">
+                      <FormField
+                        control={form.control}
+                        name={`familyDetails.${index}.age`}
+                        render={({ field }) => (
+                          <FormItem className="flex-1">
+                            <FormLabel className="text-[10px]">Age</FormLabel>
+                            <FormControl><Input type="number" {...field} /></FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <Button variant="ghost" size="icon" className="text-rose-500" onClick={() => removeFamily(index)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
               <FormField
                 control={form.control}
                 name="reference"
@@ -568,7 +623,7 @@ export function EmployeeForm({
                 name="currentAddress"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Current/Temporary Address</FormLabel>
+                    <FormLabel>Current Address</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -598,70 +653,110 @@ export function EmployeeForm({
               <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider bg-slate-50 p-2 rounded">
                 4. Documentation & Qualification
               </h3>
+              
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold text-slate-500 uppercase">Academic Qualifications</h4>
+                  <Button type="button" variant="outline" size="sm" onClick={() => appendAcademic({ degree: "", institute: "", year: "" })}>
+                    <Plus className="h-4 w-4 mr-2" /> Add Qualification
+                  </Button>
+                </div>
+                {academicFields.map((field, index) => (
+                  <div key={field.id} className="grid grid-cols-3 gap-4 p-4 border rounded-xl bg-amber-50/20">
+                    <FormField
+                      control={form.control}
+                      name={`academicQualification.${index}.degree`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-[10px]">Degree</FormLabel>
+                          <FormControl><Input {...field} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name={`academicQualification.${index}.institute`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-[10px]">Institute</FormLabel>
+                          <FormControl><Input {...field} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <div className="flex gap-2 items-end">
+                      <FormField
+                        control={form.control}
+                        name={`academicQualification.${index}.year`}
+                        render={({ field }) => (
+                          <FormItem className="flex-1">
+                            <FormLabel className="text-[10px]">Year</FormLabel>
+                            <FormControl><Input placeholder="2020" {...field} /></FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <Button variant="ghost" size="icon" className="text-rose-500" onClick={() => removeAcademic(index)} disabled={academicFields.length === 1}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold text-slate-500 uppercase">Previous Work Experience</h4>
+                  <Button type="button" variant="outline" size="sm" onClick={() => appendExperience({ company: "", role: "", years: "" })}>
+                    <Plus className="h-4 w-4 mr-2" /> Add Experience
+                  </Button>
+                </div>
+                {experienceFields.map((field, index) => (
+                  <div key={field.id} className="grid grid-cols-3 gap-4 p-4 border rounded-xl bg-slate-50/50">
+                    <FormField
+                      control={form.control}
+                      name={`previousWorkExperience.${index}.company`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-[10px]">Company</FormLabel>
+                          <FormControl><Input {...field} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name={`previousWorkExperience.${index}.role`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-[10px]">Role</FormLabel>
+                          <FormControl><Input {...field} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <div className="flex gap-2 items-end">
+                      <FormField
+                        control={form.control}
+                        name={`previousWorkExperience.${index}.years`}
+                        render={({ field }) => (
+                          <FormItem className="flex-1">
+                            <FormLabel className="text-[10px]">Years</FormLabel>
+                            <FormControl><Input placeholder="2" {...field} /></FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <Button variant="ghost" size="icon" className="text-rose-500" onClick={() => removeExperience(index)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="academicQualification"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Academic Qualification</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Degree / Diploma" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="previousWorkExperience"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Previous Experience</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Years / Companies" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="interviewDate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Date of Interview</FormLabel>
-                      <FormControl>
-                        <Input type="date" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="competencyMet"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Competency Met?</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Yes">Yes</SelectItem>
-                          <SelectItem value="No">No</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
                 <FormField
                   control={form.control}
                   name="aadharNo"

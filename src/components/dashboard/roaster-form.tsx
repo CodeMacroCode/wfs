@@ -168,7 +168,7 @@ export function RoasterForm({ onSubmit, isLoading }: RoasterFormProps) {
                           />
                           <div className="flex flex-col">
                             <span className="text-sm font-medium">{employee.name || "Unnamed"}</span>
-                            <span className="text-xs text-slate-500">{employee.empCode}</span>
+                            <span className="text-xs text-slate-500">{employee.uniqueId}</span>
                           </div>
                         </div>
                       ))}
