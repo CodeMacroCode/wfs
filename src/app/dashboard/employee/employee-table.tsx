@@ -60,7 +60,7 @@ export const getEmployeeColumns = (
             header: "Contact Info",
             cell: ({ row }) => (
                 <div className="flex flex-col items-center text-center">
-                    <span className="font-medium text-slate-600 truncate max-w-[150px]">{row.original.email}</span>
+                    <span className="font-medium text-slate-600 truncate">{row.original.email}</span>
                     {row.original.mobileNo && (
                         <span className="text-xs text-slate-400">{row.original.mobileNo}</span>
                     )}
@@ -94,9 +94,6 @@ export const getEmployeeColumns = (
                 <div className="flex flex-col items-center text-center">
                     <span className="text-sm font-medium text-slate-700">
                         {row.original.doj ? format(new Date(row.original.doj), "dd MMM yyyy") : "N/A"}
-                    </span>
-                    <span className="text-[10px] text-slate-400 italic">
-                        {row.original.doj ? format(new Date(row.original.doj), "iii") : ""}
                     </span>
                 </div>
             ),
