@@ -1,11 +1,13 @@
 "use client"
 
 import * as React from "react"
-import { Filter, Download, LayoutGrid, List } from "lucide-react"
+import { Filter } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Asset, AssetType, CreateAssetDto } from "@/types/asset"
-import { AssetTable } from "@/components/asset-tracking/asset-table"
+import { AssetTable, getAssetColumns } from "@/components/asset-tracking/asset-table"
+import { DataTableExport } from "@/components/ui/data-table-export"
 import { IssueAssetDialog, EditAssetDialog } from "@/components/asset-tracking/asset-dialogs"
+import { assetService } from "@/services/asset-service"
 import {
     Select,
     SelectContent,
@@ -59,11 +61,31 @@ export default function AssetTrackingPage() {
         if (confirm("Are you sure you want to delete this asset record?")) {
             try {
                 await deleteMutation.mutateAsync(id)
-            } catch (_error) {
+            } catch {
                 // Error is handled by service toast
             }
         }
     }
+
+    const handleFetchAll = async () => {
+        const result = await assetService.getAll({
+            search: debouncedSearch,
+            type: typeFilter === "All" ? undefined : typeFilter,
+            limit: 1000 // Fetch all matching data for export
+        });
+
+        // Format data for export (flattening and date formatting)
+        const formattedData = result.data.map(asset => ({
+            ...asset,
+            issuedTo: typeof asset.issuedTo === 'object' && asset.issuedTo !== null 
+                ? asset.issuedTo.name 
+                : asset.issuedTo,
+            issuedDate: asset.issuedDate ? new Date(asset.issuedDate).toLocaleDateString() : "-",
+            maintenanceDueDate: asset.maintenanceDueDate ? new Date(asset.maintenanceDueDate).toLocaleDateString() : "-"
+        }));
+
+        return { data: formattedData as Asset[] };
+    };
 
     const maintenanceAlertsCount = assets.filter(a => {
         if (!a.maintenanceDueDate) return false
@@ -86,10 +108,11 @@ export default function AssetTrackingPage() {
                     </p>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Button variant="outline" className="gap-2 text-slate-600 border-slate-200">
-                        <Download className="h-4 w-4" />
-                        Export Assets
-                    </Button>
+                    <DataTableExport
+                        columns={getAssetColumns(() => {}, () => {})}
+                        filename="assets_inventory_report"
+                        fetchData={handleFetchAll}
+                    />
                     <Button
                         className="bg-indigo-600 hover:bg-indigo-700 gap-2 text-white shadow-lg shadow-indigo-500/20"
                         onClick={() => setIsIssueOpen(true)}
