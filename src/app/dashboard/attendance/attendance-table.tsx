@@ -99,9 +99,11 @@ export function AttendanceTable({
             <User className="h-4 w-4" />
           </div>
           <div className="flex flex-col">
-            <span className="font-bold text-slate-900 line-clamp-1">{row.original.userId.name}</span>
+            <span className="font-bold text-slate-900 line-clamp-1">
+              {row.original.userId?.name || "Unknown"}
+            </span>
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
-              ID: {row.original.uniqueId || row.original.userId._id.slice(-6)}
+              ID: {row.original.uniqueId || row.original.userId?._id?.slice(-6) || "N/A"}
             </span>
           </div>
         </div>

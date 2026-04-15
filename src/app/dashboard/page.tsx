@@ -148,90 +148,88 @@ export default function DashboardPage() {
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {/* Total Labor Force */}
-        <Card className="border-none shadow-none bg-[#f1f5f9] rounded-[24px] overflow-hidden min-h-[160px] flex flex-col justify-between p-6">
-          <div className="space-y-4">
-            <h3 className="text-sm font-bold text-slate-600 uppercase tracking-wider">Total Labor Force</h3>
+        <Card className="border-none shadow-none bg-[#f1f5f9] rounded-[20px] overflow-hidden min-h-[130px] flex flex-col justify-between p-4 px-5">
+          <div className="space-y-2">
+            <h3 className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total Labor Force</h3>
             <div className="flex flex-col">
-              <span className="text-4xl font-bold text-slate-900 tracking-tight">1,250</span>
-              <span className="text-xs font-bold text-slate-400 uppercase">Employees</span>
+              <span className="text-3xl font-extrabold text-slate-900 tracking-tight">1,250</span>
+              <span className="text-[10px] font-bold text-slate-400 uppercase">Employees</span>
             </div>
           </div>
-          <div className="mt-4">
-            <Badge variant="secondary" className="bg-white/80 hover:bg-white text-slate-600 text-[10px] font-bold py-1.5 px-3 rounded-full border border-slate-100 uppercase tracking-lighter flex items-center justify-center w-fit shadow-xs">
+          <div className="mt-2">
+            <Badge variant="secondary" className="bg-white/80 hover:bg-white text-slate-600 text-[9px] font-bold py-1 px-3 rounded-full border border-slate-100 uppercase tracking-lighter flex items-center justify-center w-fit shadow-xs">
               <span className="text-emerald-500 mr-1">+12</span> <span className="text-slate-400">THIS MONTH</span>
             </Badge>
           </div>
         </Card>
 
         {/* Processed Present */}
-        <Card className="border-none shadow-none bg-[#f0f9f1] rounded-[24px] overflow-hidden min-h-[160px] flex flex-col justify-between p-6">
-          <div className="space-y-4">
-            <h3 className="text-sm font-bold text-emerald-700 uppercase tracking-wider">Processed Present</h3>
+        <Card className="border-none shadow-none bg-[#f0f9f1] rounded-[20px] overflow-hidden min-h-[130px] flex flex-col justify-between p-4 px-5">
+          <div className="space-y-2">
+            <h3 className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider">Processed Present</h3>
             <div className="flex items-center justify-between">
               <div className="flex flex-col">
-                <span className="text-4xl font-bold text-slate-900 tracking-tight">1,180</span>
-                <span className="text-xs font-bold text-slate-400 uppercase">Employees</span>
+                <span className="text-3xl font-extrabold text-slate-900 tracking-tight">1,180</span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase">Employees</span>
               </div>
               <div className="text-right">
-                <div className="text-sm font-bold text-emerald-500 bg-emerald-100/50 px-2 py-0.5 rounded-lg">94.4%</div>
-                <div className="text-[10px] font-bold text-slate-400 uppercase leading-none mt-1">Attendance Rate</div>
+                <div className="text-xs font-bold text-emerald-500 bg-emerald-100/50 px-2 py-0.5 rounded-lg">94.4%</div>
               </div>
             </div>
           </div>
-          <div className="mt-6 flex items-center gap-6 pt-4 border-t border-emerald-100/50">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-bold text-slate-900">1,120</span>
-              <span className="text-[10px] font-bold text-slate-400 uppercase whitespace-nowrap">On-time</span>
+          <div className="mt-4 flex items-center gap-4 pt-3 border-t border-emerald-100/50">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[13px] font-bold text-slate-900">1,120</span>
+              <span className="text-[9px] font-bold text-slate-400 uppercase whitespace-nowrap">On-time</span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-bold text-slate-900">60</span>
-              <span className="text-[10px] font-bold text-slate-400 uppercase whitespace-nowrap">Late</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[13px] font-bold text-slate-900">60</span>
+              <span className="text-[9px] font-bold text-slate-400 uppercase whitespace-nowrap">Late</span>
             </div>
           </div>
         </Card>
 
         {/* Absentees */}
-        <Card className="border-none bg-white border border-gray-100 rounded-[24px] overflow-hidden min-h-[160px] ring-1 ring-gray-100 flex flex-col justify-between p-6 shadow-sm">
-          <div className="space-y-4">
-            <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wider">Absentees</h3>
+        <Card className="border-none bg-white border border-gray-100 rounded-[20px] overflow-hidden min-h-[130px] ring-1 ring-gray-100 flex flex-col justify-between p-4 px-5 shadow-sm">
+          <div className="space-y-2">
+            <h3 className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Absentees</h3>
             <div className="flex items-center justify-between">
               <div className="flex flex-col">
-                <span className="text-4xl font-bold text-slate-900 tracking-tight">70</span>
-                <span className="text-xs font-bold text-slate-400 uppercase">Employees</span>
+                <span className="text-3xl font-extrabold text-slate-900 tracking-tight">70</span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase">Employees</span>
               </div>
               <div className="text-right">
-                <div className="text-sm font-bold text-emerald-500">-5%</div>
-                <div className="text-[10px] font-bold text-slate-400 uppercase leading-none mt-0.5 whitespace-nowrap">VS LAST WEEK</div>
+                <div className="text-xs font-bold text-emerald-500">-5%</div>
               </div>
             </div>
           </div>
-          <div className="mt-6 flex items-center justify-between pt-4 border-t border-gray-50">
+          <div className="mt-4 flex items-center justify-between pt-3 border-t border-gray-50">
             <div className="flex items-center gap-1.5">
-              <span className="text-sm font-bold text-slate-900">30</span>
-              <span className="text-[10px] font-bold text-slate-400 uppercase">Annual</span>
+              <span className="text-[13px] font-bold text-slate-900">30</span>
+              <span className="text-[9px] font-bold text-slate-400 uppercase">Annual</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="text-sm font-bold text-slate-900">25</span>
-              <span className="text-[10px] font-bold text-slate-400 uppercase">Sick</span>
+              <span className="text-[13px] font-bold text-slate-900">25</span>
+              <span className="text-[9px] font-bold text-slate-400 uppercase">Sick</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="text-sm font-bold text-slate-900">15</span>
-              <span className="text-[10px] font-bold text-slate-400 uppercase">Others</span>
+              <span className="text-[13px] font-bold text-slate-900">15</span>
+              <span className="text-[9px] font-bold text-slate-400 uppercase">Others</span>
             </div>
           </div>
         </Card>
 
         {/* Total Overtime */}
-        <Card className="border-none shadow-none bg-[#0a3622] rounded-[24px] overflow-hidden min-h-[160px] flex flex-col justify-between p-6">
-          <div className="space-y-4">
-            <h3 className="text-sm font-bold text-emerald-500/70 uppercase tracking-wider">Total Overtime</h3>
+        <Card className="border-none shadow-none bg-[#0a3622] rounded-[20px] overflow-hidden min-h-[130px] flex flex-col justify-between p-4 px-5">
+          <div className="space-y-2">
+            <h3 className="text-[11px] font-bold text-emerald-500/70 uppercase tracking-wider">Total Overtime</h3>
             <div className="flex flex-col">
-              <span className="text-4xl font-bold text-white tracking-tight">345h</span>
-              <span className="text-xs font-bold text-white/40 uppercase">Work Hours</span>
+              <span className="text-3xl font-extrabold text-white tracking-tight">345h</span>
+              <span className="text-[10px] font-bold text-white/40 uppercase">Work Hours</span>
             </div>
           </div>
-          <div className="mt-4">
-            <Badge variant="secondary" className="bg-[#1e463a] hover:bg-[#265345] text-emerald-400 text-[10px] font-bold py-1.5 px-3 rounded-full border border-emerald-900/10 uppercase tracking-lighter flex items-center justify-center w-fit shadow-xs">
+          <div className="mt-2">
+            <Badge variant="secondary" className="bg-[#1e463a] hover:bg-[#265345] text-emerald-400 text-[9px] font-bold py-1 px-3 rounded-full border border-emerald-900/10 uppercase tracking-lighter flex items-center justify-center w-fit shadow-xs">
               <span className="mr-1">+12h</span> <span className="text-white/40">VS YESTERDAY</span>
             </Badge>
           </div>
