@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { employeeService } from '@/services/employee-service';
 import { QUERY_KEYS } from '@/constants/query-keys';
 import { RegisterEmployeeDto, UpdateEmployeeDto, EmployeeQueryParams } from '@/types/employee';
@@ -10,6 +10,43 @@ export function useEmployeesQuery(params?: EmployeeQueryParams) {
   return useQuery({
     queryKey: [...QUERY_KEYS.users.all, 'list', params],
     queryFn: () => employeeService.getAll(params),
+  });
+}
+
+/**
+ * Hook to fetch employees with infinite scrolling
+ */
+export function useEmployeesInfiniteQuery(params?: EmployeeQueryParams) {
+  return useInfiniteQuery({
+    queryKey: [...QUERY_KEYS.users.all, 'infinite', params],
+    queryFn: ({ pageParam = 1 }) =>
+      employeeService.getAll({ ...params, page: pageParam, limit: 10 }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      if (lastPage.pagination.page < lastPage.pagination.totalPages) {
+        return lastPage.pagination.page + 1;
+      }
+      return undefined;
+    },
+  });
+}
+
+/**
+ * Hook to fetch employees for dropdown with infinite scrolling
+ */
+export function useEmployeesDropdownInfiniteQuery(params?: EmployeeQueryParams, enabled: boolean = true) {
+  return useInfiniteQuery({
+    queryKey: [...QUERY_KEYS.users.all, 'dropdown', 'infinite', params],
+    queryFn: ({ pageParam = 1 }) =>
+      employeeService.getDropdown({ ...params, page: pageParam, limit: 10 }),
+    initialPageParam: 1,
+    enabled,
+    getNextPageParam: (lastPage) => {
+      if (lastPage.pagination.page < lastPage.pagination.totalPages) {
+        return lastPage.pagination.page + 1;
+      }
+      return undefined;
+    },
   });
 }
 
@@ -29,7 +66,7 @@ export function useEmployeeQuery(id: string | null) {
  */
 export function useRegisterEmployeeMutation() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (data: RegisterEmployeeDto) => employeeService.register(data),
     onSuccess: () => {
@@ -43,9 +80,9 @@ export function useRegisterEmployeeMutation() {
  */
 export function useUpdateEmployeeMutation() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdateEmployeeDto }) => 
+    mutationFn: ({ id, data }: { id: string; data: UpdateEmployeeDto }) =>
       employeeService.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.users.all });
@@ -58,7 +95,7 @@ export function useUpdateEmployeeMutation() {
  */
 export function useDeleteEmployeeMutation() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (id: string) => employeeService.delete(id),
     onSuccess: () => {

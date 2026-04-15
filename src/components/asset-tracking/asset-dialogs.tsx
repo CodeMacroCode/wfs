@@ -9,7 +9,6 @@ import {
 } from "@/components/ui/dialog"
 import { AssetForm } from "./asset-form"
 import { Asset, CreateAssetDto } from "@/types/asset"
-import { toast } from "sonner"
 
 interface IssueAssetDialogProps {
   open: boolean
@@ -21,7 +20,6 @@ export function IssueAssetDialog({ open, onOpenChange, onAdd }: IssueAssetDialog
   const onSubmit = (data: CreateAssetDto) => {
     onAdd(data)
     onOpenChange(false)
-    toast.success("Asset issued successfully")
   }
 
   return (
@@ -49,7 +47,6 @@ export function EditAssetDialog({ asset, open, onOpenChange, onUpdate }: EditAss
   const onSubmit = (data: Partial<Asset>) => {
     onUpdate(asset.id, data)
     onOpenChange(false)
-    toast.success("Asset details updated")
   }
 
   return (

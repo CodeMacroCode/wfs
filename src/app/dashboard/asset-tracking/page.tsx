@@ -14,92 +14,61 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 
-const TODAY = "2026-04-09"
+import { useAssetsQuery, useCreateAssetMutation, useUpdateAssetMutation, useDeleteAssetMutation } from "@/hooks/queries/use-assets-query"
+import { useDebounce } from "@/hooks/use-debounce"
 
-const DUMMY_ASSETS: Asset[] = [
-    {
-        id: "1",
-        name: "MacBook Pro M2",
-        type: "Laptop",
-        serialNumber: "MBP-99283-A",
-        issuedTo: "John Doe",
-        issueDate: "2024-01-15",
-        status: "Issued",
-        nextMaintenanceDate: "2026-04-15", // DUE SOON (within 6 days)
-    },
-    {
-        id: "2",
-        name: "Industrial Safety Helmet",
-        type: "Safety Gear",
-        serialNumber: "SH-8821",
-        issuedTo: "Jane Smith",
-        issueDate: "2024-03-10",
-        status: "Issued",
-        nextMaintenanceDate: "2026-10-10",
-    },
-    {
-        id: "3",
-        name: "Precision Laser Level",
-        type: "Specialized Tool",
-        serialNumber: "PLL-5542",
-        issuedTo: "Mike Ross",
-        issueDate: "2023-11-20",
-        status: "Under Maintenance",
-        nextMaintenanceDate: "2026-04-12", // DUE SOON (within 3 days)
-    },
-    {
-        id: "4",
-        name: "Standard Uniform Set",
-        type: "Uniform",
-        serialNumber: "U-1122",
-        issuedTo: "Alice Johnson",
-        issueDate: "2024-04-01",
-        status: "Issued",
-        nextMaintenanceDate: "2026-04-18", // DUE SOON (within 9 days)
-    },
-    {
-        id: "5",
-        name: "Dell Latitude 5420",
-        type: "Laptop",
-        serialNumber: "DL-66712",
-        issuedTo: "Bob Wilson",
-        issueDate: "2024-02-05",
-        status: "Returned",
-        nextMaintenanceDate: "2026-08-05",
-    },
-]
+// Remove unused TODAY constant
 
 export default function AssetTrackingPage() {
-    const [assets, setAssets] = React.useState<Asset[]>(DUMMY_ASSETS)
     const [typeFilter, setTypeFilter] = React.useState<AssetType | "All">("All")
+    const [searchTerm, setSearchTerm] = React.useState("")
+    const debouncedSearch = useDebounce(searchTerm, 500)
+
+    const { data: response, isLoading } = useAssetsQuery({
+        search: debouncedSearch,
+        type: typeFilter === "All" ? undefined : typeFilter
+    })
+    const assets = response?.data || []
+
+    const createMutation = useCreateAssetMutation()
+    const updateMutation = useUpdateAssetMutation()
+    const deleteMutation = useDeleteAssetMutation()
+
     const [isIssueOpen, setIsIssueOpen] = React.useState(false)
     const [editingAsset, setEditingAsset] = React.useState<Asset | null>(null)
 
-    const handleAdd = (data: CreateAssetDto) => {
-        const newAsset: Asset = {
-            ...data,
-            id: Math.random().toString(36).substr(2, 9),
+    const handleAdd = async (data: CreateAssetDto) => {
+        try {
+            await createMutation.mutateAsync(data)
+            setIsIssueOpen(false)
+        } catch {
+            // Error is handled by service toast
         }
-        setAssets([newAsset, ...assets])
     }
 
-    const handleUpdate = (id: string, data: Partial<Asset>) => {
-        setAssets(assets.map(a => a.id === id ? { ...a, ...data } : a))
+    const handleUpdate = async (id: string, data: Partial<Asset>) => {
+        try {
+            await updateMutation.mutateAsync({ id, data })
+            setEditingAsset(null)
+        } catch {
+            // Error is handled by service toast
+        }
     }
 
-    const handleDelete = (id: string) => {
+    const handleDelete = async (id: string) => {
         if (confirm("Are you sure you want to delete this asset record?")) {
-            setAssets(assets.filter(a => a.id !== id))
+            try {
+                await deleteMutation.mutateAsync(id)
+            } catch (_error) {
+                // Error is handled by service toast
+            }
         }
     }
-
-    const filteredAssets = assets.filter(a =>
-        typeFilter === "All" || a.type === typeFilter
-    )
 
     const maintenanceAlertsCount = assets.filter(a => {
-        const dueDate = new Date(a.nextMaintenanceDate)
-        const today = new Date(TODAY)
+        if (!a.maintenanceDueDate) return false
+        const dueDate = new Date(a.maintenanceDueDate)
+        const today = new Date()
         const diffTime = dueDate.getTime() - today.getTime()
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
         return diffDays <= 10 && diffDays >= 0
@@ -151,7 +120,7 @@ export default function AssetTrackingPage() {
             </div>
 
             <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
-                <div className="flex items-center gap-4 flex-1">
+                <div className="flex items-center justify-between gap-4 flex-1">
                     <div className="w-full max-w-[240px]">
                         <Select onValueChange={(v) => setTypeFilter(v as AssetType | "All")} defaultValue="All">
                             <SelectTrigger className="bg-slate-50 border-slate-200">
@@ -169,24 +138,19 @@ export default function AssetTrackingPage() {
                         </Select>
                     </div>
                     <span className="text-sm text-slate-400">
-                        Showing {filteredAssets.length} assets
+                        Showing {assets.length} assets
                     </span>
-                </div>
-                <div className="flex items-center bg-slate-100 p-1 rounded-lg">
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 bg-white shadow-sm">
-                        <List className="h-4 w-4 text-indigo-600" />
-                    </Button>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-slate-400">
-                        <LayoutGrid className="h-4 w-4" />
-                    </Button>
                 </div>
             </div>
 
 
             <AssetTable
-                data={filteredAssets}
+                data={assets}
+                isLoading={isLoading}
                 onEdit={setEditingAsset}
                 onDelete={handleDelete}
+                searchValue={searchTerm}
+                onSearchChange={setSearchTerm}
             />
 
 

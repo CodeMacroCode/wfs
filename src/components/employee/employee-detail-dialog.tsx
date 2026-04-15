@@ -89,7 +89,6 @@ export function EmployeeDetailDialog({ employeeId, open, onOpenChange }: Employe
                   <CardContent className="p-6 space-y-6">
                     <div className="grid grid-cols-2 gap-6">
                        <DataItem label="Date of Joining" value={employee.doj ? new Date(employee.doj).toLocaleDateString() : "-"} icon={Calendar} />
-                       <DataItem label="Category" value={employee.category || "-"} />
                     </div>
                     <div className="flex items-center justify-between p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
                        <div className="flex flex-col">

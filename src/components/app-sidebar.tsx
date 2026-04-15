@@ -33,7 +33,7 @@ const items = [
   { title: "Attendance", url: "/dashboard/attendance", icon: UserCheck },
   { title: "Payroll Policies", url: "/dashboard/payroll-policies", icon: UserCheck },
   { title: "Attendance Policies", url: "/dashboard/attendance-policies", icon: UserCheck },
-  { title: "Roaster", url: "/dashboard/roaster", icon: UserCheck },
+  { title: "Roster", url: "/dashboard/roaster", icon: UserCheck },
   { title: "Leave Management", url: "/dashboard/leave-management", icon: CalendarX },
   { title: "Recruitment", url: "/dashboard/recruitment", icon: Search },
   { title: "Asset Tracking", url: "/dashboard/asset-tracking", icon: Search },

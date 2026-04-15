@@ -4,7 +4,8 @@ import {
   RegisterEmployeeDto, 
   UpdateEmployeeDto, 
   EmployeeQueryParams,
-  Employee
+  Employee,
+  EmployeeDropdownResponse
 } from '@/types/employee';
 import { toast } from 'sonner';
 
@@ -20,6 +21,18 @@ export const employeeService = {
       return await apiClient.get<void, EmployeesResponse>('/user/get-all', { params });
     } catch (error: unknown) {
       toast.error('Failed to fetch employees');
+      throw error;
+    }
+  },
+
+  /**
+   * Get employee dropdown list
+   */
+  getDropdown: async (params?: EmployeeQueryParams): Promise<EmployeeDropdownResponse> => {
+    try {
+      return await apiClient.get<void, EmployeeDropdownResponse>('/user/get-dropdown', { params });
+    } catch (error: unknown) {
+      toast.error('Failed to fetch employee dropdown');
       throw error;
     }
   },

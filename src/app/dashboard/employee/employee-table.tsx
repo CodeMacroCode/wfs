@@ -72,8 +72,10 @@ export const getEmployeeColumns = (
             header: "Emergency Contact",
             cell: ({ row }) => (
                 <div className="flex flex-col items-center text-center">
-                    <span className="text-sm text-slate-600 capitalize">{row.original.emergencyContact.name}</span>
-                    <span className="text-xs text-slate-400">{row.original.emergencyContact.phone}</span>
+                    <span className="text-sm text-slate-600 capitalize">{row.original.emergencyContact?.name || "N/A"}</span>
+                    {row.original.emergencyContact?.phone && (
+                        <span className="text-xs text-slate-400">{row.original.emergencyContact.phone}</span>
+                    )}
                 </div>
             )
         },
@@ -176,7 +178,7 @@ export const getEmployeeColumns = (
                                 variant="ghost"
                                 size="icon-sm"
                                 className="text-slate-400 hover:text-destructive hover:bg-destructive/5 rounded-full h-8 w-8 p-0"
-                                onClick={() => onDelete(employee.id)}
+                                onClick={() => onDelete(employee.id || employee._id || "")}
                             >
                                 <Trash2 className="h-4 w-4" />
                             </Button>

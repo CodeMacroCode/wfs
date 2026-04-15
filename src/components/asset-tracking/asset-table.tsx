@@ -14,6 +14,8 @@ interface AssetTableProps {
   isLoading?: boolean
   onEdit: (asset: Asset) => void
   onDelete: (id: string) => void
+  searchValue: string
+  onSearchChange: (value: string) => void
 }
 
 const isMaintenanceDueSoon = (dateStr: string) => {
@@ -51,16 +53,28 @@ export const getAssetColumns = (
     {
       accessorKey: "issuedTo",
       header: "Issued To",
-      cell: ({ row }) => (
-        <span className="text-sm text-slate-600 font-medium">{row.original.issuedTo}</span>
-      ),
+      cell: ({ row }) => {
+        const issuedTo = row.original.issuedTo
+        const displayName = typeof issuedTo === "object" && issuedTo !== null 
+          ? issuedTo.name 
+          : issuedTo
+        
+        return (
+          <span className="text-sm text-slate-600 font-medium">{displayName}</span>
+        )
+      },
     },
     {
-      accessorKey: "issueDate",
+      accessorKey: "issuedDate",
       header: "Issued On",
-      cell: ({ row }) => (
-        <span className="text-sm text-slate-500">{row.original.issueDate}</span>
-      ),
+      cell: ({ row }) => {
+        const date = row.original.issuedDate
+        return (
+          <span className="text-sm text-slate-500">
+            {date ? new Date(date).toLocaleDateString() : "-"}
+          </span>
+        )
+      },
     },
     {
       accessorKey: "status",
@@ -84,11 +98,11 @@ export const getAssetColumns = (
       },
     },
     {
-      accessorKey: "nextMaintenanceDate",
+      accessorKey: "maintenanceDueDate",
       header: "Next Maint.",
       cell: ({ row }) => {
-        const date = row.original.nextMaintenanceDate
-        const isDueSoon = isMaintenanceDueSoon(date)
+        const date = row.original.maintenanceDueDate
+        const isDueSoon = date ? isMaintenanceDueSoon(date) : false
 
         return (
           <div className={cn(
@@ -96,7 +110,7 @@ export const getAssetColumns = (
             isDueSoon ? "text-orange-600 font-bold" : "text-slate-500"
           )}>
             <Clock className={cn("h-3.5 w-3.5", isDueSoon && "animate-pulse")} />
-            {date}
+            {date ? new Date(date).toLocaleDateString() : "-"}
             {isDueSoon && <AlertTriangle className="h-4 w-4 text-orange-500" />}
           </div>
         )
@@ -138,6 +152,8 @@ export function AssetTable({
   isLoading = false,
   onEdit,
   onDelete,
+  searchValue,
+  onSearchChange,
 }: AssetTableProps) {
   const columns = React.useMemo(
     () => getAssetColumns(onEdit, onDelete),
@@ -156,8 +172,8 @@ export function AssetTable({
       onSortingChange={() => {}}
       searchKey="name"
       searchPlaceholder="Search asset name or SN..."
-      searchValue=""
-      onSearchChange={() => {}}
+      searchValue={searchValue}
+      onSearchChange={onSearchChange}
       showSrNo={true}
     />
   )

@@ -1,9 +1,12 @@
 "use client";
 
-import { useForm, useFieldArray, type Resolver } from "react-hook-form";
+import React, { useState, useEffect } from "react";
+import { useForm, useFieldArray, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import {
   Form,
   FormControl,
@@ -23,8 +26,12 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { RegisterEmployeeDto } from "@/types/employee";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Calendar as CalendarIcon } from "lucide-react";
+import { format, parseISO } from "date-fns";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { authStorage } from "@/lib/auth";
+import { cn } from "@/lib/utils";
 
 const familyMemberSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -54,7 +61,6 @@ export interface EmployeeFormValues {
   role: "user" | "hr" | "admin";
   uniqueId: number;
   otherName?: string;
-  category?: string;
   gender: "male" | "female" | "other";
   fatherName: string;
   motherName: string;
@@ -97,7 +103,7 @@ export interface EmployeeFormValues {
   createdBy?: string;
 }
 
-const formSchema: z.ZodType<EmployeeFormValues, z.ZodType, any> = z.object({
+const formSchema: z.ZodType<EmployeeFormValues> = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
   password: z
@@ -107,7 +113,6 @@ const formSchema: z.ZodType<EmployeeFormValues, z.ZodType, any> = z.object({
   role: z.enum(["user", "hr", "admin"]),
   uniqueId: z.coerce.number().min(1, "Unique ID is required"),
   otherName: z.string().optional(),
-  category: z.string().optional(),
   gender: z.enum(["male", "female", "other"]),
   fatherName: z.string().min(1, "Father's name is required"),
   motherName: z.string().min(1, "Mother's name is required"),
@@ -117,7 +122,7 @@ const formSchema: z.ZodType<EmployeeFormValues, z.ZodType, any> = z.object({
   bloodGroup: z.string().min(1, "Blood Group is required"),
   emergencyContact: z.object({
     name: z.string().min(1, "Name is required"),
-    phone: z.string().min(1, "Phone is required"),
+    phone: z.string().length(10, "Phone must be exactly 10 digits").regex(/^\d+$/, "Phone must contain only digits"),
     relation: z.string().min(1, "Relation is required"),
   }),
   reference: z.string().optional(),
@@ -128,10 +133,9 @@ const formSchema: z.ZodType<EmployeeFormValues, z.ZodType, any> = z.object({
   pfNo: z.string().optional(),
   esiNo: z.string().optional(),
   doj: z.string().min(1, "D.O.J is required"),
-  doe: z.string().optional().nullable(),
   permanentAddress: z.string().min(1, "Permanent address is required"),
   currentAddress: z.string().min(1, "Current address is required"),
-  mobileNo: z.string().min(1, "Mobile No is required"),
+  mobileNo: z.string().length(10, "Mobile No must be exactly 10 digits").regex(/^\d+$/, "Mobile No must contain only digits"),
   createdBy: z.string().optional(),
 });
 
@@ -159,7 +163,6 @@ export function EmployeeForm({
       role: initialValues?.role || "user",
       uniqueId: initialValues?.uniqueId || 0,
       otherName: initialValues?.otherName || "",
-      category: initialValues?.category || "",
       gender: (initialValues?.gender?.toLowerCase() as "male" | "female" | "other") || "male",
       fatherName: initialValues?.fatherName || "",
       motherName: initialValues?.motherName || "",
@@ -180,13 +183,24 @@ export function EmployeeForm({
       pfNo: initialValues?.pfNo || "",
       esiNo: initialValues?.esiNo || "",
       doj: initialValues?.doj || "",
-      doe: initialValues?.doe || null,
       permanentAddress: initialValues?.permanentAddress || "",
       currentAddress: initialValues?.currentAddress || "",
       mobileNo: initialValues?.mobileNo || "",
       createdBy: initialValues?.createdBy || user?.id || "",
     },
   });
+
+  const currentAddress = useWatch({
+    control: form.control,
+    name: "currentAddress",
+  });
+  const [sameAsCurrent, setSameAsCurrent] = useState(false);
+
+  useEffect(() => {
+    if (sameAsCurrent) {
+      form.setValue("permanentAddress", currentAddress, { shouldValidate: true });
+    }
+  }, [sameAsCurrent, currentAddress, form]);
 
   const { fields: academicFields, append: appendAcademic, remove: removeAcademic } = useFieldArray({
     control: form.control,
@@ -226,7 +240,7 @@ export function EmployeeForm({
                   name="uniqueId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Unique ID (Manual)</FormLabel>
+                      <FormLabel>Unique ID (From Punch Machine)</FormLabel>
                       <FormControl>
                         <Input type="number" placeholder="1001" {...field} />
                       </FormControl>
@@ -251,24 +265,39 @@ export function EmployeeForm({
                   control={form.control}
                   name="doj"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>D.O.J (Joining)</FormLabel>
-                      <FormControl>
-                        <Input type="date" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="doe"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>D.O.E (Exit)</FormLabel>
-                      <FormControl>
-                        <Input type="date" value={field.value || ""} onChange={field.onChange} />
-                      </FormControl>
+                    <FormItem className="flex flex-col">
+                      <FormLabel className="mb-2">D.O.J (Joining)</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant={"outline"}
+                              className={cn(
+                                "w-full pl-3 text-left font-normal h-9 rounded-lg border-input bg-background/50 hover:bg-white transition-colors",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value ? (
+                                format(parseISO(field.value), "PPP")
+                              ) : (
+                                <span>Pick joining date</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 text-slate-400" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            captionLayout="dropdown"
+                            selected={field.value ? parseISO(field.value) : undefined}
+                            onSelect={(date) => field.onChange(date ? format(date, "yyyy-MM-dd") : "")}
+                            startMonth={new Date(2000, 0)}
+                            endMonth={new Date(new Date().getFullYear() + 10, 0)}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -402,11 +431,42 @@ export function EmployeeForm({
                   control={form.control}
                   name="dob"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Date of Birth</FormLabel>
-                      <FormControl>
-                        <Input type="date" {...field} />
-                      </FormControl>
+                    <FormItem className="flex flex-col">
+                      <FormLabel className="mb-2">Date of Birth</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant={"outline"}
+                              className={cn(
+                                "w-full pl-3 text-left font-normal h-9 rounded-lg border-input bg-background/50 hover:bg-white transition-colors",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value ? (
+                                format(parseISO(field.value), "PPP")
+                              ) : (
+                                <span>Pick birth date</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 text-slate-400" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            captionLayout="dropdown"
+                            selected={field.value ? parseISO(field.value) : undefined}
+                            onSelect={(date) => field.onChange(date ? format(date, "yyyy-MM-dd") : "")}
+                            disabled={(date) =>
+                              date > new Date() || date < new Date("1900-01-01")
+                            }
+                            startMonth={new Date(1900, 0)}
+                            endMonth={new Date()}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -419,19 +479,6 @@ export function EmployeeForm({
                       <FormLabel>Blood Group</FormLabel>
                       <FormControl>
                         <Input placeholder="O+" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="category"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Category</FormLabel>
-                      <FormControl>
-                        <Input placeholder="General/OBC/etc" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -507,7 +554,7 @@ export function EmployeeForm({
                     <FormItem>
                       <FormLabel>Mobile No</FormLabel>
                       <FormControl>
-                        <Input placeholder="9876543210" {...field} />
+                        <Input placeholder="9876543210" {...field} maxLength={10} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -533,7 +580,7 @@ export function EmployeeForm({
                     <FormItem>
                       <FormLabel>Emergency Contact Phone</FormLabel>
                       <FormControl>
-                        <Input placeholder="Phone Number" {...field} />
+                        <Input placeholder="Phone Number" {...field} maxLength={10} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -631,6 +678,16 @@ export function EmployeeForm({
                   </FormItem>
                 )}
               />
+              <div className="flex items-center space-x-2 my-2">
+                <Checkbox 
+                  id="same-as-current" 
+                  checked={sameAsCurrent} 
+                  onCheckedChange={(checked) => setSameAsCurrent(!!checked)} 
+                />
+                <Label htmlFor="same-as-current" className="text-xs text-slate-500 font-medium cursor-pointer">
+                  Same as current address
+                </Label>
+              </div>
               <FormField
                 control={form.control}
                 name="permanentAddress"
@@ -638,7 +695,7 @@ export function EmployeeForm({
                   <FormItem>
                     <FormLabel>Permanent Address</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input {...field} disabled={sameAsCurrent} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

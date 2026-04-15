@@ -57,7 +57,7 @@ export function EditEmployeeDialog({ employee, open, onOpenChange }: EditEmploye
 
   const onSubmit = (data: RegisterEmployeeDto) => {
     update(
-      { id: employee.id, data },
+      { id: employee.id || employee._id || "", data },
       {
         onSuccess: () => onOpenChange(false),
       }

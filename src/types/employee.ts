@@ -36,7 +36,6 @@ export interface Employee {
   uniqueId: number;
   password?: string;
   otherName?: string;
-  category?: string;
   gender: "male" | "female" | "other";
   fatherName: string;
   motherName: string;
@@ -56,7 +55,6 @@ export interface Employee {
   pfNo?: string;
   esiNo?: string;
   doj: string;
-  doe?: string | null;
   permanentAddress: string;
   currentAddress: string;
   mobileNo: string;
@@ -91,4 +89,15 @@ export interface EmployeeQueryParams {
   sort?: string;
   order?: "asc" | "desc";
   search?: string;
+}
+
+export interface EmployeeDropdownItem {
+  _id: string;
+  name: string;
+}
+
+export interface EmployeeDropdownResponse {
+  success: boolean;
+  data: EmployeeDropdownItem[];
+  pagination: PaginationInfo;
 }

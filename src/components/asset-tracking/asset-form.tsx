@@ -22,15 +22,20 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { CreateAssetDto } from "@/types/asset"
+import { Employee } from "@/types/employee"
+
+import { Textarea } from "@/components/ui/textarea"
+import { EmployeeSelect } from "@/components/employee/employee-select"
 
 const formSchema = z.object({
   name: z.string().min(2, "Asset name is required"),
-  type: z.enum(["Laptop", "Safety Gear", "Specialized Tool", "Uniform", "Mobile Device", "Other"] as const),
+  type: z.enum(["Laptop", "Safety Gear", "Specialized Tool", "Uniform", "Mobile Device", "Electronics", "Other"] as const),
   serialNumber: z.string().min(2, "Serial number is required"),
-  issuedTo: z.string().min(2, "Employee name is required"),
-  issueDate: z.string().min(1, "Issue date is required"),
+  issuedTo: z.string().min(1, "Employee is required"),
+  issuedDate: z.string().min(1, "Issue date is required"),
   status: z.enum(["Issued", "Returned", "Under Maintenance", "Damaged"] as const),
-  nextMaintenanceDate: z.string().min(1, "Maintenance date is required"),
+  maintenanceDueDate: z.string().min(1, "Maintenance date is required"),
+  extraNote: z.string().optional(),
 })
 
 interface AssetFormProps {
@@ -52,10 +57,13 @@ export function AssetForm({
     name: initialValues?.name || "",
     type: initialValues?.type || "Other",
     serialNumber: initialValues?.serialNumber || "",
-    issuedTo: initialValues?.issuedTo || "",
-    issueDate: initialValues?.issueDate || new Date(now).toISOString().split('T')[0],
+    issuedTo: typeof initialValues?.issuedTo === "object" && initialValues.issuedTo !== null
+      ? (initialValues.issuedTo as Employee)._id || (initialValues.issuedTo as Employee).id || ""
+      : initialValues?.issuedTo || "",
+    issuedDate: initialValues?.issuedDate ? initialValues.issuedDate.split('T')[0] : new Date(now).toISOString().split('T')[0],
     status: initialValues?.status || "Issued",
-    nextMaintenanceDate: initialValues?.nextMaintenanceDate || new Date(now + 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    maintenanceDueDate: initialValues?.maintenanceDueDate ? initialValues.maintenanceDueDate.split('T')[0] : new Date(now + 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    extraNote: initialValues?.extraNote || "",
   }), [initialValues, now])
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -63,9 +71,26 @@ export function AssetForm({
     defaultValues,
   })
 
+  // Re-sync form if initialValues change (important for edit mode)
+  React.useEffect(() => {
+    if (initialValues) {
+      form.reset(defaultValues)
+    }
+  }, [initialValues, defaultValues, form])
+
+  const handleSubmit = (data: z.infer<typeof formSchema>) => {
+    // Convert dates to ISO format for backend if needed
+    const payload = {
+      ...data,
+      issuedDate: new Date(data.issuedDate).toISOString(),
+      maintenanceDueDate: new Date(data.maintenanceDueDate).toISOString(),
+    }
+    onSubmit(payload)
+  }
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
@@ -86,7 +111,7 @@ export function AssetForm({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Asset Type</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select type" />
@@ -98,6 +123,7 @@ export function AssetForm({
                     <SelectItem value="Specialized Tool">Specialized Tool</SelectItem>
                     <SelectItem value="Uniform">Uniform</SelectItem>
                     <SelectItem value="Mobile Device">Mobile Device</SelectItem>
+                    <SelectItem value="Electronics">Electronics</SelectItem>
                     <SelectItem value="Other">Other</SelectItem>
                   </SelectContent>
                 </Select>
@@ -128,7 +154,10 @@ export function AssetForm({
               <FormItem>
                 <FormLabel>Issued To (Employee)</FormLabel>
                 <FormControl>
-                  <Input placeholder="John Doe" {...field} />
+                  <EmployeeSelect 
+                    value={field.value} 
+                    onValueChange={(val) => field.onChange(val)} 
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -139,7 +168,7 @@ export function AssetForm({
         <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
-            name="issueDate"
+            name="issuedDate"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Issue Date</FormLabel>
@@ -156,7 +185,7 @@ export function AssetForm({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Current Status</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select status" />
@@ -177,12 +206,30 @@ export function AssetForm({
 
         <FormField
           control={form.control}
-          name="nextMaintenanceDate"
+          name="maintenanceDueDate"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Next Maintenance Due</FormLabel>
               <FormControl>
                 <Input type="date" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="extraNote"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Extra Note</FormLabel>
+              <FormControl>
+                <Textarea 
+                  placeholder="Additional details about the asset..." 
+                  className="resize-none" 
+                  {...field} 
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

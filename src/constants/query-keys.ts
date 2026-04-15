@@ -43,4 +43,9 @@ export const QUERY_KEYS = {
     all: ['rosters'] as const,
     list: () => [...QUERY_KEYS.rosters.all, 'list'] as const,
   },
+  assets: {
+    all: ['assets'] as const,
+    list: (params?: unknown) => [...QUERY_KEYS.assets.all, 'list', { params }] as const,
+    detail: (id: string) => [...QUERY_KEYS.assets.all, 'detail', id] as const,
+  },
 } as const;
