@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useForm, useFieldArray, useWatch } from "react-hook-form";
+import { useForm, useFieldArray, useWatch, Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
@@ -54,56 +54,7 @@ const workExperienceSchema = z.object({
   _id: z.string().optional(),
 });
 
-export interface EmployeeFormValues {
-  name: string;
-  email: string;
-  password?: string;
-  role: "user" | "hr" | "admin";
-  uniqueId: number;
-  otherName?: string;
-  gender: "male" | "female" | "other";
-  fatherName: string;
-  motherName: string;
-  maritalStatus: "single" | "married" | "divorced" | "widowed";
-  familyDetails?: Array<{
-    name: string;
-    relation: string;
-    age: number;
-    _id?: string;
-  }>;
-  dob: string;
-  bloodGroup: string;
-  emergencyContact: {
-    name: string;
-    phone: string;
-    relation: string;
-  };
-  reference?: string;
-  academicQualification?: Array<{
-    degree: string;
-    institute: string;
-    year: string;
-    _id?: string;
-  }>;
-  previousWorkExperience?: Array<{
-    company: string;
-    role: string;
-    years: string;
-    _id?: string;
-  }>;
-  designation: string;
-  aadharNo: string;
-  pfNo?: string;
-  esiNo?: string;
-  doj: string;
-  doe?: string | null;
-  permanentAddress: string;
-  currentAddress: string;
-  mobileNo: string;
-  createdBy?: string;
-}
-
-const formSchema: z.ZodType<EmployeeFormValues> = z.object({
+const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
   password: z
@@ -111,7 +62,7 @@ const formSchema: z.ZodType<EmployeeFormValues> = z.object({
     .min(6, "Password must be at least 6 characters")
     .optional(),
   role: z.enum(["user", "hr", "admin"]),
-  uniqueId: z.coerce.number().min(1, "Unique ID is required"),
+  uniqueId: z.preprocess((val) => Number(val), z.number().min(1, "Unique ID is required")),
   otherName: z.string().optional(),
   gender: z.enum(["male", "female", "other"]),
   fatherName: z.string().min(1, "Father's name is required"),
@@ -133,11 +84,14 @@ const formSchema: z.ZodType<EmployeeFormValues> = z.object({
   pfNo: z.string().optional(),
   esiNo: z.string().optional(),
   doj: z.string().min(1, "D.O.J is required"),
+  doe: z.string().optional().nullable(),
   permanentAddress: z.string().min(1, "Permanent address is required"),
   currentAddress: z.string().min(1, "Current address is required"),
   mobileNo: z.string().length(10, "Mobile No must be exactly 10 digits").regex(/^\d+$/, "Mobile No must contain only digits"),
   createdBy: z.string().optional(),
 });
+
+export type EmployeeFormValues = z.infer<typeof formSchema>;
 
 interface EmployeeFormProps {
   initialValues?: Partial<RegisterEmployeeDto>;
@@ -155,7 +109,7 @@ export function EmployeeForm({
   const user = authStorage.getUser();
 
   const form = useForm<EmployeeFormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(formSchema) as Resolver<EmployeeFormValues>,
     defaultValues: {
       name: initialValues?.name || "",
       email: initialValues?.email || "",
