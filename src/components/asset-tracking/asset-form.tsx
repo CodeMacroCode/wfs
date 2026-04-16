@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { Button } from "@/components/ui/button"
@@ -27,16 +27,27 @@ import { Employee } from "@/types/employee"
 import { Textarea } from "@/components/ui/textarea"
 import { EmployeeSelect } from "@/components/employee/employee-select"
 
+const PREDEFINED_TYPES = ["Laptop", "Safety Gear", "Specialized Tool", "Uniform", "Mobile Device", "Electronics"];
+
 const formSchema = z.object({
   name: z.string().min(2, "Asset name is required"),
-  type: z.enum(["Laptop", "Safety Gear", "Specialized Tool", "Uniform", "Mobile Device", "Electronics", "Other"] as const),
+  type: z.string().min(1, "Asset type is required"),
+  otherType: z.string().optional(),
   serialNumber: z.string().min(2, "Serial number is required"),
   issuedTo: z.string().min(1, "Employee is required"),
   issuedDate: z.string().min(1, "Issue date is required"),
   status: z.enum(["Issued", "Returned", "Under Maintenance", "Damaged"] as const),
   maintenanceDueDate: z.string().min(1, "Maintenance date is required"),
   extraNote: z.string().optional(),
-})
+}).refine((data) => {
+  if (data.type === "Other" && (!data.otherType || data.otherType.trim() === "")) {
+    return false;
+  }
+  return true;
+}, {
+  message: "Please specify the other asset type",
+  path: ["otherType"]
+});
 
 interface AssetFormProps {
   initialValues?: Partial<CreateAssetDto>
@@ -53,22 +64,33 @@ export function AssetForm({
 }: AssetFormProps) {
   const [now] = React.useState(() => Date.now())
 
-  const defaultValues = React.useMemo(() => ({
-    name: initialValues?.name || "",
-    type: initialValues?.type || "Other",
-    serialNumber: initialValues?.serialNumber || "",
-    issuedTo: typeof initialValues?.issuedTo === "object" && initialValues.issuedTo !== null
-      ? (initialValues.issuedTo as Employee)._id || (initialValues.issuedTo as Employee).id || ""
-      : initialValues?.issuedTo || "",
-    issuedDate: initialValues?.issuedDate ? initialValues.issuedDate.split('T')[0] : new Date(now).toISOString().split('T')[0],
-    status: initialValues?.status || "Issued",
-    maintenanceDueDate: initialValues?.maintenanceDueDate ? initialValues.maintenanceDueDate.split('T')[0] : new Date(now + 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    extraNote: initialValues?.extraNote || "",
-  }), [initialValues, now])
+  const defaultValues = React.useMemo(() => {
+    const assetType = initialValues?.type || "Laptop";
+    const isPredefined = PREDEFINED_TYPES.includes(assetType as any);
+    
+    return {
+      name: initialValues?.name || "",
+      type: isPredefined ? assetType : "Other",
+      otherType: isPredefined ? "" : assetType,
+      serialNumber: initialValues?.serialNumber || "",
+      issuedTo: typeof initialValues?.issuedTo === "object" && initialValues.issuedTo !== null
+        ? (initialValues.issuedTo as Employee)._id || (initialValues.issuedTo as Employee).id || ""
+        : initialValues?.issuedTo || "",
+      issuedDate: initialValues?.issuedDate ? initialValues.issuedDate.split('T')[0] : new Date(now).toISOString().split('T')[0],
+      status: initialValues?.status || "Issued",
+      maintenanceDueDate: initialValues?.maintenanceDueDate ? initialValues.maintenanceDueDate.split('T')[0] : new Date(now + 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      extraNote: initialValues?.extraNote || "",
+    };
+  }, [initialValues, now])
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues,
+  })
+
+  const selectedType = useWatch({
+    control: form.control,
+    name: "type",
   })
 
   // Re-sync form if initialValues change (important for edit mode)
@@ -79,9 +101,16 @@ export function AssetForm({
   }, [initialValues, defaultValues, form])
 
   const handleSubmit = (data: z.infer<typeof formSchema>) => {
+    // Determine the actual type to send to backend
+    const actualType = data.type === "Other" ? data.otherType : data.type;
+    
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { otherType, ...restOfData } = data;
+
     // Convert dates to ISO format for backend if needed
     const payload = {
-      ...data,
+      ...restOfData,
+      type: actualType as any,
       issuedDate: new Date(data.issuedDate).toISOString(),
       maintenanceDueDate: new Date(data.maintenanceDueDate).toISOString(),
     }
@@ -118,12 +147,9 @@ export function AssetForm({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="Laptop">Laptop</SelectItem>
-                    <SelectItem value="Safety Gear">Safety Gear</SelectItem>
-                    <SelectItem value="Specialized Tool">Specialized Tool</SelectItem>
-                    <SelectItem value="Uniform">Uniform</SelectItem>
-                    <SelectItem value="Mobile Device">Mobile Device</SelectItem>
-                    <SelectItem value="Electronics">Electronics</SelectItem>
+                    {PREDEFINED_TYPES.map((type) => (
+                      <SelectItem key={type} value={type}>{type}</SelectItem>
+                    ))}
                     <SelectItem value="Other">Other</SelectItem>
                   </SelectContent>
                 </Select>
@@ -132,6 +158,22 @@ export function AssetForm({
             )}
           />
         </div>
+
+        {selectedType === "Other" && (
+          <FormField
+            control={form.control}
+            name="otherType"
+            render={({ field }) => (
+              <FormItem className="animate-in fade-in slide-in-from-top-2 duration-300">
+                <FormLabel>Specify Other Type</FormLabel>
+                <FormControl>
+                  <Input placeholder="E.g. Drone, Server, Furniture" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
 
         <div className="grid grid-cols-2 gap-4">
           <FormField

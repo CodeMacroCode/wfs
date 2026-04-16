@@ -1,6 +1,6 @@
 import { Employee } from "./employee";
 
-export type AssetType = "Laptop" | "Safety Gear" | "Specialized Tool" | "Uniform" | "Mobile Device" | "Electronics" | "Other";
+export type AssetType = "Laptop" | "Safety Gear" | "Specialized Tool" | "Uniform" | "Mobile Device" | "Electronics" | "Other" | (string & {});
 export type AssetStatus = "Issued" | "Returned" | "Under Maintenance" | "Damaged";
 
 export interface Asset {
