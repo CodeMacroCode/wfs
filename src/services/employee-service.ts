@@ -40,9 +40,9 @@ export const employeeService = {
   /**
    * Register a new employee
    */
-  register: async (data: RegisterEmployeeDto): Promise<void> => {
+  register: async (data: RegisterEmployeeDto | FormData): Promise<void> => {
     try {
-      await apiClient.post<RegisterEmployeeDto, void>('/user/register', data);
+      await apiClient.post<RegisterEmployeeDto | FormData, void>('/user/register', data);
       toast.success('Employee registered successfully');
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to register employee';
@@ -54,9 +54,9 @@ export const employeeService = {
   /**
    * Update an existing employee
    */
-  update: async (id: string, data: UpdateEmployeeDto): Promise<void> => {
+  update: async (id: string, data: UpdateEmployeeDto | FormData): Promise<void> => {
     try {
-      await apiClient.put<UpdateEmployeeDto, void>(`/user/update/${id}`, data);
+      await apiClient.put<UpdateEmployeeDto | FormData, void>(`/user/update/${id}`, data);
       toast.success('Employee updated successfully');
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to update employee';

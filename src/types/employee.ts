@@ -27,6 +27,13 @@ export interface WorkExperience {
   _id?: string;
 }
 
+export interface EmployeeDocument {
+  title: string;
+  url: string;
+  file?: File | null;
+  _id?: string;
+}
+
 export interface Employee {
   id: string;
   _id?: string;
@@ -49,7 +56,6 @@ export interface Employee {
   academicQualification: AcademicQualification[];
   previousWorkExperience?: WorkExperience[];
   interviewDate?: string;
-  competencyMet: boolean;
   designation: string;
   department?: string;
   aadharNo: string;
@@ -61,6 +67,7 @@ export interface Employee {
   mobileNo: string;
   attendancePolicyId?: string;
   payrollPolicyId?: string;
+  documents?: EmployeeDocument[];
   createdBy?: string;
   remarks?: string;
   createdAt?: string;

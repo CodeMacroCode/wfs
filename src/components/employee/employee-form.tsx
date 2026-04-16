@@ -55,6 +55,13 @@ const workExperienceSchema = z.object({
   _id: z.string().optional(),
 });
 
+const documentSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  url: z.string().optional(),
+  file: z.any().optional(),
+  _id: z.string().optional(),
+});
+
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
@@ -91,6 +98,7 @@ const formSchema = z.object({
   currentAddress: z.string().min(1, "Current address is required"),
   mobileNo: z.string().length(10, "Mobile No must be exactly 10 digits").regex(/^\d+$/, "Mobile No must contain only digits"),
   remarks: z.string().optional(),
+  documents: z.array(documentSchema).optional(),
   createdBy: z.string().optional(),
 });
 
@@ -98,7 +106,7 @@ export type EmployeeFormValues = z.infer<typeof formSchema>;
 
 interface EmployeeFormProps {
   initialValues?: Partial<RegisterEmployeeDto>;
-  onSubmit: (data: RegisterEmployeeDto) => void;
+  onSubmit: (data: RegisterEmployeeDto | FormData) => void;
   isLoading?: boolean;
   isEdit?: boolean;
 }
@@ -145,6 +153,7 @@ export function EmployeeForm({
       currentAddress: initialValues?.currentAddress || "",
       mobileNo: initialValues?.mobileNo || "",
       remarks: initialValues?.remarks || "",
+      documents: initialValues?.documents || [],
       createdBy: initialValues?.createdBy || user?.id || "",
     },
   });
@@ -176,8 +185,56 @@ export function EmployeeForm({
     name: "familyDetails",
   });
 
-  const handleFormSubmit = (data: z.infer<typeof formSchema>) => {
-    onSubmit(data as RegisterEmployeeDto);
+  const { fields: documentFields, append: appendDocument, remove: removeDocument } = useFieldArray({
+    control: form.control,
+    name: "documents",
+  });
+
+  const handleFormSubmit = (values: z.infer<typeof formSchema>) => {
+    const formData = new FormData();
+
+    // Map all simple string/number fields to formData
+    Object.keys(values).forEach((key) => {
+      const value = (values as any)[key];
+      
+      // Skip fields that need special handling
+      if (
+        ['familyDetails', 'academicQualification', 'previousWorkExperience', 'emergencyContact', 'documents'].includes(key)
+      ) {
+        return;
+      }
+
+      if (value !== undefined && value !== null) {
+        formData.append(key, value.toString());
+      }
+    });
+
+    // Handle nested objects and simple arrays as JSON strings
+    formData.append('emergencyContact', JSON.stringify(values.emergencyContact));
+    if (values.familyDetails) formData.append('familyDetails', JSON.stringify(values.familyDetails));
+    if (values.academicQualification) formData.append('academicQualification', JSON.stringify(values.academicQualification));
+    if (values.previousWorkExperience) formData.append('previousWorkExperience', JSON.stringify(values.previousWorkExperience));
+
+    // Handle Documents and Files
+    if (values.documents && values.documents.length > 0) {
+      // First, we send the document metadata as a JSON string
+      const docMetadata = values.documents.map(doc => ({
+        title: doc.title,
+        url: doc.url,
+        _id: doc._id
+      }));
+      formData.append('documentsMetadata', JSON.stringify(docMetadata));
+
+      // Then, we append each file to the 'files' field
+      // The backend will likely match files by order or we can append indexed keys
+      values.documents.forEach((doc, index) => {
+        if (doc.file) {
+          formData.append('files', doc.file);
+        }
+      });
+    }
+
+    onSubmit(formData as any);
   };
 
   return (
@@ -825,6 +882,56 @@ export function EmployeeForm({
                     </FormItem>
                   )}
                 />
+              </div>
+
+              <div className="space-y-4 pt-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold text-slate-500 uppercase">Other Documents</h4>
+                  <Button type="button" variant="outline" size="sm" onClick={() => appendDocument({ title: "", url: "" })}>
+                    <Plus className="h-4 w-4 mr-2" /> Add Document
+                  </Button>
+                </div>
+                {documentFields.map((field, index) => (
+                  <div key={field.id} className="grid grid-cols-2 gap-4 p-4 border rounded-xl bg-slate-50/30">
+                    <FormField
+                      control={form.control}
+                      name={`documents.${index}.title`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-[10px]">Document Title</FormLabel>
+                          <FormControl><Input placeholder="e.g. Voter ID, Passport" {...field} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <div className="flex gap-2 items-end">
+                      <FormField
+                        control={form.control}
+                        name={`documents.${index}.file`}
+                        render={({ field: { value, onChange, ...fieldProps } }) => (
+                          <FormItem className="flex-1">
+                            <FormLabel className="text-[10px]">Upload Document</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="file" 
+                                className="h-9 cursor-pointer file:bg-slate-100 file:border-0 file:rounded-md file:text-[10px] file:font-bold hover:file:bg-slate-200"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) onChange(file);
+                                }}
+                                {...fieldProps}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <Button variant="ghost" size="icon" className="text-rose-500" onClick={() => removeDocument(index)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
               </div>
 
               <FormField

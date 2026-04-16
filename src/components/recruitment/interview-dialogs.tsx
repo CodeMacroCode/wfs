@@ -79,9 +79,10 @@ interface OnboardEmployeeDialogProps {
 export function OnboardEmployeeDialog({ interview, open, onOpenChange }: OnboardEmployeeDialogProps) {
   if (!interview) return null
 
-  const onSubmit = (data: RegisterEmployeeDto) => {
+  const onSubmit = (data: RegisterEmployeeDto | FormData) => {
     console.log("Onboarding data:", data)
-    toast.success(`${data.name} has been onboarded to Labor Directory!`)
+    const name = data instanceof FormData ? data.get("name") : data.name
+    toast.success(`${name} has been onboarded to Labor Directory!`)
     onOpenChange(false)
   }
 
@@ -101,7 +102,6 @@ export function OnboardEmployeeDialog({ interview, open, onOpenChange }: Onboard
             mobileNo: interview.contact,
             designation: interview.position,
             interviewDate: interview.interviewDate,
-            competencyMet: true,
             role: "user",
           }}
           onSubmit={onSubmit}

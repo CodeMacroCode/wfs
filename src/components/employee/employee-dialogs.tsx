@@ -21,7 +21,7 @@ export function RegisterEmployeeDialog() {
   const [open, setOpen] = React.useState(false)
   const { mutate: register, isPending } = useRegisterEmployeeMutation()
 
-  const onSubmit = (data: RegisterEmployeeDto) => {
+  const onSubmit = (data: RegisterEmployeeDto | FormData) => {
     register(data, {
       onSuccess: () => setOpen(false),
     })
@@ -55,7 +55,7 @@ export function EditEmployeeDialog({ employee, open, onOpenChange }: EditEmploye
 
   if (!employee) return null
 
-  const onSubmit = (data: RegisterEmployeeDto) => {
+  const onSubmit = (data: RegisterEmployeeDto | FormData) => {
     update(
       { id: employee.id || employee._id || "", data },
       {

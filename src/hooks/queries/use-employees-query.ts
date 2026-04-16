@@ -68,7 +68,7 @@ export function useRegisterEmployeeMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: RegisterEmployeeDto) => employeeService.register(data),
+    mutationFn: (data: RegisterEmployeeDto | FormData) => employeeService.register(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.users.all });
     },
@@ -82,7 +82,7 @@ export function useUpdateEmployeeMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdateEmployeeDto }) =>
+    mutationFn: ({ id, data }: { id: string; data: UpdateEmployeeDto | FormData }) =>
       employeeService.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.users.all });
