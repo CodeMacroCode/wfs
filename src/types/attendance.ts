@@ -21,6 +21,7 @@ export interface Attendance {
   overtimeHours: number;
   overtimePay: number;
   uniqueId: number;
+  isManual: boolean;
   createdAt: string;
   updatedAt: string;
   __v: number;

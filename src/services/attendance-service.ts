@@ -21,6 +21,20 @@ export const attendanceService = {
   },
 
   /**
+   * Get attendance for a specific user filtered by month and year
+   */
+  getMonthlyAttendance: async (userId: string, month: string, year: string): Promise<AttendanceResponse> => {
+    try {
+      return await apiClient.get<void, AttendanceResponse>('/attendance', {
+        params: { userId, month, year, limit: 100 } // Fetch more to cover a month
+      });
+    } catch (error: unknown) {
+      toast.error('Failed to fetch monthly attendance');
+      throw error;
+    }
+  },
+
+  /**
    * Upload attendance file
    * @param file - The file to upload
    */

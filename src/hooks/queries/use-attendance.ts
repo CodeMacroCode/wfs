@@ -11,3 +11,14 @@ export function useAttendanceQuery(page: number = 1, limit: number = 10) {
     queryFn: () => attendanceService.getAll(page, limit),
   });
 }
+
+/**
+ * Hook to fetch monthly attendance for a specific user
+ */
+export function useMonthlyAttendanceQuery(userId: string, month: string, year: string) {
+  return useQuery({
+    queryKey: [...QUERY_KEYS.attendance.list(), 'monthly', { userId, month, year }],
+    queryFn: () => attendanceService.getMonthlyAttendance(userId, month, year),
+    enabled: !!userId && !!month && !!year,
+  });
+}

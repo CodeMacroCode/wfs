@@ -2,10 +2,10 @@
 
 import * as React from "react"
 import { ColumnDef, PaginationState, SortingState } from "@tanstack/react-table"
+import { useRouter } from "next/navigation"
 import { DataTable } from "@/components/ui/data-table"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Edit, Trash2 } from "lucide-react"
+import { Edit, Trash2, Eye } from "lucide-react"
 import { Employee } from "@/types/employee"
 import { format } from "date-fns"
 
@@ -21,11 +21,13 @@ interface EmployeeTableProps {
     onSearchChange: (value: string) => void
     onEdit: (employee: Employee) => void
     onDelete: (id: string) => void
+    onView?: (employee: Employee) => void
 }
 
 export const getEmployeeColumns = (
     onEdit?: (employee: Employee) => void,
     onDelete?: (id: string) => void,
+    onView?: (employee: Employee) => void,
 ): ColumnDef<Employee>[] => {
     const cols: ColumnDef<Employee>[] = [
         {
@@ -80,16 +82,6 @@ export const getEmployeeColumns = (
             )
         },
         {
-            accessorKey: "gender",
-            header: "Gender / Blood",
-            cell: ({ row }) => (
-                <div className="flex flex-col items-center text-center">
-                    <span className="text-sm text-slate-600 capitalize">{row.original.gender}</span>
-                    <span className="text-[10px] font-bold text-rose-500">{row.original.bloodGroup}</span>
-                </div>
-            ),
-        },
-        {
             accessorKey: "doj",
             header: "Joining Date",
             cell: ({ row }) => (
@@ -100,61 +92,9 @@ export const getEmployeeColumns = (
                 </div>
             ),
         },
-        {
-            accessorKey: "role",
-            header: "Role",
-            cell: ({ row }) => {
-                const role = row.original.role
-                const variant =
-                    role === "admin"
-                        ? "destructive"
-                        : role === "hr"
-                            ? "secondary"
-                            : "outline"
-
-                return (
-                    <div className="flex items-center justify-center">
-                        <Badge variant={variant} className="capitalize rounded-full px-3 py-0 text-[10px]">
-                            {role.toLowerCase().replace("_", " ")}
-                        </Badge>
-                    </div>
-                )
-            },
-        },
-        {
-            accessorKey: "academicQualification",
-            header: "Academic Qualification",
-            cell: ({ row }) => {
-                const qualifications = row.original.academicQualification
-                if (!qualifications || qualifications.length === 0) {
-                    return <span className="text-sm text-slate-400">N/A</span>
-                }
-                return (
-                    <div className="flex flex-col items-center text-center">
-                        {qualifications.map((q, index) => (
-                            <div key={index} className="flex flex-col">
-                                <span className="text-sm text-slate-600 font-medium">{q.degree}</span>
-                                <span className="text-[10px] text-slate-400">{q.institute} ({q.year})</span>
-                            </div>
-                        ))}
-                    </div>
-                )
-            }
-        },
-        {
-            accessorKey: "maritalStatus",
-            header: "Marital Status",
-            cell: ({ row }) => (
-                <div className="flex items-center justify-center">
-                    <span className="text-sm text-slate-600 capitalize">{row.original.maritalStatus}</span>
-                </div>
-            ),
-        }
-        
-        
     ]
 
-    if (onEdit || onDelete) {
+    if (onEdit || onDelete || onView) {
         cols.push({
             id: "actions",
             header: "Actions",
@@ -163,6 +103,16 @@ export const getEmployeeColumns = (
 
                 return (
                     <div className="flex items-center justify-center gap-2">
+                        {onView && (
+                            <Button
+                                variant="ghost"
+                                size="icon-sm"
+                                className="text-slate-400 hover:text-[#2eb88a] hover:bg-[#2eb88a]/5 rounded-full h-8 w-8 p-0"
+                                onClick={() => onView(employee)}
+                            >
+                                <Eye className="h-4 w-4" />
+                            </Button>
+                        )}
                         {onEdit && (
                             <Button
                                 variant="ghost"
@@ -204,10 +154,12 @@ export function EmployeeTable({
     onSearchChange,
     onEdit,
     onDelete,
+    onView,
 }: EmployeeTableProps) {
+    const router = useRouter()
     const columns = React.useMemo(
-        () => getEmployeeColumns(onEdit, onDelete),
-        [onEdit, onDelete]
+        () => getEmployeeColumns(onEdit, onDelete, onView || ((emp) => router.push(`/dashboard/employee/${emp.id || (emp as any)._id}`))),
+        [onEdit, onDelete, onView, router]
     )
 
     return (

@@ -68,6 +68,7 @@ export interface Employee {
   attendancePolicyId?: string;
   payrollPolicyId?: string;
   documents?: EmployeeDocument[];
+  profilePicture?: string | File | null;
   createdBy?: string;
   remarks?: string;
   createdAt?: string;

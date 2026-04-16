@@ -27,7 +27,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { RegisterEmployeeDto } from "@/types/employee";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, Calendar as CalendarIcon } from "lucide-react";
+import { Plus, Trash2, Calendar as CalendarIcon, User, Image as ImageIcon, Upload, X } from "lucide-react";
 import { format, parseISO, isValid } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -64,6 +64,7 @@ const documentSchema = z.object({
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
+  profilePicture: z.any().optional(),
   email: z.string().email("Invalid email address"),
   password: z
     .string()
@@ -125,6 +126,7 @@ export function EmployeeForm({
       name: initialValues?.name || "",
       email: initialValues?.email || "",
       password: initialValues?.password || (isEdit ? undefined : ""),
+      profilePicture: initialValues?.profilePicture || null,
       role: initialValues?.role || "user",
       uniqueId: initialValues?.uniqueId || 0,
       otherName: initialValues?.otherName || "",
@@ -190,18 +192,48 @@ export function EmployeeForm({
     name: "documents",
   });
 
+  const profilePicture = useWatch({
+    control: form.control,
+    name: "profilePicture",
+  });
+
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!profilePicture) {
+      setPreviewUrl(null);
+      return;
+    }
+
+    if (typeof profilePicture === 'string') {
+      setPreviewUrl(profilePicture);
+      return;
+    }
+
+    if (profilePicture instanceof File) {
+      const url = URL.createObjectURL(profilePicture);
+      setPreviewUrl(url);
+      return () => URL.revokeObjectURL(url);
+    }
+  }, [profilePicture]);
+
   const handleFormSubmit = (values: z.infer<typeof formSchema>) => {
     const formData = new FormData();
 
     // Map all simple string/number fields to formData
     Object.keys(values).forEach((key) => {
-      const value = (values as any)[key];
+      let value = (values as any)[key];
       
       // Skip fields that need special handling
       if (
-        ['familyDetails', 'academicQualification', 'previousWorkExperience', 'emergencyContact', 'documents'].includes(key)
+        ['familyDetails', 'academicQualification', 'previousWorkExperience', 'emergencyContact', 'documents', 'profilePicture'].includes(key)
       ) {
         return;
+      }
+
+      // Hardcode role to 'user' as requested
+      if (key === 'role') {
+        value = 'user';
       }
 
       if (value !== undefined && value !== null) {
@@ -214,6 +246,11 @@ export function EmployeeForm({
     if (values.familyDetails) formData.append('familyDetails', JSON.stringify(values.familyDetails));
     if (values.academicQualification) formData.append('academicQualification', JSON.stringify(values.academicQualification));
     if (values.previousWorkExperience) formData.append('previousWorkExperience', JSON.stringify(values.previousWorkExperience));
+
+    // Handle profile picture
+    if (values.profilePicture instanceof File) {
+      formData.append('profilePicture', values.profilePicture);
+    }
 
     // Handle Documents and Files
     if (values.documents && values.documents.length > 0) {
@@ -331,31 +368,6 @@ export function EmployeeForm({
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="role"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>System Role</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select role" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="user">User</SelectItem>
-                          <SelectItem value="hr">HR</SelectItem>
-                          <SelectItem value="admin">Admin</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <FormField
@@ -404,6 +416,70 @@ export function EmployeeForm({
               <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider bg-slate-50 p-2 rounded">
                 2. Personal Details
               </h3>
+              
+              <div className="flex flex-col items-center justify-center space-y-3 mb-4">
+                <FormField
+                  control={form.control}
+                  name="profilePicture"
+                  render={({ field: { value, onChange, ...fieldProps } }) => (
+                    <FormItem className="flex flex-col items-center">
+                      <FormControl>
+                        <div className="relative group cursor-pointer">
+                          <div className="w-24 h-24 rounded-full border-2 border-dashed border-slate-300 flex items-center justify-center overflow-hidden bg-slate-50 group-hover:border-primary transition-all duration-200 shadow-sm">
+                            {previewUrl ? (
+                              <img 
+                                src={previewUrl} 
+                                alt="Profile Preview" 
+                                className="w-full h-full object-cover" 
+                              />
+                            ) : (
+                              <div className="flex flex-col items-center text-slate-400 group-hover:text-primary transition-colors">
+                                <User className="w-8 h-8 mb-1" />
+                                <span className="text-[10px] font-medium">Upload</span>
+                              </div>
+                            )}
+                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Upload className="w-5 h-5 text-white" />
+                            </div>
+                          </div>
+                          <input 
+                            type="file" 
+                            accept="image/jpeg,image/jpg,image/png"
+                            className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                            style={{ fontSize: 0 }}
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              const allowed = ["image/jpeg", "image/jpg", "image/png"];
+                              if (!allowed.includes(file.type)) return;
+                              onChange(file);
+                            }}
+                            name={fieldProps.name}
+                            onBlur={fieldProps.onBlur}
+                            ref={fieldProps.ref}
+                          />
+                          {value && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                onChange(null);
+                              }}
+                              className="absolute -top-1 -right-1 bg-rose-500 text-white rounded-full p-1 shadow-lg hover:bg-rose-600 transition-colors z-10"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          )}
+                        </div>
+                      </FormControl>
+                      <FormLabel className="text-[11px] font-bold text-slate-500 mt-1 uppercase tracking-tight">Profile Photo</FormLabel>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
@@ -919,7 +995,9 @@ export function EmployeeForm({
                                   const file = e.target.files?.[0];
                                   if (file) onChange(file);
                                 }}
-                                {...fieldProps}
+                                name={fieldProps.name}
+                                onBlur={fieldProps.onBlur}
+                                ref={fieldProps.ref}
                               />
                             </FormControl>
                             <FormMessage />

@@ -11,12 +11,10 @@ import { DeleteEmployeeDialog } from "@/components/employee/delete-employee-dial
 import { DataTableExport } from "@/components/ui/data-table-export"
 import { employeeService } from "@/services/employee-service"
 import { EmployeeTable, getEmployeeColumns } from "./employee-table"
-import { EmployeeDetailDialog } from "@/components/employee/employee-detail-dialog"
 
 export default function EmployeeMaster() {
   const [editingEmployee, setEditingEmployee] = React.useState<Employee | null>(null)
   const [deletingEmployeeId, setDeletingEmployeeId] = React.useState<string | null>(null)
-  const [viewingEmployeeId, setViewingEmployeeId] = React.useState<string | null>(null)
 
   const {
     pagination,
@@ -75,12 +73,6 @@ export default function EmployeeMaster() {
         onSearchChange={onSearchChange}
         onEdit={setEditingEmployee}
         onDelete={setDeletingEmployeeId}
-      />
-
-      <EmployeeDetailDialog
-        employeeId={viewingEmployeeId}
-        open={!!viewingEmployeeId}
-        onOpenChange={(open) => !open && setViewingEmployeeId(null)}
       />
 
       <EditEmployeeDialog

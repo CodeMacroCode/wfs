@@ -22,6 +22,7 @@ import {
   Banknote,
   CalendarX,
   Search,
+  PaperclipIcon,
 } from "lucide-react"
 import Link from "next/link"
 import * as React from "react"
@@ -30,6 +31,7 @@ const items = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Calendar", url: "/dashboard/calendar", icon: Calendar },
   { title: "Employees", url: "/dashboard/employee", icon: Users },
+  { title: "Document Center", url: "/dashboard/document", icon: PaperclipIcon },
   { title: "Attendance", url: "/dashboard/attendance", icon: UserCheck },
   { title: "Payroll Policies", url: "/dashboard/payroll-policies", icon: UserCheck },
   { title: "Attendance Policies", url: "/dashboard/attendance-policies", icon: UserCheck },
