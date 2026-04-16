@@ -61,6 +61,7 @@ export interface Employee {
   attendancePolicyId?: string;
   payrollPolicyId?: string;
   createdBy?: string;
+  remarks?: string;
   createdAt?: string;
   updatedAt?: string;
 }

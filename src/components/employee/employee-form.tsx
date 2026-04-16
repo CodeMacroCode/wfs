@@ -26,6 +26,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { RegisterEmployeeDto } from "@/types/employee";
 import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
 import { Plus, Trash2, Calendar as CalendarIcon } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -88,6 +89,7 @@ const formSchema = z.object({
   permanentAddress: z.string().min(1, "Permanent address is required"),
   currentAddress: z.string().min(1, "Current address is required"),
   mobileNo: z.string().length(10, "Mobile No must be exactly 10 digits").regex(/^\d+$/, "Mobile No must contain only digits"),
+  remarks: z.string().optional(),
   createdBy: z.string().optional(),
 });
 
@@ -140,6 +142,7 @@ export function EmployeeForm({
       permanentAddress: initialValues?.permanentAddress || "",
       currentAddress: initialValues?.currentAddress || "",
       mobileNo: initialValues?.mobileNo || "",
+      remarks: initialValues?.remarks || "",
       createdBy: initialValues?.createdBy || user?.id || "",
     },
   });
@@ -808,6 +811,24 @@ export function EmployeeForm({
                   )}
                 />
               </div>
+
+              <FormField
+                control={form.control}
+                name="remarks"
+                render={({ field }) => (
+                  <FormItem className="mt-4">
+                    <FormLabel>Remarks</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Any additional notes about the employee..."
+                        className="resize-none"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
           </div>
         </ScrollArea>
