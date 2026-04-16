@@ -28,7 +28,7 @@ import { RegisterEmployeeDto } from "@/types/employee";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Trash2, Calendar as CalendarIcon } from "lucide-react";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, isValid } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { authStorage } from "@/lib/auth";
@@ -81,6 +81,7 @@ const formSchema = z.object({
   academicQualification: z.array(academicQualificationSchema).optional(),
   previousWorkExperience: z.array(workExperienceSchema).optional(),
   designation: z.string().min(1, "Designation is required"),
+  department: z.string().optional(),
   aadharNo: z.string().min(1, "Aadhar No is required"),
   pfNo: z.string().optional(),
   esiNo: z.string().optional(),
@@ -135,6 +136,7 @@ export function EmployeeForm({
       academicQualification: initialValues?.academicQualification || [{ degree: "", institute: "", year: "" }],
       previousWorkExperience: initialValues?.previousWorkExperience || [],
       designation: initialValues?.designation || "",
+      department: initialValues?.department || "",
       aadharNo: initialValues?.aadharNo || "",
       pfNo: initialValues?.pfNo || "",
       esiNo: initialValues?.esiNo || "",
@@ -220,6 +222,19 @@ export function EmployeeForm({
                 />
                 <FormField
                   control={form.control}
+                  name="department"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Department</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Engineering" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
                   name="doj"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
@@ -234,7 +249,7 @@ export function EmployeeForm({
                                 !field.value && "text-muted-foreground"
                               )}
                             >
-                              {field.value ? (
+                              {field.value && isValid(parseISO(field.value)) ? (
                                 format(parseISO(field.value), "PPP")
                               ) : (
                                 <span>Pick joining date</span>
@@ -247,7 +262,7 @@ export function EmployeeForm({
                           <Calendar
                             mode="single"
                             captionLayout="dropdown"
-                            selected={field.value ? parseISO(field.value) : undefined}
+                            selected={field.value && isValid(parseISO(field.value)) ? parseISO(field.value) : undefined}
                             onSelect={(date) => field.onChange(date ? format(date, "yyyy-MM-dd") : "")}
                             startMonth={new Date(2000, 0)}
                             endMonth={new Date(new Date().getFullYear() + 10, 0)}
@@ -400,7 +415,7 @@ export function EmployeeForm({
                                 !field.value && "text-muted-foreground"
                               )}
                             >
-                              {field.value ? (
+                              {field.value && isValid(parseISO(field.value)) ? (
                                 format(parseISO(field.value), "PPP")
                               ) : (
                                 <span>Pick birth date</span>
@@ -413,7 +428,7 @@ export function EmployeeForm({
                           <Calendar
                             mode="single"
                             captionLayout="dropdown"
-                            selected={field.value ? parseISO(field.value) : undefined}
+                            selected={field.value && isValid(parseISO(field.value)) ? parseISO(field.value) : undefined}
                             onSelect={(date) => field.onChange(date ? format(date, "yyyy-MM-dd") : "")}
                             disabled={(date) =>
                               date > new Date() || date < new Date("1900-01-01")

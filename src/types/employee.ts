@@ -51,6 +51,7 @@ export interface Employee {
   interviewDate?: string;
   competencyMet: boolean;
   designation: string;
+  department?: string;
   aadharNo: string;
   pfNo?: string;
   esiNo?: string;
