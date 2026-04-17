@@ -59,10 +59,11 @@ export default function EmployeeProfilePage() {
           
           <div className="min-h-[400px]">
             {activeTab === "overview" && <OverviewTab employee={employee} />}
+            {activeTab === "documents" && <DocumentsTab employee={employee} />}
             {activeTab === "i-card" && <DocumentsTab employee={employee} />}
             {activeTab === "attendance" && <AttendanceTab employeeId={employeeId} />}
             
-            {(activeTab !== "overview" && activeTab !== "i-card" && activeTab !== "attendance") && (
+            {(activeTab !== "overview" && activeTab !== "documents" && activeTab !== "i-card" && activeTab !== "attendance") && (
               <div className="flex flex-col items-center justify-center py-24 text-slate-300">
                 <div className="bg-slate-100 p-4 rounded-full mb-4">
                   <Loader2 className="w-8 h-8 animate-spin text-[#2eb88a]" />

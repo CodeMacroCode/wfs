@@ -19,15 +19,19 @@ interface EmployeeTableProps {
     onSortingChange: (sorting: SortingState) => void
     search: string
     onSearchChange: (value: string) => void
-    onEdit: (employee: Employee) => void
-    onDelete: (id: string) => void
+    onEdit?: (employee: Employee) => void
+    onDelete?: (id: string) => void
     onView?: (employee: Employee) => void
+    showActions?: boolean
+    hideSearch?: boolean
+    isDashboardView?: boolean
 }
 
 export const getEmployeeColumns = (
     onEdit?: (employee: Employee) => void,
     onDelete?: (id: string) => void,
     onView?: (employee: Employee) => void,
+    isDashboardView?: boolean,
 ): ColumnDef<Employee>[] => {
     const cols: ColumnDef<Employee>[] = [
         {
@@ -69,7 +73,10 @@ export const getEmployeeColumns = (
                 </div>
             ),
         },
-        {
+    ];
+
+    if (!isDashboardView) {
+        cols.push({
             accessorKey: "emergencyContact",
             header: "Emergency Contact",
             cell: ({ row }) => (
@@ -80,8 +87,8 @@ export const getEmployeeColumns = (
                     )}
                 </div>
             )
-        },
-        {
+        });
+        cols.push({
             accessorKey: "doj",
             header: "Joining Date",
             cell: ({ row }) => (
@@ -91,8 +98,8 @@ export const getEmployeeColumns = (
                     </span>
                 </div>
             ),
-        },
-    ]
+        });
+    }
 
     if (onEdit || onDelete || onView) {
         cols.push({
@@ -155,11 +162,26 @@ export function EmployeeTable({
     onEdit,
     onDelete,
     onView,
+    showActions,
+    hideSearch,
+    isDashboardView,
 }: EmployeeTableProps) {
     const router = useRouter()
+    
+    // Default onView redirect only if showActions is not explicitly false
+    const effectiveOnView = React.useMemo(() => {
+        if (showActions === false) return undefined
+        return onView || ((emp: Employee) => router.push(`/dashboard/employee/${emp.id || emp._id}`))
+    }, [onView, router, showActions])
+
     const columns = React.useMemo(
-        () => getEmployeeColumns(onEdit, onDelete, onView || ((emp) => router.push(`/dashboard/employee/${emp.id || (emp as any)._id}`))),
-        [onEdit, onDelete, onView, router]
+        () => getEmployeeColumns(
+            showActions === false ? undefined : onEdit, 
+            showActions === false ? undefined : onDelete, 
+            effectiveOnView,
+            isDashboardView
+        ),
+        [onEdit, onDelete, effectiveOnView, showActions, isDashboardView]
     )
 
     return (
@@ -177,6 +199,7 @@ export function EmployeeTable({
             searchValue={search}
             onSearchChange={onSearchChange}
             showSrNo={true}
+            hideSearch={hideSearch}
         />
     )
 }

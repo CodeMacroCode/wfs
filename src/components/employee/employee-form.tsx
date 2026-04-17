@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
+import Image from "next/image";
 import { useForm, useFieldArray, useWatch, Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -24,15 +25,25 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { RegisterEmployeeDto } from "@/types/employee";
+import { RegisterEmployeeDto, EmergencyContact } from "@/types/employee";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, Calendar as CalendarIcon, User, Image as ImageIcon, Upload, X } from "lucide-react";
+import { Plus, Trash2, Calendar as CalendarIcon, User, Upload, X } from "lucide-react";
 import { format, parseISO, isValid } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { authStorage } from "@/lib/auth";
 import { cn } from "@/lib/utils";
+import { useAttendancePoliciesQuery } from "@/hooks/queries/use-attendance-policies";
+import { usePayrollPoliciesQuery } from "@/hooks/queries/use-payroll-policies";
+import { useCompanyQuery } from "@/hooks/queries/use-company";
+import { useEmployeeIdDropdownQuery } from "@/hooks/queries/use-employees-query";
+
+const emergencyContactSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  relation: z.string().min(1, "Relation is required"),
+  phone: z.string().length(10, "Phone must be 10 digits").regex(/^\d+$/, "Phone must contain only digits"),
+});
 
 const familyMemberSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -64,15 +75,20 @@ const documentSchema = z.object({
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
-  profilePicture: z.any().optional(),
+  profileImage: z.any().optional(),
   email: z.string().email("Invalid email address"),
   password: z
     .string()
     .min(6, "Password must be at least 6 characters")
     .optional(),
   role: z.enum(["user", "hr", "admin"]),
-  uniqueId: z.preprocess((val) => Number(val), z.number().min(1, "Unique ID is required")),
+  uniqueId: z.string().optional(),      // punch machine employeeId string (e.g. "Tech-001")
+  employeeObjId: z.string().optional(), // _id of the selected employee-id record
+  companyId: z.string().optional(),
+  attendancePolicyId: z.string().optional(),
+  payrollPolicyId: z.string().optional(),
   otherName: z.string().optional(),
+  category: z.string().optional(),
   gender: z.enum(["male", "female", "other"]),
   fatherName: z.string().min(1, "Father's name is required"),
   motherName: z.string().min(1, "Mother's name is required"),
@@ -80,16 +96,13 @@ const formSchema = z.object({
   familyDetails: z.array(familyMemberSchema).optional(),
   dob: z.string().min(1, "D.O.B is required"),
   bloodGroup: z.string().min(1, "Blood Group is required"),
-  emergencyContact: z.object({
-    name: z.string().min(1, "Name is required"),
-    phone: z.string().length(10, "Phone must be exactly 10 digits").regex(/^\d+$/, "Phone must contain only digits"),
-    relation: z.string().min(1, "Relation is required"),
-  }),
+  emergencyContact: emergencyContactSchema.optional(),
   reference: z.string().optional(),
   academicQualification: z.array(academicQualificationSchema).optional(),
   previousWorkExperience: z.array(workExperienceSchema).optional(),
   designation: z.string().min(1, "Designation is required"),
   department: z.string().optional(),
+  workingHours: z.string().optional(),
   aadharNo: z.string().min(1, "Aadhar No is required"),
   pfNo: z.string().optional(),
   esiNo: z.string().optional(),
@@ -98,7 +111,7 @@ const formSchema = z.object({
   permanentAddress: z.string().min(1, "Permanent address is required"),
   currentAddress: z.string().min(1, "Current address is required"),
   mobileNo: z.string().length(10, "Mobile No must be exactly 10 digits").regex(/^\d+$/, "Mobile No must contain only digits"),
-  remarks: z.string().optional(),
+  notes: z.string().optional(),
   documents: z.array(documentSchema).optional(),
   createdBy: z.string().optional(),
 });
@@ -120,16 +133,26 @@ export function EmployeeForm({
 }: EmployeeFormProps) {
   const user = authStorage.getUser();
 
+  const { data: attendancePoliciesData } = useAttendancePoliciesQuery();
+  const { data: payrollPoliciesData } = usePayrollPoliciesQuery();
+  const { data: companyData } = useCompanyQuery({ limit: 100 });
+  const { data: employeeIdData } = useEmployeeIdDropdownQuery();
+
   const form = useForm<EmployeeFormValues>({
     resolver: zodResolver(formSchema) as Resolver<EmployeeFormValues>,
     defaultValues: {
       name: initialValues?.name || "",
       email: initialValues?.email || "",
       password: initialValues?.password || (isEdit ? undefined : ""),
-      profilePicture: initialValues?.profilePicture || null,
+      profileImage: initialValues?.profilePicture || null,
       role: initialValues?.role || "user",
-      uniqueId: initialValues?.uniqueId || 0,
+      uniqueId: initialValues?.uniqueId?.toString() || "",
+      employeeObjId: "",
+      companyId: initialValues?.companyId || "",
+      attendancePolicyId: initialValues?.attendancePolicyId || "",
+      payrollPolicyId: initialValues?.payrollPolicyId || "",
       otherName: initialValues?.otherName || "",
+      category: initialValues?.category || "",
       gender: (initialValues?.gender?.toLowerCase() as "male" | "female" | "other") || "male",
       fatherName: initialValues?.fatherName || "",
       motherName: initialValues?.motherName || "",
@@ -138,15 +161,16 @@ export function EmployeeForm({
       dob: initialValues?.dob || "",
       bloodGroup: initialValues?.bloodGroup || "",
       emergencyContact: {
-        name: initialValues?.emergencyContact?.name || "",
-        phone: initialValues?.emergencyContact?.phone || "",
-        relation: initialValues?.emergencyContact?.relation || "",
+        name: (initialValues?.emergencyContact as EmergencyContact)?.name || "",
+        relation: (initialValues?.emergencyContact as EmergencyContact)?.relation || "",
+        phone: (initialValues?.emergencyContact as EmergencyContact)?.phone || (typeof initialValues?.emergencyContact === 'string' ? initialValues?.emergencyContact : ""),
       },
       reference: initialValues?.reference || "",
       academicQualification: initialValues?.academicQualification || [{ degree: "", institute: "", year: "" }],
       previousWorkExperience: initialValues?.previousWorkExperience || [],
       designation: initialValues?.designation || "",
       department: initialValues?.department || "",
+      workingHours: initialValues?.workingHours || "",
       aadharNo: initialValues?.aadharNo || "",
       pfNo: initialValues?.pfNo || "",
       esiNo: initialValues?.esiNo || "",
@@ -154,16 +178,13 @@ export function EmployeeForm({
       permanentAddress: initialValues?.permanentAddress || "",
       currentAddress: initialValues?.currentAddress || "",
       mobileNo: initialValues?.mobileNo || "",
-      remarks: initialValues?.remarks || "",
+      notes: initialValues?.notes || "",
       documents: initialValues?.documents || [],
       createdBy: initialValues?.createdBy || user?.id || "",
     },
   });
 
-  const currentAddress = useWatch({
-    control: form.control,
-    name: "currentAddress",
-  });
+  const currentAddress = useWatch({ control: form.control, name: "currentAddress" });
   const [sameAsCurrent, setSameAsCurrent] = useState(false);
 
   useEffect(() => {
@@ -172,117 +193,115 @@ export function EmployeeForm({
     }
   }, [sameAsCurrent, currentAddress, form]);
 
-  const { fields: academicFields, append: appendAcademic, remove: removeAcademic } = useFieldArray({
-    control: form.control,
-    name: "academicQualification",
-  });
+  const { fields: academicFields, append: appendAcademic, remove: removeAcademic } = useFieldArray({ control: form.control, name: "academicQualification" });
+  const { fields: experienceFields, append: appendExperience, remove: removeExperience } = useFieldArray({ control: form.control, name: "previousWorkExperience" });
+  const { fields: familyFields, append: appendFamily, remove: removeFamily } = useFieldArray({ control: form.control, name: "familyDetails" });
+  const { fields: documentFields, append: appendDocument, remove: removeDocument } = useFieldArray({ control: form.control, name: "documents" });
 
-  const { fields: experienceFields, append: appendExperience, remove: removeExperience } = useFieldArray({
-    control: form.control,
-    name: "previousWorkExperience",
-  });
-
-  const { fields: familyFields, append: appendFamily, remove: removeFamily } = useFieldArray({
-    control: form.control,
-    name: "familyDetails",
-  });
-
-  const { fields: documentFields, append: appendDocument, remove: removeDocument } = useFieldArray({
-    control: form.control,
-    name: "documents",
-  });
-
-  const profilePicture = useWatch({
-    control: form.control,
-    name: "profilePicture",
-  });
-
+  const profileImage = useWatch({ control: form.control, name: "profileImage" });
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!profilePicture) {
-      setPreviewUrl(null);
-      return;
-    }
-
-    if (typeof profilePicture === 'string') {
-      setPreviewUrl(profilePicture);
-      return;
-    }
-
-    if (profilePicture instanceof File) {
-      const url = URL.createObjectURL(profilePicture);
-      setPreviewUrl(url);
+    if (profileImage instanceof File) {
+      const url = URL.createObjectURL(profileImage);
+      // Use queueMicrotask to avoid synchronous setState warning in some strict lint rules
+      queueMicrotask(() => setPreviewUrl(url));
       return () => URL.revokeObjectURL(url);
     }
-  }, [profilePicture]);
+    queueMicrotask(() => setPreviewUrl(null));
+  }, [profileImage]);
+
+  const displayPreview = typeof profileImage === 'string' ? profileImage : previewUrl;
 
   const handleFormSubmit = (values: z.infer<typeof formSchema>) => {
     const formData = new FormData();
 
-    // Map all simple string/number fields to formData
+    // Simple scalar fields
+    const skipFields = ['familyDetails', 'academicQualification', 'previousWorkExperience', 'documents', 'profileImage', 'emergencyContact'];
+
     Object.keys(values).forEach((key) => {
-      let value = (values as any)[key];
-      
-      // Skip fields that need special handling
-      if (
-        ['familyDetails', 'academicQualification', 'previousWorkExperience', 'emergencyContact', 'documents', 'profilePicture'].includes(key)
-      ) {
-        return;
-      }
+      if (skipFields.includes(key)) return;
 
-      // Hardcode role to 'user' as requested
-      if (key === 'role') {
-        value = 'user';
-      }
+      let value = (values as Record<string, unknown>)[key];
+      // Skip employeeObjId — handled separately
+      if (key === 'employeeObjId') return;
+      // Hardcode role to 'user'
+      if (key === 'role') value = 'user';
 
-      if (value !== undefined && value !== null) {
-        formData.append(key, value.toString());
+      if (value !== undefined && value !== null && value !== '') {
+        // Send uniqueId as a number
+        if (key === 'uniqueId') {
+          const num = parseInt(value.toString(), 10);
+          if (!isNaN(num)) formData.append(key, num.toString());
+        } else {
+          formData.append(key, value.toString());
+        }
       }
     });
 
-    // Handle nested objects and simple arrays as JSON strings
-    formData.append('emergencyContact', JSON.stringify(values.emergencyContact));
-    if (values.familyDetails) formData.append('familyDetails', JSON.stringify(values.familyDetails));
-    if (values.academicQualification) formData.append('academicQualification', JSON.stringify(values.academicQualification));
-    if (values.previousWorkExperience) formData.append('previousWorkExperience', JSON.stringify(values.previousWorkExperience));
-
-    // Handle profile picture
-    if (values.profilePicture instanceof File) {
-      formData.append('profilePicture', values.profilePicture);
+    // Emergency Contact fields mapping
+    if (values.emergencyContact) {
+      formData.append('emergencyContact[name]', values.emergencyContact.name || '');
+      formData.append('emergencyContact[relation]', values.emergencyContact.relation || '');
+      formData.append('emergencyContact[phone]', values.emergencyContact.phone || '');
     }
 
-    // Handle Documents and Files
-    if (values.documents && values.documents.length > 0) {
-      // First, we send the document metadata as a JSON string
-      const docMetadata = values.documents.map(doc => ({
-        title: doc.title,
-        url: doc.url,
-        _id: doc._id
-      }));
-      formData.append('documentsMetadata', JSON.stringify(docMetadata));
+    // Send employeeObjId (_id of the selected employee-id record)
+    if (values.employeeObjId) {
+      formData.append('employeeObjId', values.employeeObjId);
+    }
 
-      // Then, we append each file to the 'files' field
-      // The backend will likely match files by order or we can append indexed keys
-      values.documents.forEach((doc, index) => {
-        if (doc.file) {
-          formData.append('files', doc.file);
+    // Family details — individual indexed fields
+    values.familyDetails?.forEach((member, i) => {
+      formData.append(`familyDetails[${i}][name]`, member.name);
+      formData.append(`familyDetails[${i}][relation]`, member.relation);
+      formData.append(`familyDetails[${i}][age]`, member.age.toString());
+    });
+
+    // Academic qualification — individual indexed fields
+    values.academicQualification?.forEach((qual, i) => {
+      formData.append(`academicQualification[${i}][degree]`, qual.degree);
+      formData.append(`academicQualification[${i}][institute]`, qual.institute);
+      formData.append(`academicQualification[${i}][year]`, qual.year);
+    });
+
+    // Previous work experience — individual indexed fields
+    values.previousWorkExperience?.forEach((exp, i) => {
+      formData.append(`previousWorkExperience[${i}][company]`, exp.company);
+      formData.append(`previousWorkExperience[${i}][role]`, exp.role);
+      formData.append(`previousWorkExperience[${i}][years]`, exp.years);
+    });
+
+    // Profile image
+    if (values.profileImage instanceof File) {
+      formData.append('profileImage', values.profileImage);
+    }
+
+    // Other Documents: append each file + title pair separately
+    if (values.documents && values.documents.length > 0) {
+      values.documents.forEach((doc) => {
+        if (doc.file instanceof File) {
+          formData.append('otherDocuments', doc.file);
+          formData.append('otherDocumentsTitle', doc.title);
         }
       });
     }
 
-    onSubmit(formData as any);
+    onSubmit(formData);
   };
+
+  const attendancePolicies = attendancePoliciesData?.policies || [];
+  const payrollPolicies = (payrollPoliciesData as { data?: { _id: string; name: string }[] })?.data || [];
+  const companies = companyData?.data || [];
+  const employeeIds = employeeIdData?.data || [];
 
   return (
     <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(handleFormSubmit)}
-        className="space-y-6"
-      >
+      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
         <ScrollArea className="h-[65vh] pr-4">
           <div className="space-y-8">
-            {/* Section 1: Professional Access */}
+
+            {/* ── Section 1: Professional & Access ── */}
             <div className="space-y-4">
               <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider bg-slate-50 p-2 rounded">
                 1. Professional & Access
@@ -290,13 +309,53 @@ export function EmployeeForm({
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
+                  name="companyId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Company</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger><SelectValue placeholder="Select company" /></SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {companies.map((c) => (
+                            <SelectItem key={c._id} value={c._id}>{c.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="employeeObjId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Employee ID</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger><SelectValue placeholder="Select employee ID" /></SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {employeeIds.map((emp) => (
+                            <SelectItem key={emp._id} value={emp._id}>
+                              {emp.employeeId}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
                   name="uniqueId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Unique ID (From Punch Machine)</FormLabel>
-                      <FormControl>
-                        <Input type="number" placeholder="1001" {...field} />
-                      </FormControl>
+                      <FormLabel>Unique ID (Punch Machine No.)</FormLabel>
+                      <FormControl><Input type="number" placeholder="e.g. 1001" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -307,9 +366,7 @@ export function EmployeeForm({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Designation</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Developer" {...field} />
-                      </FormControl>
+                      <FormControl><Input placeholder="Developer" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -320,13 +377,12 @@ export function EmployeeForm({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Department</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Engineering" {...field} />
-                      </FormControl>
+                      <FormControl><Input placeholder="Engineering" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+
                 <FormField
                   control={form.control}
                   name="doj"
@@ -338,32 +394,57 @@ export function EmployeeForm({
                           <FormControl>
                             <Button
                               variant={"outline"}
-                              className={cn(
-                                "w-full pl-3 text-left font-normal h-9 rounded-lg border-input bg-background/50 hover:bg-white transition-colors",
-                                !field.value && "text-muted-foreground"
-                              )}
+                              className={cn("w-full pl-3 text-left font-normal h-9 rounded-lg border-input bg-background/50 hover:bg-white transition-colors", !field.value && "text-muted-foreground")}
                             >
-                              {field.value && isValid(parseISO(field.value)) ? (
-                                format(parseISO(field.value), "PPP")
-                              ) : (
-                                <span>Pick joining date</span>
-                              )}
+                              {field.value && isValid(parseISO(field.value)) ? format(parseISO(field.value), "PPP") : <span>Pick joining date</span>}
                               <CalendarIcon className="ml-auto h-4 w-4 text-slate-400" />
                             </Button>
                           </FormControl>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            captionLayout="dropdown"
-                            selected={field.value && isValid(parseISO(field.value)) ? parseISO(field.value) : undefined}
-                            onSelect={(date) => field.onChange(date ? format(date, "yyyy-MM-dd") : "")}
-                            startMonth={new Date(2000, 0)}
-                            endMonth={new Date(new Date().getFullYear() + 10, 0)}
-                            initialFocus
-                          />
+                          <Calendar mode="single" captionLayout="dropdown" selected={field.value && isValid(parseISO(field.value)) ? parseISO(field.value) : undefined} onSelect={(date) => field.onChange(date ? format(date, "yyyy-MM-dd") : "")} startMonth={new Date(2000, 0)} endMonth={new Date(new Date().getFullYear() + 10, 0)} initialFocus />
                         </PopoverContent>
                       </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="attendancePolicyId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Attendance Policy</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger><SelectValue placeholder="Select policy" /></SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {attendancePolicies.map((p) => (
+                            <SelectItem key={p._id} value={p._id}>{p.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="payrollPolicyId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Payroll Policy</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger><SelectValue placeholder="Select policy" /></SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {payrollPolicies.map((p) => (
+                            <SelectItem key={p._id} value={p._id}>{p.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -376,13 +457,7 @@ export function EmployeeForm({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Email Address</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="john@example.com"
-                          {...field}
-                          disabled={isEdit}
-                        />
-                      </FormControl>
+                      <FormControl><Input placeholder="john@example.com" {...field} disabled={isEdit} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -394,13 +469,7 @@ export function EmployeeForm({
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Password</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="password"
-                            placeholder="••••••"
-                            {...field}
-                          />
-                        </FormControl>
+                        <FormControl><Input type="password" placeholder="••••••" {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -411,27 +480,24 @@ export function EmployeeForm({
 
             <Separator />
 
-            {/* Section 2: Personal Details */}
+            {/* ── Section 2: Personal Details ── */}
             <div className="space-y-4">
               <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider bg-slate-50 p-2 rounded">
                 2. Personal Details
               </h3>
-              
+
+              {/* Profile Picture */}
               <div className="flex flex-col items-center justify-center space-y-3 mb-4">
                 <FormField
                   control={form.control}
-                  name="profilePicture"
+                  name="profileImage"
                   render={({ field: { value, onChange, ...fieldProps } }) => (
                     <FormItem className="flex flex-col items-center">
                       <FormControl>
                         <div className="relative group cursor-pointer">
                           <div className="w-24 h-24 rounded-full border-2 border-dashed border-slate-300 flex items-center justify-center overflow-hidden bg-slate-50 group-hover:border-primary transition-all duration-200 shadow-sm">
-                            {previewUrl ? (
-                              <img 
-                                src={previewUrl} 
-                                alt="Profile Preview" 
-                                className="w-full h-full object-cover" 
-                              />
+                            {displayPreview ? (
+                              <Image src={displayPreview} alt="Profile Preview" width={96} height={96} className="w-full h-full object-cover" />
                             ) : (
                               <div className="flex flex-col items-center text-slate-400 group-hover:text-primary transition-colors">
                                 <User className="w-8 h-8 mb-1" />
@@ -442,16 +508,15 @@ export function EmployeeForm({
                               <Upload className="w-5 h-5 text-white" />
                             </div>
                           </div>
-                          <input 
-                            type="file" 
+                          <input
+                            type="file"
                             accept="image/jpeg,image/jpg,image/png"
                             className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
                             style={{ fontSize: 0 }}
                             onChange={(e) => {
                               const file = e.target.files?.[0];
                               if (!file) return;
-                              const allowed = ["image/jpeg", "image/jpg", "image/png"];
-                              if (!allowed.includes(file.type)) return;
+                              if (!["image/jpeg", "image/jpg", "image/png"].includes(file.type)) return;
                               onChange(file);
                             }}
                             name={fieldProps.name}
@@ -459,15 +524,7 @@ export function EmployeeForm({
                             ref={fieldProps.ref}
                           />
                           {value && (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                onChange(null);
-                              }}
-                              className="absolute -top-1 -right-1 bg-rose-500 text-white rounded-full p-1 shadow-lg hover:bg-rose-600 transition-colors z-10"
-                            >
+                            <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onChange(null); }} className="absolute -top-1 -right-1 bg-rose-500 text-white rounded-full p-1 shadow-lg hover:bg-rose-600 transition-colors z-10">
                               <X className="w-3 h-3" />
                             </button>
                           )}
@@ -481,47 +538,16 @@ export function EmployeeForm({
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Full Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="John Doe" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="otherName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Other Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Alias" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Full Name</FormLabel><FormControl><Input placeholder="John Doe" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="otherName" render={({ field }) => (<FormItem><FormLabel>Other Name</FormLabel><FormControl><Input placeholder="Alias" {...field} /></FormControl><FormMessage /></FormItem>)} />
                 <FormField
                   control={form.control}
                   name="gender"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Gender</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select" />
-                          </SelectTrigger>
-                        </FormControl>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger></FormControl>
                         <SelectContent>
                           <SelectItem value="male">Male</SelectItem>
                           <SelectItem value="female">Female</SelectItem>
@@ -532,6 +558,7 @@ export function EmployeeForm({
                     </FormItem>
                   )}
                 />
+
                 <FormField
                   control={form.control}
                   name="dob"
@@ -541,69 +568,29 @@ export function EmployeeForm({
                       <Popover>
                         <PopoverTrigger asChild>
                           <FormControl>
-                            <Button
-                              variant={"outline"}
-                              className={cn(
-                                "w-full pl-3 text-left font-normal h-9 rounded-lg border-input bg-background/50 hover:bg-white transition-colors",
-                                !field.value && "text-muted-foreground"
-                              )}
-                            >
-                              {field.value && isValid(parseISO(field.value)) ? (
-                                format(parseISO(field.value), "PPP")
-                              ) : (
-                                <span>Pick birth date</span>
-                              )}
+                            <Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal h-9 rounded-lg border-input bg-background/50 hover:bg-white transition-colors", !field.value && "text-muted-foreground")}>
+                              {field.value && isValid(parseISO(field.value)) ? format(parseISO(field.value), "PPP") : <span>Pick birth date</span>}
                               <CalendarIcon className="ml-auto h-4 w-4 text-slate-400" />
                             </Button>
                           </FormControl>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            captionLayout="dropdown"
-                            selected={field.value && isValid(parseISO(field.value)) ? parseISO(field.value) : undefined}
-                            onSelect={(date) => field.onChange(date ? format(date, "yyyy-MM-dd") : "")}
-                            disabled={(date) =>
-                              date > new Date() || date < new Date("1900-01-01")
-                            }
-                            startMonth={new Date(1900, 0)}
-                            endMonth={new Date()}
-                            initialFocus
-                          />
+                          <Calendar mode="single" captionLayout="dropdown" selected={field.value && isValid(parseISO(field.value)) ? parseISO(field.value) : undefined} onSelect={(date) => field.onChange(date ? format(date, "yyyy-MM-dd") : "")} disabled={(date) => date > new Date() || date < new Date("1900-01-01")} startMonth={new Date(1900, 0)} endMonth={new Date()} initialFocus />
                         </PopoverContent>
                       </Popover>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="bloodGroup"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Blood Group</FormLabel>
-                      <FormControl>
-                        <Input placeholder="O+" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <FormField control={form.control} name="bloodGroup" render={({ field }) => (<FormItem><FormLabel>Blood Group</FormLabel><FormControl><Input placeholder="O+" {...field} /></FormControl><FormMessage /></FormItem>)} />
                 <FormField
                   control={form.control}
                   name="maritalStatus"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Marital Status</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select" />
-                          </SelectTrigger>
-                        </FormControl>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger></FormControl>
                         <SelectContent>
                           <SelectItem value="single">Single</SelectItem>
                           <SelectItem value="married">Married</SelectItem>
@@ -620,92 +607,53 @@ export function EmployeeForm({
 
             <Separator />
 
-            {/* Section 3: Family & Contact */}
+            {/* ── Section 3: Family & Contact ── */}
             <div className="space-y-4">
               <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider bg-slate-50 p-2 rounded">
                 3. Family & Contact
               </h3>
               <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="fatherName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Father&apos;s Name</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="motherName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Mother&apos;s Name</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="mobileNo"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Mobile No</FormLabel>
-                      <FormControl>
-                        <Input placeholder="9876543210" {...field} maxLength={10} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="emergencyContact.name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Emergency Contact Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Contact Person" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="emergencyContact.phone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Emergency Contact Phone</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Phone Number" {...field} maxLength={10} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="emergencyContact.relation"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Emergency Contact Relation</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g. Spouse, Parent" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <FormField control={form.control} name="fatherName" render={({ field }) => (<FormItem><FormLabel>Father&apos;s Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="motherName" render={({ field }) => (<FormItem><FormLabel>Mother&apos;s Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="mobileNo" render={({ field }) => (<FormItem><FormLabel>Mobile No</FormLabel><FormControl><Input placeholder="9876543210" {...field} maxLength={10} /></FormControl><FormMessage /></FormItem>)} />
+                <div className="col-span-2 grid grid-cols-3 gap-4 p-4 border rounded-xl bg-rose-50/20">
+                  <FormField
+                    control={form.control}
+                    name="emergencyContact.name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Emergency Contact Name</FormLabel>
+                        <FormControl><Input placeholder="Name" {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="emergencyContact.relation"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Relation</FormLabel>
+                        <FormControl><Input placeholder="Relation" {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="emergencyContact.phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Phone</FormLabel>
+                        <FormControl><Input placeholder="Phone" {...field} maxLength={10} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
-              
+
+              {/* Family Members */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h4 className="text-xs font-bold text-slate-500 uppercase">Family Members</h4>
@@ -715,107 +663,34 @@ export function EmployeeForm({
                 </div>
                 {familyFields.map((field, index) => (
                   <div key={field.id} className="grid grid-cols-3 gap-4 p-4 border rounded-xl relative bg-slate-50/50">
-                    <FormField
-                      control={form.control}
-                      name={`familyDetails.${index}.name`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-[10px]">Name</FormLabel>
-                          <FormControl><Input {...field} /></FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name={`familyDetails.${index}.relation`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-[10px]">Relation</FormLabel>
-                          <FormControl><Input {...field} /></FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    <FormField control={form.control} name={`familyDetails.${index}.name`} render={({ field }) => (<FormItem><FormLabel className="text-[10px]">Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name={`familyDetails.${index}.relation`} render={({ field }) => (<FormItem><FormLabel className="text-[10px]">Relation</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                     <div className="flex gap-2 items-end">
-                      <FormField
-                        control={form.control}
-                        name={`familyDetails.${index}.age`}
-                        render={({ field }) => (
-                          <FormItem className="flex-1">
-                            <FormLabel className="text-[10px]">Age</FormLabel>
-                            <FormControl><Input type="number" {...field} /></FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <Button variant="ghost" size="icon" className="text-rose-500" onClick={() => removeFamily(index)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <FormField control={form.control} name={`familyDetails.${index}.age`} render={({ field }) => (<FormItem className="flex-1"><FormLabel className="text-[10px]">Age</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                      <Button variant="ghost" size="icon" className="text-rose-500" onClick={() => removeFamily(index)}><Trash2 className="h-4 w-4" /></Button>
                     </div>
                   </div>
                 ))}
               </div>
 
-              <FormField
-                control={form.control}
-                name="reference"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Reference (If any)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Referred by..." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="currentAddress"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Current Address</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <FormField control={form.control} name="reference" render={({ field }) => (<FormItem><FormLabel>Reference (If any)</FormLabel><FormControl><Input placeholder="Referred by..." {...field} /></FormControl><FormMessage /></FormItem>)} />
+              <FormField control={form.control} name="currentAddress" render={({ field }) => (<FormItem><FormLabel>Current Address</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
               <div className="flex items-center space-x-2 my-2">
-                <Checkbox 
-                  id="same-as-current" 
-                  checked={sameAsCurrent} 
-                  onCheckedChange={(checked) => setSameAsCurrent(!!checked)} 
-                />
-                <Label htmlFor="same-as-current" className="text-xs text-slate-500 font-medium cursor-pointer">
-                  Same as current address
-                </Label>
+                <Checkbox id="same-as-current" checked={sameAsCurrent} onCheckedChange={(checked) => setSameAsCurrent(!!checked)} />
+                <Label htmlFor="same-as-current" className="text-xs text-slate-500 font-medium cursor-pointer">Same as current address</Label>
               </div>
-              <FormField
-                control={form.control}
-                name="permanentAddress"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Permanent Address</FormLabel>
-                    <FormControl>
-                      <Input {...field} disabled={sameAsCurrent} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <FormField control={form.control} name="permanentAddress" render={({ field }) => (<FormItem><FormLabel>Permanent Address</FormLabel><FormControl><Input {...field} disabled={sameAsCurrent} /></FormControl><FormMessage /></FormItem>)} />
             </div>
 
             <Separator />
 
-            {/* Section 4: Documentation & Education */}
+            {/* ── Section 4: Documentation & Qualification ── */}
             <div className="space-y-4 pb-4">
               <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider bg-slate-50 p-2 rounded">
                 4. Documentation & Qualification
               </h3>
-              
+
+              {/* Academic Qualifications */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h4 className="text-xs font-bold text-slate-500 uppercase">Academic Qualifications</h4>
@@ -825,48 +700,17 @@ export function EmployeeForm({
                 </div>
                 {academicFields.map((field, index) => (
                   <div key={field.id} className="grid grid-cols-3 gap-4 p-4 border rounded-xl bg-amber-50/20">
-                    <FormField
-                      control={form.control}
-                      name={`academicQualification.${index}.degree`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-[10px]">Degree</FormLabel>
-                          <FormControl><Input {...field} /></FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name={`academicQualification.${index}.institute`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-[10px]">Institute</FormLabel>
-                          <FormControl><Input {...field} /></FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    <FormField control={form.control} name={`academicQualification.${index}.degree`} render={({ field }) => (<FormItem><FormLabel className="text-[10px]">Degree</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name={`academicQualification.${index}.institute`} render={({ field }) => (<FormItem><FormLabel className="text-[10px]">Institute</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                     <div className="flex gap-2 items-end">
-                      <FormField
-                        control={form.control}
-                        name={`academicQualification.${index}.year`}
-                        render={({ field }) => (
-                          <FormItem className="flex-1">
-                            <FormLabel className="text-[10px]">Year</FormLabel>
-                            <FormControl><Input placeholder="2020" {...field} /></FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <Button variant="ghost" size="icon" className="text-rose-500" onClick={() => removeAcademic(index)} disabled={academicFields.length === 1}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <FormField control={form.control} name={`academicQualification.${index}.year`} render={({ field }) => (<FormItem className="flex-1"><FormLabel className="text-[10px]">Year</FormLabel><FormControl><Input placeholder="2020" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                      <Button variant="ghost" size="icon" className="text-rose-500" onClick={() => removeAcademic(index)} disabled={academicFields.length === 1}><Trash2 className="h-4 w-4" /></Button>
                     </div>
                   </div>
                 ))}
               </div>
 
+              {/* Work Experience */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h4 className="text-xs font-bold text-slate-500 uppercase">Previous Work Experience</h4>
@@ -876,90 +720,24 @@ export function EmployeeForm({
                 </div>
                 {experienceFields.map((field, index) => (
                   <div key={field.id} className="grid grid-cols-3 gap-4 p-4 border rounded-xl bg-slate-50/50">
-                    <FormField
-                      control={form.control}
-                      name={`previousWorkExperience.${index}.company`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-[10px]">Company</FormLabel>
-                          <FormControl><Input {...field} /></FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name={`previousWorkExperience.${index}.role`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-[10px]">Role</FormLabel>
-                          <FormControl><Input {...field} /></FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    <FormField control={form.control} name={`previousWorkExperience.${index}.company`} render={({ field }) => (<FormItem><FormLabel className="text-[10px]">Company</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name={`previousWorkExperience.${index}.role`} render={({ field }) => (<FormItem><FormLabel className="text-[10px]">Role</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                     <div className="flex gap-2 items-end">
-                      <FormField
-                        control={form.control}
-                        name={`previousWorkExperience.${index}.years`}
-                        render={({ field }) => (
-                          <FormItem className="flex-1">
-                            <FormLabel className="text-[10px]">Years</FormLabel>
-                            <FormControl><Input placeholder="2" {...field} /></FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <Button variant="ghost" size="icon" className="text-rose-500" onClick={() => removeExperience(index)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <FormField control={form.control} name={`previousWorkExperience.${index}.years`} render={({ field }) => (<FormItem className="flex-1"><FormLabel className="text-[10px]">Years</FormLabel><FormControl><Input placeholder="2" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                      <Button variant="ghost" size="icon" className="text-rose-500" onClick={() => removeExperience(index)}><Trash2 className="h-4 w-4" /></Button>
                     </div>
                   </div>
                 ))}
               </div>
 
+              {/* IDs */}
               <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="aadharNo"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Aadhar NO</FormLabel>
-                      <FormControl>
-                        <Input placeholder="12 Digit No" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="pfNo"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>PF NO.</FormLabel>
-                      <FormControl>
-                        <Input placeholder="PF Number" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="esiNo"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>ESI NO.</FormLabel>
-                      <FormControl>
-                        <Input placeholder="ESI Number" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <FormField control={form.control} name="aadharNo" render={({ field }) => (<FormItem><FormLabel>Aadhar NO</FormLabel><FormControl><Input placeholder="12 Digit No" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="pfNo" render={({ field }) => (<FormItem><FormLabel>PF NO.</FormLabel><FormControl><Input placeholder="PF Number" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="esiNo" render={({ field }) => (<FormItem><FormLabel>ESI NO.</FormLabel><FormControl><Input placeholder="ESI Number" {...field} /></FormControl><FormMessage /></FormItem>)} />
               </div>
 
+              {/* Other Documents */}
               <div className="space-y-4 pt-4">
                 <div className="flex items-center justify-between">
                   <h4 className="text-xs font-bold text-slate-500 uppercase">Other Documents</h4>
@@ -975,7 +753,7 @@ export function EmployeeForm({
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-[10px]">Document Title</FormLabel>
-                          <FormControl><Input placeholder="e.g. Voter ID, Passport" {...field} /></FormControl>
+                          <FormControl><Input placeholder="e.g. Aadhar Card, Resume" {...field} /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -984,46 +762,31 @@ export function EmployeeForm({
                       <FormField
                         control={form.control}
                         name={`documents.${index}.file`}
-                        render={({ field: { value, onChange, ...fieldProps } }) => (
+                        render={({ field: { onChange, ...fieldProps } }) => (
                           <FormItem className="flex-1">
-                            <FormLabel className="text-[10px]">Upload Document</FormLabel>
+                            <FormLabel className="text-[10px]">Upload File</FormLabel>
                             <FormControl>
-                              <Input 
-                                type="file" 
-                                className="h-9 cursor-pointer file:bg-slate-100 file:border-0 file:rounded-md file:text-[10px] file:font-bold hover:file:bg-slate-200"
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0];
-                                  if (file) onChange(file);
-                                }}
-                                name={fieldProps.name}
-                                onBlur={fieldProps.onBlur}
-                                ref={fieldProps.ref}
-                              />
+                              <Input type="file" className="h-9 cursor-pointer file:bg-slate-100 file:border-0 file:rounded-md file:text-[10px] file:font-bold hover:file:bg-slate-200" onChange={(e) => { const file = e.target.files?.[0]; if (file) onChange(file); }} name={fieldProps.name} onBlur={fieldProps.onBlur} ref={fieldProps.ref} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
-                      <Button variant="ghost" size="icon" className="text-rose-500" onClick={() => removeDocument(index)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <Button variant="ghost" size="icon" className="text-rose-500" onClick={() => removeDocument(index)}><Trash2 className="h-4 w-4" /></Button>
                     </div>
                   </div>
                 ))}
               </div>
 
+              {/* Notes */}
               <FormField
                 control={form.control}
-                name="remarks"
+                name="notes"
                 render={({ field }) => (
                   <FormItem className="mt-4">
-                    <FormLabel>Remarks</FormLabel>
+                    <FormLabel>Notes</FormLabel>
                     <FormControl>
-                      <Textarea
-                        placeholder="Any additional notes about the employee..."
-                        className="resize-none"
-                        {...field}
-                      />
+                      <Textarea placeholder="Any additional notes about the employee..." className="resize-none" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -1034,16 +797,8 @@ export function EmployeeForm({
         </ScrollArea>
 
         <div className="flex justify-end gap-2 pt-4 border-t">
-          <Button
-            type="submit"
-            className="bg-[#2eb88a] hover:bg-[#259b74]"
-            disabled={isLoading}
-          >
-            {isLoading
-              ? "Saving..."
-              : isEdit
-                ? "Update Employee"
-                : "Register Employee"}
+          <Button type="submit" className="bg-[#2eb88a] hover:bg-[#259b74]" disabled={isLoading}>
+            {isLoading ? "Saving..." : isEdit ? "Update Employee" : "Register Employee"}
           </Button>
         </div>
       </form>

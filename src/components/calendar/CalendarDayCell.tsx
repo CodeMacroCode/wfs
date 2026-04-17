@@ -3,6 +3,8 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { CalendarDay } from '@/types/calendar';
+import { getRemindersForDate } from '@/utils/reminders';
+import { ReceiptText, Clock } from 'lucide-react';
 
 
 interface CalendarDayCellProps {
@@ -29,6 +31,7 @@ export const CalendarDayCell: React.FC<CalendarDayCellProps> = ({
   const date = new Date(year, month, day);
   const isSunday = date.getDay() === 0;
   const isHoliday = data?.dayType === 'holiday';
+  const reminders = getRemindersForDate(date);
 
   return (
     <div
@@ -74,6 +77,31 @@ export const CalendarDayCell: React.FC<CalendarDayCellProps> = ({
             )} />
           </div>
         )}
+
+        {/* Time Exceptions Indicator */}
+        {data?.dayType === 'working' && (data?.checkIn || data?.checkOut) && (
+          <div className="p-2 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-100/50 text-[10px] leading-tight font-bold shadow-sm flex items-center gap-1.5">
+            <Clock className="h-2.5 w-2.5" />
+            <span>{data.checkIn || '--:--'} — {data.checkOut || '--:--'}</span>
+          </div>
+        )}
+        
+        {/* System Reminders (e.g. Bill Payments) */}
+        {reminders.map((reminder) => (
+          <div key={reminder.id} className={cn(
+            "p-2 rounded-lg border-0 text-[10px] sm:text-[11px] leading-tight font-semibold shadow-sm relative group/reminder",
+            "bg-indigo-50 text-indigo-700"
+          )}>
+            <div className="text-[8px] font-bold uppercase tracking-tight opacity-60 mb-0.5 flex items-center gap-1">
+              <ReceiptText className="h-2 w-2" />
+              Reminder
+            </div>
+            <div className="line-clamp-2 pr-4">{reminder.title}</div>
+            
+            {/* Indicator Dot at bottom right */}
+            <div className="absolute bottom-2 right-2 w-2 h-2 rounded-full bg-indigo-500" />
+          </div>
+        ))}
         
         {/* Placeholder for future events/agendas */}
         {!isHoliday && isSunday && isCurrentMonth && (

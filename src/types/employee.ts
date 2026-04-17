@@ -1,4 +1,6 @@
 export type EmployeeRole = "user" | "hr" | "admin";
+export type EmployeeStatus = "present" | "absent" | "on-leave" | "overtime" | "all";
+
 
 export interface EmergencyContact {
   name: string;
@@ -42,7 +44,11 @@ export interface Employee {
   role: EmployeeRole;
   uniqueId: number;
   password?: string;
+  companyId?: string;
+  attendancePolicyId?: string;
+  payrollPolicyId?: string;
   otherName?: string;
+  category?: string;
   gender: "male" | "female" | "other";
   fatherName: string;
   motherName: string;
@@ -51,13 +57,14 @@ export interface Employee {
   familyDetails?: FamilyMember[];
   dob: string;
   bloodGroup: string;
-  emergencyContact: EmergencyContact;
+  emergencyContact?: EmergencyContact;
   reference?: string;
   academicQualification: AcademicQualification[];
   previousWorkExperience?: WorkExperience[];
   interviewDate?: string;
   designation: string;
   department?: string;
+  workingHours?: string;
   aadharNo: string;
   pfNo?: string;
   esiNo?: string;
@@ -65,11 +72,11 @@ export interface Employee {
   permanentAddress: string;
   currentAddress: string;
   mobileNo: string;
-  attendancePolicyId?: string;
-  payrollPolicyId?: string;
   documents?: EmployeeDocument[];
+  profileImage?: string | File | null;
   profilePicture?: string | File | null;
   createdBy?: string;
+  notes?: string;
   remarks?: string;
   createdAt?: string;
   updatedAt?: string;

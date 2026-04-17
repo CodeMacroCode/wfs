@@ -25,7 +25,7 @@ const apiClient: AxiosInstance = axios.create({
   timeout: 10000, // 10 seconds
 });
 
-// Request Interceptor: Attach Auth Token
+// Request Interceptor: Attach Auth Token + handle FormData
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     // Check if we are on the client side
@@ -36,6 +36,13 @@ apiClient.interceptors.request.use(
         config.headers.Authorization = `Bearer ${token}`;
       }
     }
+
+    // If sending FormData, remove the Content-Type header so the browser
+    // can set it automatically with the correct multipart boundary.
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type'];
+    }
+
     return config;
   },
   (error) => {

@@ -66,11 +66,11 @@ export function AssetForm({
 
   const defaultValues = React.useMemo(() => {
     const assetType = initialValues?.type || "Laptop";
-    const isPredefined = PREDEFINED_TYPES.includes(assetType as any);
+    const isPredefined = assetType ? PREDEFINED_TYPES.includes(assetType) : false;
     
     return {
       name: initialValues?.name || "",
-      type: isPredefined ? assetType : "Other",
+      type: isPredefined ? (assetType as string) : "Other",
       otherType: isPredefined ? "" : assetType,
       serialNumber: initialValues?.serialNumber || "",
       issuedTo: typeof initialValues?.issuedTo === "object" && initialValues.issuedTo !== null
@@ -110,7 +110,7 @@ export function AssetForm({
     // Convert dates to ISO format for backend if needed
     const payload = {
       ...restOfData,
-      type: actualType as any,
+      type: actualType as string,
       issuedDate: new Date(data.issuedDate).toISOString(),
       maintenanceDueDate: new Date(data.maintenanceDueDate).toISOString(),
     }

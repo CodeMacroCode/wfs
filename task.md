@@ -1,0 +1,28 @@
+- [x] Define types in `src/types/doc-center.ts`
+- [x] Add query keys in `src/constants/query-keys.ts`
+- [x] Implement service in `src/services/doc-center-service.ts`
+- [x] Implement hooks in `src/hooks/queries/use-doc-center.ts`
+- [x] Create `UploadDocDialog` component
+- [x] Create `DocCenterTable` component
+- [x] Update `DocumentPage` in `src/app/dashboard/document/page.tsx`
+- [x] Verify functionality
+- [x] Update types for multi-file support in `src/types/doc-center.ts`
+- [x] Implement `deleteFiles` in `src/services/doc-center-service.ts`
+- [x] Implement `useDeleteFilesMutation` in `src/hooks/queries/use-doc-center.ts`
+- [x] Update `UploadDocDialog` for multi-file selection
+- [x] Update `DocCenterTable` to display multiple files and handle file deletion
+- [x] Add `UpdateDocFilesDto` in `src/types/doc-center.ts`
+- [x] Implement `updateFiles` in `src/services/doc-center-service.ts`
+- [x] Implement `useUpdateDocFilesMutation` in `src/hooks/queries/use-doc-center.ts`
+- [x] Create `AddFilesDialog` component
+- [x] Integrate `AddFilesDialog` into `DocCenterTable`
+- [x] Final verification of "Add More" feature
+- [x] Final verification of all document features
+- [x] Create `src/utils/reminders.ts` logic
+- [x] Update `CalendarDayCell.tsx` to show reminder badges
+- [x] Update `DetailsSidebar.tsx` to show reminder details
+- [x] Final verification of bill reminders
+- [x] Add `checkIn` and `checkOut` to `src/types/calendar.ts`
+- [x] Implement Check-In/Out inputs in `DetailsSidebar.tsx`
+- [x] Display schedule indicators in `CalendarDayCell.tsx`
+- [x] Final verification of time exceptions

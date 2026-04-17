@@ -25,9 +25,10 @@ export default function EmployeeMaster() {
     apiParams,
   } = useDataTable({
     storageKey: "employee-master",
+    initialPageSize: 10,
   })
 
-  const { data, isLoading, refetch, isFetching } = useEmployeesQuery(apiParams as EmployeeQueryParams)
+  const { data, isLoading, refetch, isFetching } = useEmployeesQuery({ ...apiParams, limit: 10 } as EmployeeQueryParams)
 
   // Use a static version of columns for export (without actions)
   const exportColumns = React.useMemo(() => getEmployeeColumns(), [])
@@ -66,7 +67,7 @@ export default function EmployeeMaster() {
         isLoading={isLoading}
         totalItems={data?.pagination?.total || 0}
         pageCount={data?.pagination?.totalPages || 0}
-        pagination={pagination}
+        pagination={{ ...pagination, pageSize: 10 }}
         onPaginationChange={onPaginationChange}
         onSortingChange={onSortingChange}
         search={search}

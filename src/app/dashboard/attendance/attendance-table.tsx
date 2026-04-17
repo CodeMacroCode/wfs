@@ -23,6 +23,7 @@ interface AttendanceTableProps {
   pagination: PaginationState
   onPaginationChange: (pagination: PaginationState) => void
   totalItems?: number
+  hideSearch?: boolean
 }
 
 export function AttendanceTable({ 
@@ -30,7 +31,8 @@ export function AttendanceTable({
   isLoading,
   pagination,
   onPaginationChange,
-  totalItems
+  totalItems,
+  hideSearch = false
 }: AttendanceTableProps) {
   
   /**
@@ -179,6 +181,7 @@ export function AttendanceTable({
       onPaginationChange={onPaginationChange}
       totalItems={totalItems}
       showSrNo={true}
+      hideSearch={hideSearch}
     />
   )
 }

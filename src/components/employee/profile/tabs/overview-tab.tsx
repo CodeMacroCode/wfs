@@ -10,7 +10,6 @@ import {
   GraduationCap, 
   Heart, 
   Users, 
-  ShieldCheck, 
   Mail,
   IdCard,
   Calendar,
@@ -161,7 +160,7 @@ export function OverviewTab({ employee }: OverviewTabProps) {
   );
 }
 
-function ProfileSection({ icon: Icon, title, color, children }: { icon: any, title: string, color: string, children: React.ReactNode }) {
+function ProfileSection({ icon: Icon, title, color, children }: { icon: React.ElementType, title: string, color: string, children: React.ReactNode }) {
   return (
     <div className="p-10">
       <div className="flex items-center gap-4 mb-10">
@@ -180,7 +179,7 @@ function ProfileSection({ icon: Icon, title, color, children }: { icon: any, tit
   );
 }
 
-function DataItem({ label, value, icon: Icon, isMono, highlight, vertical }: { label: string, value: string | number, icon?: any, isMono?: boolean, highlight?: boolean, vertical?: boolean }) {
+function DataItem({ label, value, icon: Icon, isMono, highlight, vertical }: { label: string, value: string | number, icon?: React.ElementType, isMono?: boolean, highlight?: boolean, vertical?: boolean }) {
   return (
     <div className={cn("flex flex-col gap-2", vertical && "w-full")}>
       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] leading-none">{label}</span>

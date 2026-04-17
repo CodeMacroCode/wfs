@@ -51,6 +51,7 @@ interface DataTableProps<TData, TValue> {
   totalItems?: number
   height?: string
   showSrNo?: boolean
+  hideSearch?: boolean
 }
 
 export function DataTable<TData, TValue>({
@@ -70,6 +71,7 @@ export function DataTable<TData, TValue>({
   totalItems,
   height,
   showSrNo = true,
+  hideSearch = false,
 }: DataTableProps<TData, TValue>) {
   const [rowSelection, setRowSelection] = React.useState({})
   const [columnVisibility, setColumnVisibility] =
@@ -189,7 +191,7 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className="space-y-4">
-      {(searchKey || onSearchChange) && (
+      {!hideSearch && (searchKey || onSearchChange) && (
         <div className="flex items-center justify-between py-4">
           <Input
             placeholder={searchPlaceholder}

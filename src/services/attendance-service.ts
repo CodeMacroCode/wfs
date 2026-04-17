@@ -9,10 +9,10 @@ export const attendanceService = {
   /**
    * Get all attendance records with pagination
    */
-  getAll: async (page: number = 1, limit: number = 10): Promise<AttendanceResponse> => {
+  getAll: async (page: number = 1, limit: number = 10, status?: string): Promise<AttendanceResponse> => {
     try {
       return await apiClient.get<void, AttendanceResponse>('/attendance', {
-        params: { page, limit }
+        params: { page, limit, status }
       });
     } catch (error: unknown) {
       toast.error('Failed to fetch attendance records');

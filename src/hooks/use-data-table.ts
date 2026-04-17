@@ -113,7 +113,7 @@ export function useDataTable({
       page: pagination.pageIndex + 1,
       limit: pagination.pageSize,
       sort: sorting.length > 0 ? sorting[0].id : undefined,
-      order: sorting.length > 0 ? (sorting[0].desc ? "desc" : "asc") : undefined,
+      order: (sorting.length > 0 ? (sorting[0].desc ? "desc" : "asc") : undefined) as "asc" | "desc" | undefined,
       search: debouncedSearch || undefined, // Use debounced value for API
     }
   }

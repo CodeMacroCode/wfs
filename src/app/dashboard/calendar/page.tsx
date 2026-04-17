@@ -89,6 +89,8 @@ function CalendarPageContent() {
     isNationalHoliday: boolean;
     isCompanyHoliday: boolean;
     description: string;
+    checkIn?: string;
+    checkOut?: string;
   }) => {
     if (!selectedDate) return;
 
@@ -98,13 +100,60 @@ function CalendarPageContent() {
     });
   };
 
-  // Find data for currently selected date
+  // Find data for currently selected date, with dummy overrides injected
   const selectedDayData = useMemo(() => {
-    if (!selectedDate || !data?.days) return undefined;
+    if (!selectedDate) return undefined;
     const dateStr = format(selectedDate, 'yyyy-MM-dd');
-    // The API returns ISO strings, so we check if the date starts with our YYYY-MM-DD
-    return data.days.find(d => d.date.startsWith(dateStr));
+    const day = selectedDate.getDate();
+
+    const apiData = data?.days?.find(d => d.date.startsWith(dateStr));
+
+    // Dummy schedule overrides (same as grid)
+    const dummySchedules: Record<number, { checkIn: string; checkOut: string; description: string }> = {
+      12: { checkIn: '08:00', checkOut: '15:00', description: 'Early Morning Shift' },
+      14: { checkIn: '14:00', checkOut: '22:00', description: 'Late Evening Shift' },
+      20: { checkIn: '11:00', checkOut: '18:00', description: 'Delayed Start' },
+      25: { checkIn: '09:00', checkOut: '13:00', description: 'Half Day (Morning)' },
+    };
+
+    const override = dummySchedules[day];
+
+    if (apiData) {
+      // Inject dummy data into the existing API record if it has no custom times
+      if (override && !apiData.checkIn && !apiData.checkOut) {
+        return { ...apiData, ...override };
+      }
+      return apiData;
+    }
+
+    return undefined;
   }, [selectedDate, data]);
+
+  // Merge API data with dummy schedule exceptions for the grid
+  const mergedCalendarData = useMemo(() => {
+    const apiDays = data?.days || [];
+    const datePrefix = format(currentDate, 'yyyy-MM');
+
+    // Dummy schedule exceptions keyed by day number
+    const dummySchedules: Record<string, { checkIn: string; checkOut: string; description: string }> = {
+      [`${datePrefix}-12`]: { checkIn: '08:00', checkOut: '15:00', description: 'Early Morning Shift' },
+      [`${datePrefix}-14`]: { checkIn: '14:00', checkOut: '22:00', description: 'Late Evening Shift' },
+      [`${datePrefix}-20`]: { checkIn: '11:00', checkOut: '18:00', description: 'Delayed Start' },
+      [`${datePrefix}-25`]: { checkIn: '09:00', checkOut: '13:00', description: 'Half Day (Morning)' },
+    };
+
+    // Inject dummy checkIn/checkOut into matching API records
+    const merged = apiDays.map(day => {
+      const dateKey = day.date.substring(0, 10); // "2026-04-12"
+      const override = dummySchedules[dateKey];
+      if (override && !day.checkIn && !day.checkOut) {
+        return { ...day, ...override };
+      }
+      return day;
+    });
+
+    return merged;
+  }, [data, currentDate]);
 
   if (!isMounted) {
     return (
@@ -142,7 +191,7 @@ function CalendarPageContent() {
               currentDate={currentDate}
               selectedDate={selectedDate}
               onDateClick={handleDayClick}
-              calendarData={data?.days}
+              calendarData={mergedCalendarData}
             />
           </div>
 

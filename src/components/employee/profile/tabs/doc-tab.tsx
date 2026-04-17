@@ -3,7 +3,8 @@
 import React from "react";
 import { Employee } from "@/types/employee";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
-import { FileText, Download, User, QrCode, ShieldCheck } from "lucide-react";
+import { FileText, Download, User, ShieldCheck } from "lucide-react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 
 interface DocumentsTabProps {
@@ -11,7 +12,14 @@ interface DocumentsTabProps {
 }
 
 export function DocumentsTab({ employee }: DocumentsTabProps) {
-  const profileUrl = typeof employee.profilePicture === 'string' ? employee.profilePicture : null;
+  const apiBase = (process.env.NEXT_PUBLIC_BASE_URL || "").replace(/\/api$/, "");
+  const rawImage = (employee.profileImage || employee.profilePicture) as string | null | undefined;
+  const profileUrl = typeof rawImage === "string" && rawImage
+    ? rawImage.startsWith("http") ? rawImage : `${apiBase}${rawImage}`
+    : null;
+
+  // API returns otherDocuments array
+  const docs = (employee as unknown as { otherDocuments?: { title: string; file: string; _id: string }[] }).otherDocuments;
 
   return (
     <div className="p-8 bg-slate-50/50 space-y-8">
@@ -31,7 +39,7 @@ export function DocumentsTab({ employee }: DocumentsTabProps) {
               
               <div className="mt-8 relative z-10 w-28 h-28 rounded-full border-4 border-white shadow-lg overflow-hidden bg-slate-100 mb-6 shrink-0">
                 {profileUrl ? (
-                  <img src={profileUrl} alt={employee.name} className="w-full h-full object-cover" />
+                  <Image src={profileUrl} alt={employee.name} width={112} height={112} className="w-full h-full object-cover" />
                 ) : (
                   <User className="w-full h-full p-4 text-slate-300" />
                 )}
@@ -59,7 +67,6 @@ export function DocumentsTab({ employee }: DocumentsTabProps) {
               </div>
 
               <div className="mt-auto flex flex-col items-center">
-                <QrCode className="w-16 h-16 text-slate-900 mb-2 opacity-80" />
                 <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400">
                   <ShieldCheck className="w-3 h-3 text-emerald-500" />
                   VERIFIED BY GOYAL ENTERPRISES
@@ -76,9 +83,9 @@ export function DocumentsTab({ employee }: DocumentsTabProps) {
           </div>
           <CardContent className="p-6">
              <div className="space-y-4">
-               {employee.documents?.length ? (
-                 employee.documents.map((doc, idx) => (
-                   <div key={idx} className="flex items-center justify-between p-4 rounded-xl bg-slate-50 border border-slate-100 transition-hover hover:border-[#2eb88a]/30 group">
+               {docs?.length ? (
+                 docs.map((doc, idx) => (
+                   <div key={doc._id || idx} className="flex items-center justify-between p-4 rounded-xl bg-slate-50 border border-slate-100 transition-hover hover:border-[#2eb88a]/30 group">
                      <div className="flex items-center gap-4">
                         <div className="h-10 w-10 rounded-xl bg-white border flex items-center justify-center text-slate-400 shadow-sm group-hover:text-[#2eb88a] transition-colors">
                           <FileText className="w-5 h-5" />
@@ -89,7 +96,7 @@ export function DocumentsTab({ employee }: DocumentsTabProps) {
                         </div>
                      </div>
                      <Button variant="ghost" size="sm" asChild>
-                        <a href={doc.url} target="_blank" rel="noreferrer" className="text-[#2eb88a] font-bold">View</a>
+                        <a href={doc.file.startsWith("http") ? doc.file : `${apiBase}${doc.file}`} target="_blank" rel="noreferrer" className="text-[#2eb88a] font-bold">View</a>
                      </Button>
                    </div>
                  ))

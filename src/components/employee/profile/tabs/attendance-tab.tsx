@@ -19,7 +19,6 @@ import {
   ChevronLeft, 
   ChevronRight, 
   Clock, 
-  MapPin, 
   AlertCircle, 
   CheckCircle2, 
   XCircle, 
@@ -50,7 +49,7 @@ const statusColors: Record<AttendanceStatus, string> = {
   "On Leave": "bg-blue-50 text-blue-600 border-blue-100",
 };
 
-const statusIcons: Record<AttendanceStatus, any> = {
+const statusIcons: Record<AttendanceStatus, React.ElementType> = {
   "Present": CheckCircle2,
   "Absent": XCircle,
   "Late": Clock,

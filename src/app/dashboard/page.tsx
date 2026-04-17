@@ -4,7 +4,6 @@ import {
   Plus,
   Upload,
   MoreVertical,
-  Search,
   Filter,
   ArrowRight,
   Zap,
@@ -13,20 +12,9 @@ import {
   FileText,
   AlertCircle
 } from "lucide-react"
-import Image from "next/image"
 import { AttendanceUploadDialog } from "@/components/dashboard/attendance-upload-dialog"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
 import {
   BarChart,
   Bar,
@@ -39,6 +27,15 @@ import {
   Pie,
   Cell
 } from "recharts"
+import { useState } from "react"
+import { motion, AnimatePresence } from "framer-motion"
+import { Employee, EmployeeStatus } from "@/types/employee"
+import { ExpandedStatCard } from "@/components/dashboard/ExpandedStatCard"
+import { useDataTable } from "@/hooks/use-data-table"
+import { useAttendanceQuery } from "@/hooks/queries/use-attendance"
+import { AttendanceTable } from "@/app/dashboard/attendance/attendance-table"
+import { EditEmployeeDialog } from "@/components/employee/employee-dialogs"
+import { DeleteEmployeeDialog } from "@/components/employee/delete-employee-dialog"
 
 const weeklyStats = [
   { day: "Mon", present: 85, onLeave: 12, absent: 3 },
@@ -103,15 +100,38 @@ const billAlerts = [
   }
 ]
 
-const employees = [
-  { id: "EMP-0234", name: "Olivia Mason", role: "Marketing", subRole: "Executive Marketing", shift: "General", date: "28 Jun 35", company: "Fourtech", avatar: "OM" },
-  { id: "EMP-0178", name: "Ethan Ray", role: "UI Designer", subRole: "Product Design", shift: "First Shift", date: "28 Jun 35", company: "Goel Enterprises", avatar: "ER" },
-  { id: "EMP-0289", name: "Mia Torres", role: "HR Officer", subRole: "Human Resources", shift: "General", date: "28 Jun 35", company: "Fourtech", avatar: "MT" },
-  { id: "EMP-0291", name: "Daniel Cheung", role: "Compliance Specialist", subRole: "Operations", shift: "General", date: "28 Jun 35", company: "Goel Enterprises", avatar: "DC" },
-  { id: "EMP-0320", name: "Farah Nabila", role: "Customer Experience Lead", subRole: "Customer Service", shift: "Night", date: "28 Jun 35", company: "Fourtech", avatar: "FN" }
-]
+// Mock data removed in favor of real API data
+
 
 export default function DashboardPage() {
+  const [selectedStat, setSelectedStat] = useState<EmployeeStatus | "all" | null>(null)
+  const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null)
+  const [deletingEmployeeId, setDeletingEmployeeId] = useState<string | null>(null)
+
+  const {
+    pagination,
+    onPaginationChange,
+    apiParams,
+  } = useDataTable({
+    storageKey: "dashboard-employees",
+  })
+
+  const { data: attendanceData, isLoading: isAttendanceLoading } = useAttendanceQuery(
+    apiParams.page, 
+    apiParams.limit as number,
+    undefined,
+    { staleTime: 60000 }
+  )
+  const attendanceList = attendanceData?.data || []
+
+
+  const statsConfig = {
+    all: { title: "Total Labor Force", color: { bg: "bg-[#f1f5f9]", text: "text-slate-900", titleText: "text-slate-500" } },
+    present: { title: "Processed Present", color: { bg: "bg-[#f0f9f1]", text: "text-slate-900", titleText: "text-emerald-700" } },
+    absent: { title: "Absentees", color: { bg: "bg-white", text: "text-slate-900", titleText: "text-slate-600" } },
+    "on-leave": { title: "On Leave", color: { bg: "bg-[#f0fdfa]", text: "text-slate-900", titleText: "text-[#0d9488]" } },
+    overtime: { title: "Total Overtime", color: { bg: "bg-[#0a3622]", text: "text-white", titleText: "text-emerald-500/70" } },
+  }
 
   return (
     <div className="flex flex-col gap-6 p-2 md:p-4">
@@ -128,7 +148,7 @@ export default function DashboardPage() {
             <Plus className="h-4 w-4" />
             <span className="font-semibold text-sm">Mark Leave</span>
           </Button>
-          <AttendanceUploadDialog 
+          <AttendanceUploadDialog
             trigger={
               <Button
                 variant="outline"
@@ -146,94 +166,135 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {/* Total Labor Force */}
-        <Card className="border-none shadow-none bg-[#f1f5f9] rounded-[20px] overflow-hidden min-h-[130px] flex flex-col justify-between p-4 px-5">
-          <div className="space-y-2">
-            <h3 className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total Labor Force</h3>
-            <div className="flex flex-col">
-              <span className="text-3xl font-extrabold text-slate-900 tracking-tight">1,250</span>
-              <span className="text-[10px] font-bold text-slate-400 uppercase">Employees</span>
-            </div>
-          </div>
-          <div className="mt-2">
-            <Badge variant="secondary" className="bg-white/80 hover:bg-white text-slate-600 text-[9px] font-bold py-1 px-3 rounded-full border border-slate-100 uppercase tracking-lighter flex items-center justify-center w-fit shadow-xs">
-              <span className="text-emerald-500 mr-1">+12</span> <span className="text-slate-400">THIS MONTH</span>
-            </Badge>
-          </div>
-        </Card>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5 relative">
+        <AnimatePresence>
+          {selectedStat && (
+            <ExpandedStatCard
+              category={selectedStat}
+              title={statsConfig[selectedStat].title}
+              onClose={() => setSelectedStat(null)}
+              colorScheme={statsConfig[selectedStat].color}
+            />
+          )}
+        </AnimatePresence>
 
-        {/* Processed Present */}
-        <Card className="border-none shadow-none bg-[#f0f9f1] rounded-[20px] overflow-hidden min-h-[130px] flex flex-col justify-between p-4 px-5">
-          <div className="space-y-2">
-            <h3 className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider">Processed Present</h3>
-            <div className="flex items-center justify-between">
+        <motion.div
+          layoutId="card-all"
+          onClick={() => setSelectedStat("all")}
+          className="cursor-pointer"
+          transition={{
+            type: "spring",
+            damping: 30,
+            stiffness: 300,
+            mass: 0.8
+          }}
+        >
+          <Card className="border-none shadow-none bg-[#f1f5f9] rounded-[20px] overflow-hidden min-h-[130px] flex flex-col justify-between p-4 px-5 hover:bg-slate-200/50">
+            <div className="space-y-2">
+              <motion.h3 layoutId="title-all" className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total Labor Force</motion.h3>
               <div className="flex flex-col">
-                <span className="text-3xl font-extrabold text-slate-900 tracking-tight">1,180</span>
-                <span className="text-[10px] font-bold text-slate-400 uppercase">Employees</span>
+                <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
+                  17
+                </span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase">Click to view</span>
               </div>
-              <div className="text-right">
-                <div className="text-xs font-bold text-emerald-500 bg-emerald-100/50 px-2 py-0.5 rounded-lg">94.4%</div>
-              </div>
             </div>
-          </div>
-          <div className="mt-4 flex items-center gap-4 pt-3 border-t border-emerald-100/50">
-            <div className="flex items-center gap-1.5">
-              <span className="text-[13px] font-bold text-slate-900">1,120</span>
-              <span className="text-[9px] font-bold text-slate-400 uppercase whitespace-nowrap">On-time</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="text-[13px] font-bold text-slate-900">60</span>
-              <span className="text-[9px] font-bold text-slate-400 uppercase whitespace-nowrap">Late</span>
-            </div>
-          </div>
-        </Card>
+          </Card>
+        </motion.div>
 
-        {/* Absentees */}
-        <Card className="border-none bg-white border border-gray-100 rounded-[20px] overflow-hidden min-h-[130px] ring-1 ring-gray-100 flex flex-col justify-between p-4 px-5 shadow-sm">
-          <div className="space-y-2">
-            <h3 className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Absentees</h3>
-            <div className="flex items-center justify-between">
-              <div className="flex flex-col">
-                <span className="text-3xl font-extrabold text-slate-900 tracking-tight">70</span>
-                <span className="text-[10px] font-bold text-slate-400 uppercase">Employees</span>
+        <motion.div
+          layoutId="card-present"
+          onClick={() => setSelectedStat("present")}
+          className="cursor-pointer"
+          transition={{
+            type: "spring",
+            damping: 30,
+            stiffness: 300,
+            mass: 0.8
+          }}
+        >
+          <Card className="border-none shadow-none bg-[#f0f9f1] rounded-[20px] overflow-hidden min-h-[130px] flex flex-col justify-between p-4 px-5 hover:bg-emerald-100/50">
+            <div className="space-y-2">
+              <motion.h3 layoutId="title-present" className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider">Processed Present</motion.h3>
+              <div className="flex items-center justify-between">
+                <div className="flex flex-col">
+                  <span className="text-3xl font-extrabold text-slate-900 tracking-tight">1,180</span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">Employees</span>
+                </div>
               </div>
-              <div className="text-right">
-                <div className="text-xs font-bold text-emerald-500">-5%</div>
+            </div>
+          </Card>
+        </motion.div>
+
+        <motion.div
+          layoutId="card-absent"
+          onClick={() => setSelectedStat("absent")}
+          className="cursor-pointer"
+          transition={{
+            type: "spring",
+            damping: 30,
+            stiffness: 300,
+            mass: 0.8
+          }}
+        >
+          <Card className="border-none bg-white border border-gray-100 rounded-[20px] overflow-hidden min-h-[130px] ring-1 ring-gray-100 flex flex-col justify-between p-4 px-5 shadow-sm hover:bg-slate-50">
+            <div className="space-y-2">
+              <motion.h3 layoutId="title-absent" className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Absentees</motion.h3>
+              <div className="flex items-center justify-between">
+                <div className="flex flex-col">
+                  <span className="text-3xl font-extrabold text-slate-900 tracking-tight">70</span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">Employees</span>
+                </div>
               </div>
             </div>
-          </div>
-          <div className="mt-4 flex items-center justify-between pt-3 border-t border-gray-50">
-            <div className="flex items-center gap-1.5">
-              <span className="text-[13px] font-bold text-slate-900">30</span>
-              <span className="text-[9px] font-bold text-slate-400 uppercase">Annual</span>
+          </Card>
+        </motion.div>
+
+        <motion.div
+          layoutId="card-on-leave"
+          onClick={() => setSelectedStat("on-leave")}
+          className="cursor-pointer"
+          transition={{
+            type: "spring",
+            damping: 30,
+            stiffness: 300,
+            mass: 0.8
+          }}
+        >
+          <Card className="border-none shadow-none bg-[#f0fdfa] rounded-[20px] overflow-hidden min-h-[130px] flex flex-col justify-between p-4 px-5 hover:bg-teal-100/50">
+            <div className="space-y-2">
+              <motion.h3 layoutId="title-on-leave" className="text-[11px] font-bold text-[#0d9488] uppercase tracking-wider">On Leave</motion.h3>
+              <div className="flex items-center justify-between">
+                <div className="flex flex-col">
+                  <span className="text-3xl font-extrabold text-slate-900 tracking-tight">12</span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">Employees</span>
+                </div>
+              </div>
             </div>
-            <div className="flex items-center gap-1.5">
-              <span className="text-[13px] font-bold text-slate-900">25</span>
-              <span className="text-[9px] font-bold text-slate-400 uppercase">Sick</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="text-[13px] font-bold text-slate-900">15</span>
-              <span className="text-[9px] font-bold text-slate-400 uppercase">Others</span>
-            </div>
-          </div>
-        </Card>
+          </Card>
+        </motion.div>
 
         {/* Total Overtime */}
-        <Card className="border-none shadow-none bg-[#0a3622] rounded-[20px] overflow-hidden min-h-[130px] flex flex-col justify-between p-4 px-5">
-          <div className="space-y-2">
-            <h3 className="text-[11px] font-bold text-emerald-500/70 uppercase tracking-wider">Total Overtime</h3>
-            <div className="flex flex-col">
-              <span className="text-3xl font-extrabold text-white tracking-tight">345h</span>
-              <span className="text-[10px] font-bold text-white/40 uppercase">Work Hours</span>
+        <motion.div
+          layoutId="card-overtime"
+          className="cursor-default"
+          transition={{
+            type: "spring",
+            damping: 30,
+            stiffness: 300,
+            mass: 0.8
+          }}
+        >
+          <Card className="border-none shadow-none bg-[#0a3622] rounded-[20px] overflow-hidden min-h-[130px] flex flex-col justify-between p-4 px-5 hover:bg-[#0d4d31]">
+            <div className="space-y-2">
+              <motion.h3 layoutId="title-overtime" className="text-[11px] font-bold text-emerald-500/70 uppercase tracking-wider">Total Overtime</motion.h3>
+              <div className="flex flex-col">
+                <span className="text-3xl font-extrabold text-white tracking-tight">345h</span>
+                <span className="text-[10px] font-bold text-white/40 uppercase">Work Hours</span>
+              </div>
             </div>
-          </div>
-          <div className="mt-2">
-            <Badge variant="secondary" className="bg-[#1e463a] hover:bg-[#265345] text-emerald-400 text-[9px] font-bold py-1 px-3 rounded-full border border-emerald-900/10 uppercase tracking-lighter flex items-center justify-center w-fit shadow-xs">
-              <span className="mr-1">+12h</span> <span className="text-white/40">VS YESTERDAY</span>
-            </Badge>
-          </div>
-        </Card>
+          </Card>
+        </motion.div>
       </div>
 
       {/* Charts Row */}
@@ -352,107 +413,32 @@ export default function DashboardPage() {
 
       {/* Detailed Data Row */}
       <div className="grid gap-4 lg:grid-cols-3">
-        {/* Employee List Table */}
+        {/* Attendance Activity Table */}
         <Card className="lg:col-span-2 border-none ring-1 ring-gray-100 shadow-none rounded-[28px] overflow-hidden flex flex-col min-h-[600px]">
-          <div className="p-8 flex flex-col gap-6">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <h3 className="text-xl font-bold text-slate-900 font-heading">Employee List</h3>
-                <p className="text-xs font-semibold text-slate-400">Manage your workforce directory.</p>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="relative group">
-                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-teal-500 transition-colors" />
-                  <Input
-                    placeholder="Search employee, ID, etc"
-                    className="pl-11 pr-4 h-11 w-64 bg-slate-50 border-none rounded-xl text-sm text-slate-600 focus:ring-2 focus:ring-teal-500/20 shadow-none transition-all"
-                  />
-                </div>
-                <Button variant="outline" className="border-gray-200 text-slate-500 h-11 px-5 rounded-xl flex gap-2 font-bold text-sm bg-white hover:bg-gray-50 shadow-sm">
-                  <Filter className="h-4 w-4" />
-                  <span>Filter</span>
-                </Button>
-              </div>
-            </div>
+          <div className="p-8 flex flex-col gap-1">
+            <h3 className="text-xl font-bold text-slate-900 font-heading">Recent Attendance Activity</h3>
+            <p className="text-xs font-semibold text-slate-400">Real-time log of employee punch-in and punch-out activities.</p>
           </div>
+          
+          <AttendanceTable
+            data={attendanceList}
+            isLoading={isAttendanceLoading}
+            totalItems={attendanceData?.total || 0}
+            pagination={pagination}
+            onPaginationChange={onPaginationChange}
+          />
 
-          <div className="flex-1 overflow-x-auto">
-            <Table>
-              <TableHeader className="bg-slate-50/50">
-                <TableRow className="border-b border-gray-100/50 hover:bg-transparent">
-                  <TableHead className="text-[10px] font-black text-slate-400 uppercase px-8 py-5 tracking-widest">Name</TableHead>
-                  <TableHead className="text-[10px] font-black text-slate-400 uppercase px-6 py-5 tracking-widest">Job Title</TableHead>
-                  <TableHead className="text-[10px] font-black text-slate-400 uppercase px-6 py-5 tracking-widest">Shift</TableHead>
-                  <TableHead className="text-[10px] font-black text-slate-400 uppercase px-6 py-5 tracking-widest">Date</TableHead>
-                  <TableHead className="text-[10px] font-black text-slate-400 uppercase px-6 py-5 tracking-widest">Company</TableHead>
-                  <TableHead className="text-[10px] font-black text-slate-400 uppercase px-8 py-5 tracking-widest text-right">Action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {employees.map((emp) => (
-                  <TableRow key={emp.id} className="border-b border-gray-50 hover:bg-slate-50/30 transition-all group">
-                    <TableCell className="px-8 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-slate-100 border-2 border-white ring-1 ring-gray-100 flex items-center justify-center overflow-hidden shadow-sm transition-transform group-hover:scale-105">
-                          <Image
-                            src={`https://api.dicebear.com/9.x/initials/svg?seed=${emp.name}`}
-                            alt={emp.name}
-                            width={40}
-                            height={40}
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="text-sm font-bold text-slate-900 group-hover:text-teal-600 transition-colors">{emp.name}</span>
-                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{emp.id}</span>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="px-6 py-4">
-                      <div className="flex flex-col">
-                        <span className="text-[13px] font-bold text-slate-700">{emp.role}</span>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{emp.subRole}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="px-6 py-4">
-                      <Badge variant="secondary" className="bg-slate-100 text-slate-500 border-none text-[10px] font-black capitalize px-2.5 py-1 rounded-lg">
-                        {emp.shift}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="px-6 py-4 text-slate-700 font-bold text-[13px]">
-                      {emp.date}
-                    </TableCell>
-                    <TableCell className="px-6 py-4">
-                      <div className="flex flex-col">
-                        <span className="text-[13px] font-bold text-slate-700">{emp.company}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="px-8 py-4 text-right">
-                      <button className="text-slate-300 hover:text-slate-600 p-2 hover:bg-white rounded-lg transition-all shadow-hover">
-                        <MoreVertical className="h-5 w-5" />
-                      </button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-          <div className="p-8 border-t border-gray-50 flex items-center justify-between bg-white mt-auto">
-            <div className="text-[11px] font-bold text-slate-400">
-              Showing <span className="text-slate-900">1 to 5</span> of <span className="text-slate-900">12</span> entries
-            </div>
-            <div className="flex items-center gap-1.5">
-              <button className="h-9 w-9 rounded-xl flex items-center justify-center text-slate-300 pointer-events-none hover:bg-gray-50 group">
-                <ArrowRight className="h-4 w-4 rotate-180" />
-              </button>
-              <button className="h-9 w-9 rounded-xl flex items-center justify-center bg-teal-500 text-white font-black text-xs shadow-lg shadow-teal-500/20 -translate-y-px">1</button>
-              <button className="h-9 w-9 rounded-xl flex items-center justify-center text-slate-400 font-black text-xs hover:bg-slate-50 transition-colors">2</button>
-              <button className="h-9 w-9 rounded-xl flex items-center justify-center text-slate-400 font-black text-xs hover:bg-slate-50 transition-colors">3</button>
-              <button className="h-9 w-9 rounded-xl flex items-center justify-center text-slate-400 hover:bg-slate-50 transition-all hover:translate-x-1 group">
-                <ArrowRight className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
+          <EditEmployeeDialog
+            employee={editingEmployee}
+            open={!!editingEmployee}
+            onOpenChange={(open) => !open && setEditingEmployee(null)}
+          />
+
+          <DeleteEmployeeDialog
+            employeeId={deletingEmployeeId}
+            open={!!deletingEmployeeId}
+            onOpenChange={(open) => !open && setDeletingEmployeeId(null)}
+          />
         </Card>
 
         {/* Bill Payment Alerts */}

@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { CalendarDay } from '@/types/calendar';
+import { getRemindersForDate } from '@/utils/reminders';
+import { ReceiptText, Bell, Clock } from 'lucide-react';
 import { 
   Select, 
   SelectContent, 
@@ -26,6 +28,8 @@ interface DetailsSidebarProps {
     isNationalHoliday: boolean;
     isCompanyHoliday: boolean;
     description: string;
+    checkIn?: string;
+    checkOut?: string;
   }) => void;
   isLoading?: boolean;
 }
@@ -43,6 +47,8 @@ export const DetailsSidebar: React.FC<DetailsSidebarProps> = ({
     isNationalHoliday: false,
     isCompanyHoliday: false,
     description: '',
+    checkIn: '',
+    checkOut: '',
   });
 
   const [prevData, setPrevData] = useState(data);
@@ -57,6 +63,8 @@ export const DetailsSidebar: React.FC<DetailsSidebarProps> = ({
         isNationalHoliday: data.isNationalHoliday,
         isCompanyHoliday: data.isCompanyHoliday,
         description: data.description || '',
+        checkIn: data.checkIn || '',
+        checkOut: data.checkOut || '',
       });
     } else {
       setEditData({
@@ -64,6 +72,8 @@ export const DetailsSidebar: React.FC<DetailsSidebarProps> = ({
         isNationalHoliday: false,
         isCompanyHoliday: false,
         description: '',
+        checkIn: '',
+        checkOut: '',
       });
     }
   }
@@ -110,16 +120,43 @@ export const DetailsSidebar: React.FC<DetailsSidebarProps> = ({
                 {data?.description || (data?.dayType === 'holiday' ? 'Republic Day' : 'Standard Working Day')}
               </h3>
 
-              {/* <div className="space-y-5 text-[15px]">
-                <div className="flex items-start">
-                  <div className="w-[100px] text-slate-400 font-medium">Note</div>
-                  <div className="flex-1 text-slate-700 font-medium leading-relaxed">
-                    {data?.description === 'Republic Day' 
-                      ? 'Prepare welcome kits and ID cards' 
-                      : 'This is a scheduled event. Please ensure all preparations are complete.'}
+              {/* Time Exceptions Display */}
+              {data?.dayType === 'working' && (data?.checkIn || data?.checkOut) && (
+                <div className="mb-6 p-4 rounded-2xl bg-white border border-slate-100 shadow-sm flex items-center gap-4">
+                  <div className="h-10 w-10 rounded-full bg-teal-50 flex items-center justify-center text-teal-600">
+                    <Clock className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-0.5">Scheduled Hours</h4>
+                    <p className="text-sm font-bold text-slate-700">
+                      {data.checkIn || '--:--'} — {data.checkOut || '--:--'}
+                    </p>
                   </div>
                 </div>
-              </div> */}
+              )}
+
+              {/* Reminders Section */}
+              {getRemindersForDate(selectedDate).length > 0 && (
+                <div className="space-y-4 pt-4 border-t border-indigo-200/30">
+                  <div className="flex items-center gap-2 text-indigo-700 font-bold text-xs uppercase tracking-wider">
+                    <Bell className="h-3 w-3" />
+                    Pending Reminders
+                  </div>
+                  <div className="space-y-3">
+                    {getRemindersForDate(selectedDate).map((reminder) => (
+                      <div key={reminder.id} className="p-4 rounded-2xl bg-white border border-indigo-100 shadow-sm flex items-start gap-3">
+                        <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600">
+                          <ReceiptText className="h-5 w-5" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-sm font-bold text-slate-800 mb-1">{reminder.title}</h4>
+                          <p className="text-xs text-slate-500 font-medium leading-relaxed">{reminder.description}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         ) : (
@@ -150,6 +187,29 @@ export const DetailsSidebar: React.FC<DetailsSidebarProps> = ({
                 className="h-12 rounded-xl bg-slate-50 border-slate-200"
               />
             </div>
+
+            {editData.dayType === 'working' && (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">Check-In</Label>
+                  <Input 
+                    type="time"
+                    value={editData.checkIn}
+                    onChange={(e) => setEditData({...editData, checkIn: e.target.value})}
+                    className="h-12 rounded-xl bg-slate-50 border-slate-200"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">Check-Out</Label>
+                  <Input 
+                    type="time"
+                    value={editData.checkOut}
+                    onChange={(e) => setEditData({...editData, checkOut: e.target.value})}
+                    className="h-12 rounded-xl bg-slate-50 border-slate-200"
+                  />
+                </div>
+              </div>
+            )}
 
             {editData.dayType === 'holiday' && (
               <div className="grid grid-cols-2 gap-4 pt-2">

@@ -3,15 +3,13 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 import { 
-  BarChart3, 
   Calendar, 
   FileText, 
   LayoutDashboard, 
-  Factory, 
   IdCard 
 } from "lucide-react";
 
-export type TabType = "overview" | "attendance" | "leaves" | "oleo" | "i-card";
+export type TabType = "overview" | "attendance" | "leaves" | "documents" | "oleo" | "i-card";
 
 interface ProfileTabsProps {
   activeTab: TabType;
@@ -22,6 +20,7 @@ const tabs = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
   { id: "attendance", label: "Attendance", icon: Calendar },
   { id: "leaves", label: "Leaves", icon: FileText },
+  { id: "documents", label: "Documents", icon: IdCard },
 ] as const;
 
 export function ProfileTabs({ activeTab, onChange }: ProfileTabsProps) {

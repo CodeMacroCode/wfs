@@ -8,6 +8,8 @@ export interface CalendarDay {
   isNationalHoliday: boolean;
   isCompanyHoliday: boolean;
   description?: string;
+  checkIn?: string;
+  checkOut?: string;
   __v?: number;
 }
 
@@ -30,6 +32,8 @@ export interface UpdateDatePayload {
   isNationalHoliday: boolean;
   isCompanyHoliday: boolean;
   description: string;
+  checkIn?: string;
+  checkOut?: string;
 }
 
 /**

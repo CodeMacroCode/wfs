@@ -1,15 +1,16 @@
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient, UseQueryOptions } from '@tanstack/react-query';
 import { employeeService } from '@/services/employee-service';
 import { QUERY_KEYS } from '@/constants/query-keys';
-import { RegisterEmployeeDto, UpdateEmployeeDto, EmployeeQueryParams } from '@/types/employee';
+import { RegisterEmployeeDto, UpdateEmployeeDto, EmployeeQueryParams, EmployeesResponse } from '@/types/employee';
 
 /**
  * Hook to fetch employees with pagination and filters
  */
-export function useEmployeesQuery(params?: EmployeeQueryParams) {
-  return useQuery({
+export function useEmployeesQuery(params?: EmployeeQueryParams, options?: Partial<UseQueryOptions<EmployeesResponse>>) {
+  return useQuery<EmployeesResponse>({
     queryKey: [...QUERY_KEYS.users.all, 'list', params],
     queryFn: () => employeeService.getAll(params),
+    ...options
   });
 }
 
@@ -58,6 +59,17 @@ export function useEmployeeQuery(id: string | null) {
     queryKey: QUERY_KEYS.users.detail(id || ''),
     queryFn: () => employeeService.getById(id!),
     enabled: !!id,
+  });
+}
+
+/**
+ * Hook to fetch the employee-id dropdown (punch machine IDs)
+ */
+export function useEmployeeIdDropdownQuery() {
+  return useQuery({
+    queryKey: [...QUERY_KEYS.users.all, 'employee-id-dropdown'],
+    queryFn: () => employeeService.getEmployeeIdDropdown(),
+    staleTime: 5 * 60 * 1000,
   });
 }
 

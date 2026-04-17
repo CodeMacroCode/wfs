@@ -90,6 +90,21 @@ export const employeeService = {
       throw error;
     }
   },
+
+  /**
+   * Get the employee-id dropdown list (punch machine IDs)
+   */
+  getEmployeeIdDropdown: async (): Promise<{
+    data: { _id: string; employeeId: string; remark: string; createdAt: string; updatedAt: string }[];
+    pagination: { total: number; page: number; limit: number; totalPages: number };
+  }> => {
+    try {
+      return await apiClient.get('/employee-id/dropdown');
+    } catch (error: unknown) {
+      toast.error('Failed to fetch employee IDs');
+      throw error;
+    }
+  },
 };
 
 export default employeeService;
