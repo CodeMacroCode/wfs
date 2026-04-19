@@ -40,15 +40,12 @@ import { useDebounce } from "@/hooks/use-debounce"
 import { useEmployeesDropdownInfiniteQuery } from "@/hooks/queries/use-employees-query"
 import { useCreateLeaveMutation } from "@/hooks/queries/use-leave"
 import { InfiniteScrollSelect } from "@/components/ui/infinite-scroll-select"
+import { EmployeeDropdownItem } from "@/types/employee"
 
 const leaveSchema = z.object({
   employeeId: z.string().min(1, "Employee is required"),
-  fromDate: z.date({
-    required_error: "From date is required",
-  }),
-  toDate: z.date({
-    required_error: "To date is required",
-  }),
+  fromDate: z.any().refine((val) => val instanceof Date, "From date is required"),
+  toDate: z.any().refine((val) => val instanceof Date, "To date is required"),
   leaveType: z.string().min(1, "Leave type is required"),
   reason: z.string().min(1, "Reason is required"),
 })
@@ -109,7 +106,7 @@ export function MarkLeaveDialog({ trigger, open: controlledOpen, onOpenChange: c
       })
       setIsOpen?.(false)
       form.reset()
-    } catch (error) {
+    } catch {
       // Error is handled in the mutation hook via toast
     }
   }
@@ -167,9 +164,9 @@ export function MarkLeaveDialog({ trigger, open: controlledOpen, onOpenChange: c
                       isLoading={isLoadingEmployees}
                       onSearchChange={setSearchTerm}
                       placeholder="Select employee"
-                      getLabel={(emp: any) => emp.name}
-                      getValue={(emp: any) => emp._id}
-                      renderItem={(emp: any) => (
+                      getLabel={(emp: EmployeeDropdownItem) => emp.name}
+                      getValue={(emp: EmployeeDropdownItem) => emp._id}
+                      renderItem={(emp: EmployeeDropdownItem) => (
                         <div className="flex flex-col gap-0.5">
                           <span className="font-bold text-slate-700 italic">{emp.name}</span>
                         </div>

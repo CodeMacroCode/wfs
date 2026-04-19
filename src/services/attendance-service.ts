@@ -53,11 +53,13 @@ export const attendanceService = {
     startDate: string,
     endDate: string,
     page: number = 1,
-    limit: number = 10
+    limit: number = 10,
+    status?: string,
+    companyId?: string
   ): Promise<AttendanceWithSummaryResponse> => {
     try {
       return await apiClient.get<void, AttendanceWithSummaryResponse>('/attendance/with-summary', {
-        params: { startDate, endDate, page, limit }
+        params: { startDate, endDate, page, limit, status, companyId }
       });
     } catch (error: unknown) {
       toast.error('Failed to fetch attendance summary');

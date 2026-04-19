@@ -1,9 +1,14 @@
 - [x] Define types in `src/types/doc-center.ts`
 - [x] Add query keys in `src/constants/query-keys.ts`
-- [x] Implement service in `src/services/doc-center-service.ts`
-- [x] Implement hooks in `src/hooks/queries/use-doc-center.ts`
-- [x] Create `UploadDocDialog` component
-- [x] Create `DocCenterTable` component
+- [x] Implement Salary Deletion
+- [x] Implement Salary Update
+    - [x] Add updateSalary service method
+    - [x] Add useUpdateSalaryMutation hook
+    - [x] Add onEdit prop and edit button to SalaryTable
+    - [x] Implement handleEdit and pre-fill form
+    - [x] Toggle between Create/Update logic
+    - [x] Final UI polish (dynamic labels, state resets)
+- [x] Update Attendance Service for status & company filtering
 - [x] Update `DocumentPage` in `src/app/dashboard/document/page.tsx`
 - [x] Verify functionality
 - [x] Update types for multi-file support in `src/types/doc-center.ts`

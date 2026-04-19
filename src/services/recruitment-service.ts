@@ -1,11 +1,27 @@
 import apiClient from '@/lib/api-client';
-import { RecruitmentResponse, InterviewQueryParams } from '@/types/recruitment';
+import { RecruitmentResponse, InterviewQueryParams, Interview, InterviewStatus, InterviewMetadata } from '@/types/recruitment';
 import { toast } from 'sonner';
+
+interface RawInterview {
+  _id: string;
+  candidateName: string;
+  email: string;
+  contactNumber: string;
+  appliedPosition: string;
+  interviewDate: string;
+  interviewerName: string;
+  interviewerFeedback?: string;
+  selectionStatus: InterviewStatus;
+  resumes?: string[];
+  metadata?: InterviewMetadata;
+  createdAt: string;
+  updatedAt?: string;
+}
 
 /**
  * Helper to normalize API response shape to internal Interview type
  */
-function normalizeInterview(raw: any) {
+function normalizeInterview(raw: RawInterview): Interview {
   return {
     id: raw._id,
     _id: raw._id,
@@ -35,10 +51,10 @@ export const recruitmentService = {
    */
   getAll: async (params?: InterviewQueryParams): Promise<RecruitmentResponse> => {
     try {
-      const response = await apiClient.get<void, any>('/recruitment', { params });
+      const response = await apiClient.get<void, { data: RawInterview[]; stats: RecruitmentResponse['stats']; pagination: RecruitmentResponse['pagination'] }>('/recruitment', { params });
       return {
         ...response,
-        data: (response.data || []).map(normalizeInterview),
+        data: (response.data || []).map((item: RawInterview) => normalizeInterview(item)),
       };
     } catch (error: unknown) {
       toast.error('Failed to fetch recruitment records');
@@ -54,7 +70,8 @@ export const recruitmentService = {
       await apiClient.post<FormData, void>('/recruitment', formData);
       toast.success('Candidate logged successfully');
     } catch (error: unknown) {
-      const msg = (error as any)?.data?.message || (error as any)?.message || 'Failed to log candidate';
+      const err = error as { data?: { message?: string }; message?: string };
+      const msg = err?.data?.message || err?.message || 'Failed to log candidate';
       toast.error(msg);
       throw error;
     }
@@ -68,7 +85,8 @@ export const recruitmentService = {
       await apiClient.delete<void, void>(`/recruitment/${id}`);
       toast.success('Candidate record deleted');
     } catch (error: unknown) {
-      const msg = (error as any)?.data?.message || (error as any)?.message || 'Failed to delete record';
+      const err = error as { data?: { message?: string }; message?: string };
+      const msg = err?.data?.message || err?.message || 'Failed to delete record';
       toast.error(msg);
       throw error;
     }

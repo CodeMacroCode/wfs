@@ -16,7 +16,6 @@ import {
   AlertCircle
 } from "lucide-react";
 import { useEmployeeLeavesQuery } from "@/hooks/queries/use-leave";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { Leave } from "@/types/leave";
@@ -167,7 +166,7 @@ export function LeavesTab({ employeeId }: LeavesTabProps) {
                       </div>
                       <div className="flex items-center gap-2 text-slate-400">
                         <AlertCircle className="h-3.5 w-3.5" />
-                        <span className="text-xs font-medium italic truncate max-w-md">"{leave.reason}"</span>
+                        <span className="text-xs font-medium italic truncate max-w-md">&quot;{leave.reason}&quot;</span>
                       </div>
                     </div>
                   </div>

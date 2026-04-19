@@ -75,6 +75,10 @@ export interface Employee {
   documents?: EmployeeDocument[];
   profileImage?: string | File | null;
   profilePicture?: string | File | null;
+  employeeObjId?: {
+    _id: string;
+    employeeId: string;
+  };
   createdBy?: string;
   notes?: string;
   remarks?: string;

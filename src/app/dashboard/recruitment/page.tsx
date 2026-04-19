@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Download, Users, Clock, CheckCircle2, XCircle, CalendarCheck } from "lucide-react"
+import { Users, Clock, CheckCircle2, XCircle, CalendarCheck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Interview } from "@/types/recruitment"

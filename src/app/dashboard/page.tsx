@@ -16,6 +16,7 @@ import { AttendanceUploadDialog } from "@/components/dashboard/attendance-upload
 import { MarkLeaveDialog } from "@/components/dashboard/mark-leave-dialog"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { format } from "date-fns"
 import {
   BarChart,
   Bar,
@@ -33,7 +34,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Employee, EmployeeStatus } from "@/types/employee"
 import { ExpandedStatCard } from "@/components/dashboard/ExpandedStatCard"
 import { useDataTable } from "@/hooks/use-data-table"
-import { useAttendanceQuery, useAttendanceDashboardCountQuery } from "@/hooks/queries/use-attendance"
+import { useAttendanceWithSummaryQuery } from "@/hooks/queries/use-attendance"
 import { AttendanceTable } from "@/app/dashboard/attendance/attendance-table"
 import { EditEmployeeDialog } from "@/components/employee/employee-dialogs"
 import { DeleteEmployeeDialog } from "@/components/employee/delete-employee-dialog"
@@ -117,15 +118,19 @@ export default function DashboardPage() {
     storageKey: "dashboard-employees",
   })
 
-  const { data: attendanceData, isLoading: isAttendanceLoading } = useAttendanceQuery(
+  const today = format(new Date(), "yyyy-MM-dd")
+
+  const { data: attendanceData, isLoading: isAttendanceLoading } = useAttendanceWithSummaryQuery(
+    today,
+    today,
     apiParams.page, 
     apiParams.limit as number,
+    undefined,
     undefined,
     { staleTime: 60000 }
   )
   const attendanceList = attendanceData?.data || []
-
-  const { data: dashboardStats } = useAttendanceDashboardCountQuery({ staleTime: 60000 });
+  const dashboardStats = attendanceData?.summary
 
   const statsConfig = {
     all: { title: "Total Labor Force", color: { bg: "bg-[#f1f5f9]", text: "text-slate-900", titleText: "text-slate-500" } },

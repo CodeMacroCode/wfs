@@ -56,3 +56,13 @@ export function useDeleteCompanyMutation() {
     },
   });
 }
+/**
+ * Hook to fetch company dropdown list
+ */
+export function useCompanyDropdownQuery() {
+  return useQuery({
+    queryKey: [...QUERY_KEYS.company.all, 'dropdown'],
+    queryFn: () => companyService.getDropdown(),
+    staleTime: 5 * 60 * 1000,
+  });
+}

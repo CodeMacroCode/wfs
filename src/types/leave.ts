@@ -31,7 +31,7 @@ export interface Leave {
 export interface LeaveResponse {
   success: boolean;
   message: string;
-  data?: any;
+  data?: Leave;
 }
 
 export interface LeaveListResponse {

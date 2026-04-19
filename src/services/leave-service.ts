@@ -1,5 +1,5 @@
 import apiClient from '@/lib/api-client';
-import { LeaveRequest, LeaveResponse, UpdateLeaveRequest } from '@/types/leave';
+import { LeaveRequest, LeaveResponse, UpdateLeaveRequest, LeaveListResponse } from '@/types/leave';
 import { toast } from 'sonner';
 
 /**
@@ -14,8 +14,9 @@ export const leaveService = {
       const response = await apiClient.post<LeaveRequest, LeaveResponse>('/leave', data);
       toast.success('Leave marked successfully');
       return response;
-    } catch (error: any) {
-      const errorMessage = error?.data?.message || error?.message || 'Failed to mark leave';
+    } catch (error: unknown) {
+      const err = error as { data?: { message?: string }; message?: string };
+      const errorMessage = err?.data?.message || err?.message || 'Failed to mark leave';
       toast.error(errorMessage);
       throw error;
     }
@@ -24,7 +25,7 @@ export const leaveService = {
   /**
    * Get leaves for a specific user filtered by month and year
    */
-  getByUser: async (userId: string, month: string, year: string): Promise<{ data: any[] }> => {
+  getByUser: async (userId: string, month: string, year: string): Promise<LeaveListResponse> => {
     try {
       return await apiClient.get('/leave/by-user', {
         params: { userId, month, year }
@@ -43,7 +44,7 @@ export const leaveService = {
     limit: number = 10,
     month?: string,
     year?: string
-  ): Promise<{ data: any[], total: number }> => {
+  ): Promise<LeaveListResponse> => {
     try {
       return await apiClient.get('/leave', {
         params: { page, limit, month, year }
@@ -62,8 +63,9 @@ export const leaveService = {
       const response = await apiClient.put<UpdateLeaveRequest, LeaveResponse>(`/leave/${id}`, data);
       toast.success(`Leave ${data.status.toLowerCase()} successfully`);
       return response;
-    } catch (error: any) {
-      const errorMessage = error?.data?.message || error?.message || `Failed to ${data.status.toLowerCase()} leave`;
+    } catch (error: unknown) {
+      const err = error as { data?: { message?: string }; message?: string };
+      const errorMessage = err?.data?.message || err?.message || `Failed to ${data.status.toLowerCase()} leave`;
       toast.error(errorMessage);
       throw error;
     }

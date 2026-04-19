@@ -15,7 +15,6 @@ import { DataTable } from "@/components/ui/data-table"
 import { Leave } from "@/types/leave"
 import { format } from "date-fns"
 import { PaginationState } from "@tanstack/react-table"
-import { cn } from "@/lib/utils"
 import { LeaveStatusDialog } from "./leave-status-dialog"
 import { Button } from "@/components/ui/button"
 import { 
@@ -149,7 +148,7 @@ export function LeaveTable({
       header: "Reason",
       cell: ({ row }) => (
         <p className="text-xs font-medium text-slate-500 line-clamp-1 italic max-w-[200px]">
-          "{row.original.reason || "No reason provided"}"
+          &quot;{row.original.reason || "No reason provided"}&quot;
         </p>
       ),
     },

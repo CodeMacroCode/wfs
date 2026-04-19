@@ -23,6 +23,7 @@ import {
   CalendarX,
   Search,
   PaperclipIcon,
+  Bell,
 } from "lucide-react"
 import Link from "next/link"
 import * as React from "react"
@@ -39,8 +40,10 @@ const items = [
   { title: "Leave Management", url: "/dashboard/leave-management", icon: CalendarX },
   { title: "Recruitment", url: "/dashboard/recruitment", icon: Search },
   { title: "Asset Tracking", url: "/dashboard/asset-tracking", icon: Search },
-  { title: "Payroll", url: "/dashboard/payroll", icon: Banknote },
+  // { title: "Payroll", url: "/dashboard/payroll", icon: Banknote },
   { title: "Company Master", url: "/dashboard/company-master", icon: Users },
+  { title: "Reminders", url: "/dashboard/reminders", icon: Bell },
+  { title: "Employee Salary", url: "/dashboard/employee-salary", icon: Banknote },
 ]
 
 function Logo({ collapsed }: { collapsed?: boolean }) {

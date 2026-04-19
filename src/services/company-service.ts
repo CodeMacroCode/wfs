@@ -1,5 +1,5 @@
 import apiClient from '@/lib/api-client';
-import { Company, CompanyResponse, CompanyQueryParams, CreateCompanyDto } from '@/types/company';
+import { Company, CompanyResponse, CompanyQueryParams, CreateCompanyDto, CompanyDropdownResponse } from '@/types/company';
 import { toast } from 'sonner';
 
 /**
@@ -64,6 +64,18 @@ export const companyService = {
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Failed to delete company';
       toast.error(message);
+      throw error;
+    }
+  },
+  
+  /**
+   * Get company dropdown list
+   */
+  getDropdown: async (): Promise<CompanyDropdownResponse> => {
+    try {
+      return await apiClient.get<void, CompanyDropdownResponse>('/company/dropdown');
+    } catch (error: unknown) {
+      toast.error('Failed to fetch company dropdown');
       throw error;
     }
   },

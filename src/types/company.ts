@@ -38,3 +38,12 @@ export interface CompanyQueryParams {
   limit?: number;
   search?: string;
 }
+
+export interface CompanyDropdownResponse {
+  success: boolean;
+  data: {
+    _id: string;
+    name: string;
+    prefix: string;
+  }[];
+}

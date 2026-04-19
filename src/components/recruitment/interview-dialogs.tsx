@@ -82,7 +82,7 @@ export function EditInterviewDialog({ interview, open, onOpenChange, onUpdate }:
     email:              interview.email,
     contactNumber:      interview.contact,           // contact → contactNumber
     appliedPosition:    interview.position,          // position → appliedPosition
-    selectionStatus:    interview.status as any,     // status → selectionStatus
+    selectionStatus:    interview.status as InterviewFormValues["selectionStatus"],     // status → selectionStatus
     interviewDate:      interview.interviewDate
                           ? interview.interviewDate.substring(0, 10)  // ISO → YYYY-MM-DD
                           : "",
@@ -97,7 +97,7 @@ export function EditInterviewDialog({ interview, open, onOpenChange, onUpdate }:
   }
 
   const onSubmit = (data: InterviewFormValues) => {
-    onUpdate(interview.id, data as any)
+    onUpdate(interview.id, data as Partial<Interview>)
     onOpenChange(false)
     toast.success("Interview updated successfully")
   }

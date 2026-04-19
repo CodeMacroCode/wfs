@@ -49,7 +49,7 @@ export function LeaveStatusDialog({ leave, status, open, onOpenChange }: LeaveSt
       onOpenChange(false)
       setReason("")
       setIsPaid(false)
-    } catch (error) {
+    } catch {
       // Error handled in hook
     }
   }
@@ -127,7 +127,7 @@ export function LeaveStatusDialog({ leave, status, open, onOpenChange }: LeaveSt
                   Mark as Paid Leave
                 </Label>
                 <p className="text-[11px] text-emerald-600 font-medium">
-                  This will count towards the employee's paid leave balance.
+                  This will count towards the employee&apos;s paid leave balance.
                 </p>
               </div>
             </div>

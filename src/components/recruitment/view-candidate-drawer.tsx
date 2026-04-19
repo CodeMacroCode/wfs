@@ -1,15 +1,12 @@
 "use client"
 
 import * as React from "react"
-import { X, Mail, Phone, Briefcase, Calendar, User, MessageSquare, FileText, MapPin, Clock, DollarSign, GraduationCap, ExternalLink } from "lucide-react"
+import { X, Mail, Phone, Calendar, User, MessageSquare, FileText, MapPin, Clock, DollarSign, GraduationCap, ExternalLink } from "lucide-react"
 import { Interview } from "@/types/recruitment"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import {
   Sheet,
   SheetContent,
-  SheetHeader,
-  SheetTitle,
 } from "@/components/ui/sheet"
 
 interface ViewCandidateDrawerProps {
