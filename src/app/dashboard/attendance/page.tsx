@@ -4,6 +4,7 @@ import * as React from "react"
 import { RefreshCw, Upload, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { AttendanceUploadDialog } from "@/components/dashboard/attendance-upload-dialog"
+import { MarkLeaveDialog } from "@/components/dashboard/mark-leave-dialog"
 import { useAttendanceQuery } from "@/hooks/queries/use-attendance"
 import { PaginationState } from "@tanstack/react-table"
 import { AttendanceTable } from "./attendance-table"
@@ -41,10 +42,14 @@ export default function AttendancePage() {
                         <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
                     </Button>
 
-                    <Button variant="outline" className="border-gray-200 text-slate-700 bg-white hover:bg-gray-50 flex gap-2 h-10 px-4 rounded-xl shadow-sm transition-all active:scale-95 border-none">
-                        <Plus className="h-4 w-4" />
-                        <span className="font-semibold text-sm">Mark Leave</span>
-                    </Button>
+                    <MarkLeaveDialog
+                        trigger={
+                            <Button variant="outline" className="border-gray-200 text-slate-700 bg-white hover:bg-gray-50 flex gap-2 h-10 px-4 rounded-xl shadow-sm transition-all active:scale-95 border-none">
+                                <Plus className="h-4 w-4" />
+                                <span className="font-semibold text-sm">Mark Leave</span>
+                            </Button>
+                        }
+                    />
 
                     <AttendanceUploadDialog
                         trigger={

@@ -39,7 +39,7 @@ export const getEmployeeColumns = (
             header: "ID",
             cell: ({ row }) => (
                 <span className="font-bold text-[#2eb88a] text-center">
-                    {row.original.uniqueId}
+                    {row.original.employeeObjId?.employeeId}
                 </span>
             ),
         },

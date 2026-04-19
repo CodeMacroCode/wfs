@@ -13,6 +13,7 @@ import {
   AlertCircle
 } from "lucide-react"
 import { AttendanceUploadDialog } from "@/components/dashboard/attendance-upload-dialog"
+import { MarkLeaveDialog } from "@/components/dashboard/mark-leave-dialog"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import {
@@ -144,10 +145,14 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" className="border-gray-200 text-slate-700 bg-white hover:bg-gray-50 flex gap-2 h-10 px-4 rounded-xl shadow-sm transition-all active:scale-95">
-            <Plus className="h-4 w-4" />
-            <span className="font-semibold text-sm">Mark Leave</span>
-          </Button>
+          <MarkLeaveDialog
+            trigger={
+              <Button variant="outline" className="border-gray-200 text-slate-700 bg-white hover:bg-gray-50 flex gap-2 h-10 px-4 rounded-xl shadow-sm transition-all active:scale-95">
+                <Plus className="h-4 w-4" />
+                <span className="font-semibold text-sm">Mark Leave</span>
+              </Button>
+            }
+          />
           <AttendanceUploadDialog
             trigger={
               <Button

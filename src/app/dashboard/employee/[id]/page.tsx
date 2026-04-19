@@ -8,6 +8,7 @@ import { ProfileTabs, TabType } from "@/components/employee/profile/profile-tabs
 import { OverviewTab } from "@/components/employee/profile/tabs/overview-tab";
 import { DocumentsTab } from "@/components/employee/profile/tabs/doc-tab";
 import { AttendanceTab } from "@/components/employee/profile/tabs/attendance-tab";
+import { LeavesTab } from "@/components/employee/profile/tabs/leaves-tab";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Loader2 } from "lucide-react";
@@ -62,8 +63,9 @@ export default function EmployeeProfilePage() {
             {activeTab === "documents" && <DocumentsTab employee={employee} />}
             {activeTab === "i-card" && <DocumentsTab employee={employee} />}
             {activeTab === "attendance" && <AttendanceTab employeeId={employeeId} />}
+            {activeTab === "leaves" && <LeavesTab employeeId={employeeId} />}
             
-            {(activeTab !== "overview" && activeTab !== "documents" && activeTab !== "i-card" && activeTab !== "attendance") && (
+            {(activeTab !== "overview" && activeTab !== "documents" && activeTab !== "i-card" && activeTab !== "attendance" && activeTab !== "leaves") && (
               <div className="flex flex-col items-center justify-center py-24 text-slate-300">
                 <div className="bg-slate-100 p-4 rounded-full mb-4">
                   <Loader2 className="w-8 h-8 animate-spin text-[#2eb88a]" />

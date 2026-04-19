@@ -57,4 +57,8 @@ export const QUERY_KEYS = {
     all: ['company'] as const,
     list: (params?: unknown) => [...QUERY_KEYS.company.all, 'list', { params }] as const,
   },
+  leaves: {
+    all: ['leaves'] as const,
+    list: () => [...QUERY_KEYS.leaves.all, 'list'] as const,
+  },
 } as const;

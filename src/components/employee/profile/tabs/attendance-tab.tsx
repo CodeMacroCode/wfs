@@ -13,7 +13,10 @@ import {
   addMonths, 
   subMonths,
   setMonth,
-  setYear
+  setYear,
+  isWithinInterval,
+  startOfDay,
+  endOfDay
 } from "date-fns";
 import { 
   ChevronLeft, 
@@ -25,7 +28,8 @@ import {
   Info,
   ChevronDown
 } from "lucide-react";
-import { useMonthlyAttendanceQuery } from "@/hooks/queries/use-attendance";
+import { useMonthlyAttendanceQuery } from "@/hooks/queries/use-attendance"
+import { useEmployeeLeavesQuery } from "@/hooks/queries/use-leave"
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -68,7 +72,10 @@ export function AttendanceTab({ employeeId }: AttendanceTabProps) {
   const monthStr = (currentDate.getMonth() + 1).toString().padStart(2, '0');
   const yearStr = currentDate.getFullYear().toString();
 
-  const { data: attendanceData, isLoading } = useMonthlyAttendanceQuery(employeeId, monthStr, yearStr);
+  const { data: attendanceData, isLoading: isAttendanceLoading } = useMonthlyAttendanceQuery(employeeId, monthStr, yearStr);
+  const { data: leavesData, isLoading: isLeavesLoading } = useEmployeeLeavesQuery(employeeId, monthStr, yearStr);
+
+  const isLoading = isAttendanceLoading || isLeavesLoading;
 
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(monthStart);
@@ -108,6 +115,8 @@ export function AttendanceTab({ employeeId }: AttendanceTabProps) {
     });
     return map;
   }, [attendanceData]);
+
+  const leaves = leavesData?.data || [];
 
   return (
     <div className="p-8 bg-slate-50/50 min-h-[600px] flex flex-col gap-8">
@@ -203,6 +212,14 @@ export function AttendanceTab({ employeeId }: AttendanceTabProps) {
               const isToday = isSameDay(day, new Date());
               const StatusIcon = attendance ? statusIcons[attendance.status] : null;
 
+              // Find if this day falls within any leave period
+              const activeLeave = leaves.find(leave => 
+                isWithinInterval(startOfDay(day), {
+                  start: startOfDay(new Date(leave.fromDate)),
+                  end: endOfDay(new Date(leave.toDate))
+                })
+              );
+
               return (
                 <div 
                   key={idx} 
@@ -256,6 +273,29 @@ export function AttendanceTab({ employeeId }: AttendanceTabProps) {
                           )}
                         </div>
                       )}
+
+                      {activeLeave && (
+                         <div className="px-1 pt-1 border-t border-slate-100/50 mt-1">
+                          <span className="text-[9px] font-bold text-blue-500 italic block truncate">
+                            {activeLeave.leaveType} Leave
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  ) : activeLeave ? (
+                    <div className="flex flex-col gap-2">
+                       <div className={cn(
+                        "flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-[10px] font-bold uppercase tracking-tight",
+                        statusColors["On Leave"]
+                      )}>
+                        <Info className="h-3 w-3" />
+                        On Leave
+                      </div>
+                      <div className="px-1">
+                        <span className="text-[10px] font-bold text-blue-500 italic">
+                          {activeLeave.leaveType}
+                        </span>
+                      </div>
                     </div>
                   ) : (
                     isCurrentMonth && day < new Date() && (
