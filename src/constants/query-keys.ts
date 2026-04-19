@@ -34,6 +34,8 @@ export const QUERY_KEYS = {
   attendance: {
     all: ['attendance'] as const,
     list: () => [...QUERY_KEYS.attendance.all, 'list'] as const,
+    dashboardCount: () => [...QUERY_KEYS.attendance.all, 'dashboard-count'] as const,
+    withSummary: (params: unknown) => [...QUERY_KEYS.attendance.all, 'with-summary', { params }] as const,
   },
   payrollPolicies: {
     all: ['payrollPolicies'] as const,
@@ -60,5 +62,9 @@ export const QUERY_KEYS = {
   leaves: {
     all: ['leaves'] as const,
     list: () => [...QUERY_KEYS.leaves.all, 'list'] as const,
+  },
+  recruitment: {
+    all: ['recruitment'] as const,
+    list: (params?: unknown) => [...QUERY_KEYS.recruitment.all, 'list', { params }] as const,
   },
 } as const;

@@ -31,12 +31,17 @@ export function useEmployeeLeavesQuery(userId: string, month: string, year: stri
 }
 
 /**
- * Hook to fetch all leave requests with pagination
+ * Hook to fetch all leave requests with pagination and optional date filtering
  */
-export function useLeavesQuery(page: number, limit: number) {
+export function useLeavesQuery(
+  page: number, 
+  limit: number, 
+  month?: string, 
+  year?: string
+) {
   return useQuery({
-    queryKey: [...QUERY_KEYS.leaves.all, { page, limit }],
-    queryFn: () => leaveService.getAll(page, limit),
+    queryKey: [...QUERY_KEYS.leaves.all, { page, limit, month, year }],
+    queryFn: () => leaveService.getAll(page, limit, month, year),
   });
 }
 

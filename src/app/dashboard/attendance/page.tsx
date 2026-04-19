@@ -5,9 +5,22 @@ import { RefreshCw, Upload, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { AttendanceUploadDialog } from "@/components/dashboard/attendance-upload-dialog"
 import { MarkLeaveDialog } from "@/components/dashboard/mark-leave-dialog"
-import { useAttendanceQuery } from "@/hooks/queries/use-attendance"
+import { useAttendanceWithSummaryQuery } from "@/hooks/queries/use-attendance"
 import { PaginationState } from "@tanstack/react-table"
 import { AttendanceTable } from "./attendance-table"
+import { DatePickerWithRange } from "@/components/ui/date-range-picker"
+import { DateRange } from "react-day-picker"
+import { format, subDays, startOfDay, endOfDay } from "date-fns"
+import { Card } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { 
+    Users, 
+    UserCheck, 
+    UserX, 
+    UserMinus, 
+    AlertTriangle 
+} from "lucide-react"
 
 export default function AttendancePage() {
     const [pagination, setPagination] = React.useState<PaginationState>({
@@ -15,7 +28,14 @@ export default function AttendancePage() {
         pageSize: 10,
     })
 
-    const { data, isLoading, refetch, isFetching } = useAttendanceQuery(
+    const [date, setDate] = React.useState<DateRange | undefined>({
+        from: new Date(),
+        to: new Date()
+    })
+
+    const { data, isLoading, refetch, isFetching } = useAttendanceWithSummaryQuery(
+        date?.from ? format(date.from, "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
+        date?.to ? format(date.to, "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
         pagination.pageIndex + 1,
         pagination.pageSize
     )
@@ -30,13 +50,23 @@ export default function AttendancePage() {
                         Monitor and manage daily attendance records and workforce punch logs.
                     </p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-end gap-3">
+                    <div className="flex flex-col gap-1.5">
+                        <Label className="text-[10px] uppercase font-black text-slate-400 ml-1">Range Filter</Label>
+                        <DatePickerWithRange 
+                            date={date} 
+                            setDate={(newDate) => {
+                                setDate(newDate)
+                                setPagination(prev => ({ ...prev, pageIndex: 0 }))
+                            }} 
+                        />
+                    </div>
                     <Button
                         variant="outline"
                         size="icon"
                         onClick={() => refetch()}
                         disabled={isLoading || isFetching}
-                        className="border-slate-200 text-slate-600 hover:bg-slate-50 h-10 w-10 rounded-xl shadow-sm transition-all active:scale-95 border-none bg-white p-0"
+                        className="border-slate-200 text-slate-600 hover:bg-slate-50 h-10 w-10 rounded-xl shadow-sm transition-all active:scale-95 bg-white border"
                         title="Refresh Data"
                     >
                         <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
@@ -44,7 +74,7 @@ export default function AttendancePage() {
 
                     <MarkLeaveDialog
                         trigger={
-                            <Button variant="outline" className="border-gray-200 text-slate-700 bg-white hover:bg-gray-50 flex gap-2 h-10 px-4 rounded-xl shadow-sm transition-all active:scale-95 border-none">
+                            <Button variant="outline" className="border-slate-200 text-slate-700 bg-white hover:bg-slate-50 flex gap-2 h-10 px-4 rounded-xl shadow-sm transition-all active:scale-95">
                                 <Plus className="h-4 w-4" />
                                 <span className="font-semibold text-sm">Mark Leave</span>
                             </Button>
@@ -55,7 +85,7 @@ export default function AttendancePage() {
                         trigger={
                             <Button
                                 variant="outline"
-                                className="border-gray-200 text-slate-100 bg-[#2dd4bf] hover:bg-[#26bba8] flex gap-2 h-10 px-5 rounded-xl border-none shadow-sm transition-all active:scale-95"
+                                className="border-none text-white bg-emerald-500 hover:bg-emerald-600 flex gap-2 h-10 px-5 rounded-xl shadow-sm transition-all active:scale-95"
                             >
                                 <Upload className="h-4 w-4" />
                                 <span className="font-bold text-sm">Bulk Import</span>
@@ -63,6 +93,31 @@ export default function AttendancePage() {
                         }
                     />
                 </div>
+            </div>
+
+            {/* Attendance Summary Stats */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                {[
+                    { label: "Total Labor", value: data?.summary?.totalUsers ?? 0, icon: Users, color: "text-slate-600", bg: "bg-slate-50" },
+                    { label: "Present", value: data?.summary?.present ?? 0, icon: UserCheck, color: "text-emerald-600", bg: "bg-emerald-50" },
+                    { label: "Absent", value: data?.summary?.absent ?? 0, icon: UserX, color: "text-rose-600", bg: "bg-rose-50" },
+                    { label: "On Leave", value: data?.summary?.onLeave ?? 0, icon: UserMinus, color: "text-amber-600", bg: "bg-amber-50" },
+                    { label: "Not Marked", value: data?.summary?.notMarked ?? 0, icon: AlertTriangle, color: "text-emerald-300", bg: "bg-[#0a3622]" },
+                ].map((stat) => (
+                    <Card key={stat.label} className={`p-5 border-none shadow-sm flex flex-col justify-between min-h-[120px] rounded-2xl ${stat.label === 'Not Marked' ? 'bg-[#0a3622]' : 'bg-white'}`}>
+                        <div className="flex items-center justify-between">
+                            <p className={`text-[10px] font-black uppercase tracking-widest ${stat.label === 'Not Marked' ? 'text-emerald-500/70' : 'text-slate-400'}`}>
+                                {stat.label}
+                            </p>
+                            <div className={`${stat.label === 'Not Marked' ? 'bg-emerald-500/10' : stat.bg} p-2 rounded-xl`}>
+                                <stat.icon className={`h-4 w-4 ${stat.label === 'Not Marked' ? 'text-emerald-500' : stat.color}`} />
+                            </div>
+                        </div>
+                        <p className={`text-3xl font-black tracking-tight ${stat.label === 'Not Marked' ? 'text-white' : 'text-slate-900'}`}>
+                            {stat.value}
+                        </p>
+                    </Card>
+                ))}
             </div>
 
             <AttendanceTable

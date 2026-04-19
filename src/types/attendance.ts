@@ -36,3 +36,40 @@ export interface AttendanceResponse {
   page: number;
   limit: number;
 }
+
+/**
+ * Interface for dashboard attendance counts
+ */
+export interface AttendanceDashboardCount {
+  startDate: string;
+  endDate: string;
+  totalUsers: number;
+  present: number;
+  absent: number;
+  onLeave: number;
+  notMarked: number;
+}
+
+/**
+ * Interface for attendance summary in filtered reports
+ */
+export interface AttendanceSummary {
+  totalUsers: number;
+  present: number;
+  absent: number;
+  onLeave: number;
+  notMarked: number;
+}
+
+/**
+ * Interface for attendance with summary response
+ */
+export interface AttendanceWithSummaryResponse {
+  summary: AttendanceSummary;
+  data: Attendance[];
+  total: number;
+  page: number;
+  limit: number;
+  startDate: string;
+  endDate: string;
+}

@@ -1,95 +1,65 @@
 "use client"
 
 import * as React from "react"
-import { Download } from "lucide-react"
+import { Download, Users, Clock, CheckCircle2, XCircle, CalendarCheck } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Interview, CreateInterviewDto } from "@/types/recruitment"
+import { Card } from "@/components/ui/card"
+import { Interview } from "@/types/recruitment"
 import { InterviewTable } from "@/components/recruitment/interview-table"
 import { AddInterviewDialog, EditInterviewDialog, OnboardEmployeeDialog } from "@/components/recruitment/interview-dialogs"
-
-const DUMMY_INTERVIEWS: Interview[] = [
-  {
-    id: "1",
-    candidateName: "John Doe",
-    email: "john@example.com",
-    contact: "+1 234 567 8901",
-    position: "Senior React Developer",
-    interviewDate: "2024-04-12",
-    interviewer: "Sarah Conners",
-    feedback: "Strong technical background, good culture fit.",
-    status: "Selected",
-    createdAt: "2024-04-01T10:00:00Z",
-  },
-  {
-    id: "2",
-    candidateName: "Jane Smith",
-    email: "jane@example.com",
-    contact: "+1 987 654 3210",
-    position: "Product Designer",
-    interviewDate: "2024-04-15",
-    interviewer: "Mike Ross",
-    feedback: "Portfolio is impressive, but needs to work on collaborative tools.",
-    status: "Pending",
-    createdAt: "2024-04-05T14:30:00Z",
-  },
-  {
-    id: "3",
-    candidateName: "Alice Johnson",
-    email: "alice@example.com",
-    contact: "+1 555 123 4567",
-    position: "Backend Engineer (Go)",
-    interviewDate: "2024-04-10",
-    interviewer: "David Miller",
-    feedback: "Technically sound but expectations on remote work didn't align.",
-    status: "Not Selected",
-    createdAt: "2024-03-25T09:15:00Z",
-  },
-]
+import { useRecruitmentQuery, useDeleteRecruitmentMutation } from "@/hooks/queries/use-recruitment"
+import { useDebounce } from "@/hooks/use-debounce"
+import { PaginationState } from "@tanstack/react-table"
 
 export default function RecruitmentPage() {
-  const [interviews, setInterviews] = React.useState<Interview[]>(DUMMY_INTERVIEWS)
+  const [pagination, setPagination] = React.useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 10,
+  })
   const [isAddOpen, setIsAddOpen] = React.useState(false)
   const [editingInterview, setEditingInterview] = React.useState<Interview | null>(null)
   const [onboardingInterview, setOnboardingInterview] = React.useState<Interview | null>(null)
+  const [searchTerm, setSearchTerm] = React.useState("")
+  const debouncedSearch = useDebounce(searchTerm, 400)
 
-  const handleAdd = (data: CreateInterviewDto) => {
-    const newInterview: Interview = {
-      ...data,
-      id: Math.random().toString(36).substr(2, 9),
-      status: "Pending",
-      createdAt: new Date().toISOString(),
-    }
-    setInterviews([newInterview, ...interviews])
-  }
+  const { data, isLoading } = useRecruitmentQuery({
+    page: pagination.pageIndex + 1,
+    limit: pagination.pageSize,
+    search: debouncedSearch || undefined,
+  })
+  const deleteMutation = useDeleteRecruitmentMutation()
 
-  const handleUpdate = (id: string, data: Partial<Interview>) => {
-    setInterviews(interviews.map(i => i.id === id ? { ...i, ...data } : i))
-  }
+  const interviews = data?.data || []
+  const stats = data?.stats
+  const total = data?.pagination?.total || 0
 
-  const handleDelete = (id: string) => {
-    if (confirm("Are you sure you want to delete this interview record?")) {
-      setInterviews(interviews.filter(i => i.id !== id))
-    }
-  }
+  const statCards = [
+    { label: "Total Candidates", value: stats?.totalCandidates ?? 0, icon: Users, color: "text-blue-600", bg: "bg-blue-50" },
+    { label: "Interview Scheduled", value: stats?.interviewScheduled ?? 0, icon: CalendarCheck, color: "text-violet-600", bg: "bg-violet-50" },
+    { label: "Pending", value: stats?.pending ?? 0, icon: Clock, color: "text-amber-600", bg: "bg-amber-50" },
+    { label: "Selected", value: stats?.selected ?? 0, icon: CheckCircle2, color: "text-emerald-600", bg: "bg-emerald-50" },
+    { label: "Rejected", value: stats?.rejected ?? 0, icon: XCircle, color: "text-rose-600", bg: "bg-rose-50" },
+  ]
 
   return (
-    <div className="flex-1 space-y-4 p-8 pt-6">
+    <div className="flex flex-col gap-8 p-2 md:p-8 bg-slate-50/30 min-h-screen">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <h2 className="text-2xl font-bold tracking-tight text-slate-900 underline decoration-[#2eb88a] decoration-4 underline-offset-8">
+        <div className="space-y-1.5">
+          <h1 className="text-3xl font-bold tracking-tight italic font-heading text-[#2eb88a]">
             Recruitment & Onboarding
-          </h2>
-          <p className="text-sm text-slate-500">
+          </h1>
+          <p className="text-sm text-slate-500 font-medium">
             Track candidate interviews and streamline their onboarding to the labor directory.
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" className="gap-2 text-slate-600 border-slate-200">
+          {/* <Button variant="outline" className="gap-2 text-slate-600 border-slate-200 rounded-xl h-10">
             <Download className="h-4 w-4" />
             Export
-          </Button>
-          <Button 
-            className="bg-[#2eb88a] hover:bg-[#259b74] gap-2 text-white shadow-md shadow-emerald-500/20"
+          </Button> */}
+          <Button
+            className="bg-[#2eb88a] hover:bg-[#259b74] gap-2 text-white shadow-md shadow-emerald-500/20 rounded-xl h-10 px-5 font-bold"
             onClick={() => setIsAddOpen(true)}
           >
             Log Interview
@@ -97,27 +67,53 @@ export default function RecruitmentPage() {
         </div>
       </div>
 
-      
-    
-        <InterviewTable
-          data={interviews}
-          onEdit={setEditingInterview}
-          onDelete={handleDelete}
-          onOnboard={setOnboardingInterview}
-        />
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+        {statCards.map((stat) => (
+          <Card key={stat.label} className="p-4 border-none shadow-sm flex items-center gap-3">
+            <div className={`${stat.bg} ${stat.color} p-2.5 rounded-xl shrink-0`}>
+              <stat.icon className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-tight">{stat.label}</p>
+              <p className="text-xl font-black text-slate-900 text-center">{stat.value}</p>
+            </div>
+          </Card>
+        ))}
+      </div>
 
+      {/* Table */}
+      <InterviewTable
+        data={interviews}
+        isLoading={isLoading}
+        totalItems={total}
+        pagination={pagination}
+        onPaginationChange={setPagination}
+        searchValue={searchTerm}
+        onSearchChange={(val) => {
+          setSearchTerm(val)
+          setPagination((p) => ({ ...p, pageIndex: 0 })) // reset to page 1 on new search
+        }}
+        onEdit={setEditingInterview}
+        onDelete={(id) => {
+          if (confirm("Are you sure you want to delete this candidate record?")) {
+            deleteMutation.mutate(id)
+          }
+        }}
+        onOnboard={setOnboardingInterview}
+      />
 
       <AddInterviewDialog
         open={isAddOpen}
         onOpenChange={setIsAddOpen}
-        onAdd={handleAdd}
+        onAdd={() => {}}
       />
 
       <EditInterviewDialog
         interview={editingInterview}
         open={!!editingInterview}
         onOpenChange={(open) => !open && setEditingInterview(null)}
-        onUpdate={handleUpdate}
+        onUpdate={() => {}}
       />
 
       <OnboardEmployeeDialog

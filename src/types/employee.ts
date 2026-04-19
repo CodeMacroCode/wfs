@@ -1,5 +1,5 @@
 export type EmployeeRole = "user" | "hr" | "admin";
-export type EmployeeStatus = "present" | "absent" | "on-leave" | "overtime" | "all";
+export type EmployeeStatus = "present" | "absent" | "on-leave" | "not-marked" | "all";
 
 
 export interface EmergencyContact {

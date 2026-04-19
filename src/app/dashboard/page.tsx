@@ -33,7 +33,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Employee, EmployeeStatus } from "@/types/employee"
 import { ExpandedStatCard } from "@/components/dashboard/ExpandedStatCard"
 import { useDataTable } from "@/hooks/use-data-table"
-import { useAttendanceQuery } from "@/hooks/queries/use-attendance"
+import { useAttendanceQuery, useAttendanceDashboardCountQuery } from "@/hooks/queries/use-attendance"
 import { AttendanceTable } from "@/app/dashboard/attendance/attendance-table"
 import { EditEmployeeDialog } from "@/components/employee/employee-dialogs"
 import { DeleteEmployeeDialog } from "@/components/employee/delete-employee-dialog"
@@ -125,13 +125,14 @@ export default function DashboardPage() {
   )
   const attendanceList = attendanceData?.data || []
 
+  const { data: dashboardStats } = useAttendanceDashboardCountQuery({ staleTime: 60000 });
 
   const statsConfig = {
     all: { title: "Total Labor Force", color: { bg: "bg-[#f1f5f9]", text: "text-slate-900", titleText: "text-slate-500" } },
     present: { title: "Processed Present", color: { bg: "bg-[#f0f9f1]", text: "text-slate-900", titleText: "text-emerald-700" } },
     absent: { title: "Absentees", color: { bg: "bg-white", text: "text-slate-900", titleText: "text-slate-600" } },
     "on-leave": { title: "On Leave", color: { bg: "bg-[#f0fdfa]", text: "text-slate-900", titleText: "text-[#0d9488]" } },
-    overtime: { title: "Total Overtime", color: { bg: "bg-[#0a3622]", text: "text-white", titleText: "text-emerald-500/70" } },
+    "not-marked": { title: "Attendance Not Marked", color: { bg: "bg-[#0a3622]", text: "text-white", titleText: "text-emerald-500/70" } },
   }
 
   return (
@@ -199,7 +200,7 @@ export default function DashboardPage() {
               <motion.h3 layoutId="title-all" className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total Labor Force</motion.h3>
               <div className="flex flex-col">
                 <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
-                  17
+                  {dashboardStats?.totalUsers ?? 0}
                 </span>
                 <span className="text-[10px] font-bold text-slate-400 uppercase">Click to view</span>
               </div>
@@ -223,7 +224,9 @@ export default function DashboardPage() {
               <motion.h3 layoutId="title-present" className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider">Processed Present</motion.h3>
               <div className="flex items-center justify-between">
                 <div className="flex flex-col">
-                  <span className="text-3xl font-extrabold text-slate-900 tracking-tight">1,180</span>
+                  <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
+                    {dashboardStats?.present ?? 0}
+                  </span>
                   <span className="text-[10px] font-bold text-slate-400 uppercase">Employees</span>
                 </div>
               </div>
@@ -247,7 +250,9 @@ export default function DashboardPage() {
               <motion.h3 layoutId="title-absent" className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Absentees</motion.h3>
               <div className="flex items-center justify-between">
                 <div className="flex flex-col">
-                  <span className="text-3xl font-extrabold text-slate-900 tracking-tight">70</span>
+                  <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
+                    {dashboardStats?.absent ?? 0}
+                  </span>
                   <span className="text-[10px] font-bold text-slate-400 uppercase">Employees</span>
                 </div>
               </div>
@@ -271,7 +276,9 @@ export default function DashboardPage() {
               <motion.h3 layoutId="title-on-leave" className="text-[11px] font-bold text-[#0d9488] uppercase tracking-wider">On Leave</motion.h3>
               <div className="flex items-center justify-between">
                 <div className="flex flex-col">
-                  <span className="text-3xl font-extrabold text-slate-900 tracking-tight">12</span>
+                  <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
+                    {dashboardStats?.onLeave ?? 0}
+                  </span>
                   <span className="text-[10px] font-bold text-slate-400 uppercase">Employees</span>
                 </div>
               </div>
@@ -279,10 +286,11 @@ export default function DashboardPage() {
           </Card>
         </motion.div>
 
-        {/* Total Overtime */}
+        {/* Not Marked */}
         <motion.div
-          layoutId="card-overtime"
-          className="cursor-default"
+          layoutId="card-not-marked"
+          onClick={() => setSelectedStat("not-marked")}
+          className="cursor-pointer"
           transition={{
             type: "spring",
             damping: 30,
@@ -292,10 +300,12 @@ export default function DashboardPage() {
         >
           <Card className="border-none shadow-none bg-[#0a3622] rounded-[20px] overflow-hidden min-h-[130px] flex flex-col justify-between p-4 px-5 hover:bg-[#0d4d31]">
             <div className="space-y-2">
-              <motion.h3 layoutId="title-overtime" className="text-[11px] font-bold text-emerald-500/70 uppercase tracking-wider">Total Overtime</motion.h3>
+              <motion.h3 layoutId="title-not-marked" className="text-[11px] font-bold text-emerald-500/70 uppercase tracking-wider">Not Marked</motion.h3>
               <div className="flex flex-col">
-                <span className="text-3xl font-extrabold text-white tracking-tight">345h</span>
-                <span className="text-[10px] font-bold text-white/40 uppercase">Work Hours</span>
+                <span className="text-3xl font-extrabold text-white tracking-tight">
+                  {dashboardStats?.notMarked ?? 0}
+                </span>
+                <span className="text-[10px] font-bold text-white/40 uppercase">Employees</span>
               </div>
             </div>
           </Card>

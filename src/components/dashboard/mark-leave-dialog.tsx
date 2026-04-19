@@ -36,8 +36,10 @@ import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
-import { useEmployeeIdDropdownQuery } from "@/hooks/queries/use-employees-query"
+import { useDebounce } from "@/hooks/use-debounce"
+import { useEmployeesDropdownInfiniteQuery } from "@/hooks/queries/use-employees-query"
 import { useCreateLeaveMutation } from "@/hooks/queries/use-leave"
+import { InfiniteScrollSelect } from "@/components/ui/infinite-scroll-select"
 
 const leaveSchema = z.object({
   employeeId: z.string().min(1, "Employee is required"),
@@ -74,7 +76,17 @@ export function MarkLeaveDialog({ trigger, open: controlledOpen, onOpenChange: c
   const isOpen = isControlled ? controlledOpen : internalOpen
   const setIsOpen = isControlled ? controlledOnOpenChange : setInternalOpen
 
-  const { data: employeeData, isLoading: isLoadingEmployees } = useEmployeeIdDropdownQuery()
+  const [searchTerm, setSearchTerm] = React.useState("")
+  const debouncedSearch = useDebounce(searchTerm, 300)
+
+  const {
+    data: employeeData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading: isLoadingEmployees
+  } = useEmployeesDropdownInfiniteQuery({ search: debouncedSearch }, isOpen)
+
   const createLeaveMutation = useCreateLeaveMutation()
 
   const form = useForm<LeaveFormValues>({
@@ -102,7 +114,10 @@ export function MarkLeaveDialog({ trigger, open: controlledOpen, onOpenChange: c
     }
   }
 
-  const employeeList = employeeData?.data || []
+  const employeeList = React.useMemo(() =>
+    employeeData?.pages.flatMap((page) => page.data) || [],
+    [employeeData]
+  )
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
@@ -112,14 +127,14 @@ export function MarkLeaveDialog({ trigger, open: controlledOpen, onOpenChange: c
       <DialogTrigger asChild>
         {trigger}
       </DialogTrigger>
-      <DialogContent 
+      <DialogContent
         showCloseButton={false}
         className="sm:max-w-[500px] p-0 overflow-hidden border-none shadow-2xl rounded-[28px] bg-white/95 backdrop-blur-xl"
       >
         <div className="absolute inset-0 bg-linear-to-br from-teal-500/5 via-transparent to-blue-500/5 pointer-events-none" />
-        
+
         <DialogHeader className="p-8 pb-0 relative z-10">
-          <button 
+          <button
             onClick={() => setIsOpen?.(false)}
             className="absolute top-6 right-6 text-slate-300 hover:text-slate-900 transition-all p-2 rounded-xl hover:bg-slate-50 pointer-events-auto z-50"
           >
@@ -139,23 +154,29 @@ export function MarkLeaveDialog({ trigger, open: controlledOpen, onOpenChange: c
               control={form.control}
               name="employeeId"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="flex flex-col">
                   <FormLabel className="text-xs font-black text-slate-400 uppercase tracking-widest">Employee</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger className="h-12 rounded-xl border-slate-200 bg-white/50 focus:ring-teal-500/20">
-                        <SelectValue placeholder={isLoadingEmployees ? "Loading employees..." : "Select employee ID"} />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent className="rounded-xl border-slate-100 shadow-xl">
-                      {employeeList.map((emp) => (
-                        <SelectItem key={emp._id} value={emp.employeeId} className="rounded-lg focus:bg-teal-50 italic">
-                          <span className="font-bold text-slate-700">{emp.employeeId}</span>
-                          {emp.remark && <span className="ml-2 text-slate-400 text-[10px]">— {emp.remark}</span>}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <InfiniteScrollSelect
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      items={employeeList}
+                      loadMore={fetchNextPage}
+                      hasNextPage={!!hasNextPage}
+                      isFetchingNextPage={isFetchingNextPage}
+                      isLoading={isLoadingEmployees}
+                      onSearchChange={setSearchTerm}
+                      placeholder="Select employee"
+                      getLabel={(emp: any) => emp.name}
+                      getValue={(emp: any) => emp._id}
+                      renderItem={(emp: any) => (
+                        <div className="flex flex-col gap-0.5">
+                          <span className="font-bold text-slate-700 italic">{emp.name}</span>
+                        </div>
+                      )}
+                      className="h-12 rounded-xl border-slate-200 bg-white/50 focus:ring-teal-500/20"
+                    />
+                  </FormControl>
                   <FormMessage className="text-[10px] font-bold" />
                 </FormItem>
               )}
@@ -268,10 +289,10 @@ export function MarkLeaveDialog({ trigger, open: controlledOpen, onOpenChange: c
                 <FormItem>
                   <FormLabel className="text-xs font-black text-slate-400 uppercase tracking-widest">Reason</FormLabel>
                   <FormControl>
-                    <Textarea 
-                      placeholder="Enter the reason for leave..." 
+                    <Textarea
+                      placeholder="Enter the reason for leave..."
                       className="min-h-[100px] rounded-xl border-slate-200 bg-white/50 focus:ring-teal-500/20 resize-none"
-                      {...field} 
+                      {...field}
                     />
                   </FormControl>
                   <FormMessage className="text-[10px] font-bold" />

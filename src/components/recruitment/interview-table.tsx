@@ -5,18 +5,26 @@ import { ColumnDef } from "@tanstack/react-table"
 import { DataTable } from "@/components/ui/data-table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Edit, Trash2, UserPlus } from "lucide-react"
+import { Edit, Eye, Trash2, UserPlus } from "lucide-react"
 import { Interview } from "@/types/recruitment"
+import { PaginationState } from "@tanstack/react-table"
+import { ViewCandidateDrawer } from "@/components/recruitment/view-candidate-drawer"
 
 interface InterviewTableProps {
   data: Interview[]
   isLoading?: boolean
+  totalItems?: number
+  pagination?: PaginationState
+  onPaginationChange?: (updater: PaginationState | ((prev: PaginationState) => PaginationState)) => void
+  searchValue?: string
+  onSearchChange?: (value: string) => void
   onEdit: (interview: Interview) => void
   onDelete: (id: string) => void
   onOnboard: (interview: Interview) => void
 }
 
 export const getInterviewColumns = (
+  onView: (interview: Interview) => void,
   onEdit: (interview: Interview) => void,
   onDelete: (id: string) => void,
   onOnboard: (interview: Interview) => void
@@ -43,7 +51,15 @@ export const getInterviewColumns = (
       accessorKey: "interviewDate",
       header: "Date",
       cell: ({ row }) => (
-        <span className="text-sm text-slate-500">{row.original.interviewDate}</span>
+        <span className="text-sm text-slate-500">
+          {row.original.interviewDate
+            ? new Date(row.original.interviewDate).toLocaleDateString("en-IN", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+              })
+            : "—"}
+        </span>
       ),
     },
     {
@@ -79,7 +95,16 @@ export const getInterviewColumns = (
         const interview = row.original
 
         return (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-full h-8 w-8 p-0"
+              onClick={() => onView(interview)}
+              title="View Details"
+            >
+              <Eye className="h-4 w-4" />
+            </Button>
             {interview.status === "Selected" && (
               <Button
                 variant="ghost"
@@ -117,30 +142,49 @@ export const getInterviewColumns = (
 export function InterviewTable({
   data,
   isLoading = false,
+  totalItems = 0,
+  pagination = { pageIndex: 0, pageSize: 10 },
+  onPaginationChange = () => {},
+  searchValue: searchValueProp,
+  onSearchChange: onSearchChangeProp,
   onEdit,
   onDelete,
   onOnboard,
 }: InterviewTableProps) {
+  const [viewingInterview, setViewingInterview] = React.useState<Interview | null>(null)
+  const [localSearch, setLocalSearch] = React.useState("")
+
+  // Allow parent to control search (server-side) or fall back to local state
+  const searchValue = searchValueProp !== undefined ? searchValueProp : localSearch
+  const handleSearchChange = onSearchChangeProp ?? setLocalSearch
+
   const columns = React.useMemo(
-    () => getInterviewColumns(onEdit, onDelete, onOnboard),
+    () => getInterviewColumns(setViewingInterview, onEdit, onDelete, onOnboard),
     [onEdit, onDelete, onOnboard]
   )
 
   return (
-    <DataTable
-      columns={columns}
-      data={data}
-      isLoading={isLoading}
-      totalItems={data.length}
-      pageCount={1}
-      pagination={{ pageIndex: 0, pageSize: 10 }}
-      onPaginationChange={() => {}}
-      onSortingChange={() => {}}
-      searchKey="candidateName"
-      searchPlaceholder="Search candidate..."
-      searchValue=""
-      onSearchChange={() => {}}
-      showSrNo={true}
-    />
+    <>
+      <DataTable
+        columns={columns}
+        data={data}
+        isLoading={isLoading}
+        totalItems={totalItems}
+        pageCount={Math.ceil(totalItems / pagination.pageSize) || 1}
+        pagination={pagination}
+        onPaginationChange={onPaginationChange}
+        onSortingChange={() => {}}
+        searchKey="candidateName"
+        searchPlaceholder="Search candidate..."
+        searchValue={searchValue}
+        onSearchChange={handleSearchChange}
+        showSrNo={true}
+      />
+      <ViewCandidateDrawer
+        interview={viewingInterview}
+        open={!!viewingInterview}
+        onOpenChange={(open) => !open && setViewingInterview(null)}
+      />
+    </>
   )
 }

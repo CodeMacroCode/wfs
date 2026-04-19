@@ -7,32 +7,60 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { InterviewForm } from "./interview-form"
-import { Interview, CreateInterviewDto } from "@/types/recruitment"
+import { InterviewForm, InterviewFormValues } from "./interview-form"
+import { Interview } from "@/types/recruitment"
 import { EmployeeForm } from "@/components/employee/employee-form"
 import { RegisterEmployeeDto } from "@/types/employee"
 import { toast } from "sonner"
+import { useCreateRecruitmentMutation } from "@/hooks/queries/use-recruitment"
 
 interface AddInterviewDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onAdd: (data: CreateInterviewDto) => void
+  onAdd?: () => void
 }
 
 export function AddInterviewDialog({ open, onOpenChange, onAdd }: AddInterviewDialogProps) {
-  const onSubmit = (data: CreateInterviewDto) => {
-    onAdd(data)
-    onOpenChange(false)
-    toast.success("Interview logged successfully")
+  const createMutation = useCreateRecruitmentMutation()
+
+  const onSubmit = async (data: InterviewFormValues, resumes: File[]) => {
+    const formData = new FormData()
+    formData.append("candidateName", data.candidateName)
+    formData.append("email", data.email)
+    formData.append("contactNumber", data.contactNumber)
+    formData.append("appliedPosition", data.appliedPosition)
+    formData.append("selectionStatus", data.selectionStatus)
+    formData.append("interviewDate", data.interviewDate)
+    formData.append("interviewerName", data.interviewerName)
+    if (data.interviewerFeedback) formData.append("interviewerFeedback", data.interviewerFeedback)
+    if (data.experience)    formData.append("experience", data.experience)
+    if (data.currentCTC)    formData.append("currentCTC", data.currentCTC)
+    if (data.expectedCTC)   formData.append("expectedCTC", data.expectedCTC)
+    if (data.noticePeriod)  formData.append("noticePeriod", data.noticePeriod)
+    if (data.skills)        formData.append("skills", data.skills)
+    resumes.forEach((file) => formData.append("resumes", file))
+
+    try {
+      await createMutation.mutateAsync(formData)
+      onOpenChange(false)
+      onAdd?.()
+    } catch {
+      // error toast handled in service
+    }
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-125">
-        <DialogHeader>
-          <DialogTitle>Log New Interview</DialogTitle>
-        </DialogHeader>
-        <InterviewForm onSubmit={onSubmit} />
+      <DialogContent className="sm:max-w-[620px] max-h-[90vh] overflow-y-auto rounded-[24px] border-none shadow-2xl p-0">
+        <div className="bg-gradient-to-br from-[#0d4c3a] to-[#0f5c47] p-6 rounded-t-[24px]">
+          <DialogHeader>
+            <DialogTitle className="text-white text-xl font-black italic">Log New Interview</DialogTitle>
+            <p className="text-teal-300/70 text-xs font-medium mt-1">Add a candidate to the recruitment pipeline</p>
+          </DialogHeader>
+        </div>
+        <div className="p-6">
+          <InterviewForm onSubmit={onSubmit} isLoading={createMutation.isPending} />
+        </div>
       </DialogContent>
     </Dialog>
   )
@@ -48,23 +76,48 @@ interface EditInterviewDialogProps {
 export function EditInterviewDialog({ interview, open, onOpenChange, onUpdate }: EditInterviewDialogProps) {
   if (!interview) return null
 
-  const onSubmit = (data: Partial<Interview>) => {
-    onUpdate(interview.id, data)
+  // Map Interview (normalized type) → InterviewFormValues (API field names)
+  const prefill: Partial<InterviewFormValues> = {
+    candidateName:      interview.candidateName,
+    email:              interview.email,
+    contactNumber:      interview.contact,           // contact → contactNumber
+    appliedPosition:    interview.position,          // position → appliedPosition
+    selectionStatus:    interview.status as any,     // status → selectionStatus
+    interviewDate:      interview.interviewDate
+                          ? interview.interviewDate.substring(0, 10)  // ISO → YYYY-MM-DD
+                          : "",
+    interviewerName:    interview.interviewer,       // interviewer → interviewerName
+    interviewerFeedback: interview.feedback ?? "",   // feedback → interviewerFeedback
+    // Flatten metadata
+    experience:   interview.metadata?.experience   ?? "",
+    currentCTC:   interview.metadata?.currentCTC   ?? "",
+    expectedCTC:  interview.metadata?.expectedCTC  ?? "",
+    noticePeriod: interview.metadata?.noticePeriod ?? "",
+    skills:       interview.metadata?.skills ?? "",
+  }
+
+  const onSubmit = (data: InterviewFormValues) => {
+    onUpdate(interview.id, data as any)
     onOpenChange(false)
     toast.success("Interview updated successfully")
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>Edit Interview Details</DialogTitle>
-        </DialogHeader>
-        <InterviewForm
-          initialValues={interview}
-          onSubmit={onSubmit}
-          isEdit={true}
-        />
+      <DialogContent className="sm:max-w-[620px] max-h-[90vh] overflow-y-auto rounded-[24px] border-none shadow-2xl p-0">
+        <div className="bg-gradient-to-br from-[#0d4c3a] to-[#0f5c47] p-6 rounded-t-[24px]">
+          <DialogHeader>
+            <DialogTitle className="text-white text-xl font-black italic">Edit Interview Details</DialogTitle>
+            <p className="text-teal-300/70 text-xs font-medium mt-1">Update candidate information</p>
+          </DialogHeader>
+        </div>
+        <div className="p-6">
+          <InterviewForm
+            initialValues={prefill}
+            onSubmit={onSubmit}
+            isEdit={true}
+          />
+        </div>
       </DialogContent>
     </Dialog>
   )

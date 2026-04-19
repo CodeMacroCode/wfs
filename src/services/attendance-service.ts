@@ -1,5 +1,5 @@
 import apiClient from '@/lib/api-client';
-import { AttendanceResponse } from '@/types/attendance';
+import { AttendanceResponse, AttendanceDashboardCount, AttendanceWithSummaryResponse } from '@/types/attendance';
 import { toast } from 'sonner';
 
 /**
@@ -30,6 +30,37 @@ export const attendanceService = {
       });
     } catch (error: unknown) {
       toast.error('Failed to fetch monthly attendance');
+      throw error;
+    }
+  },
+
+  /**
+   * Get dashboard attendance counts
+   */
+  getDashboardCount: async (): Promise<AttendanceDashboardCount> => {
+    try {
+      return await apiClient.get<void, AttendanceDashboardCount>('/attendance/dashboard-count');
+    } catch (error: unknown) {
+      toast.error('Failed to fetch attendance dashboard stats');
+      throw error;
+    }
+  },
+
+  /**
+   * Get attendance records with summary for a date range
+   */
+  getWithSummary: async (
+    startDate: string,
+    endDate: string,
+    page: number = 1,
+    limit: number = 10
+  ): Promise<AttendanceWithSummaryResponse> => {
+    try {
+      return await apiClient.get<void, AttendanceWithSummaryResponse>('/attendance/with-summary', {
+        params: { startDate, endDate, page, limit }
+      });
+    } catch (error: unknown) {
+      toast.error('Failed to fetch attendance summary');
       throw error;
     }
   },

@@ -35,6 +35,7 @@ export function ExpandedStatCard({
     present: "Present",
     absent: "Absent",
     "on-leave": "On Leave",
+    "not-marked": "Absent", // Assuming not marked counts as absent in the report view
   }
 
   // Local data fetching for the expanded view

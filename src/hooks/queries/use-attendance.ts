@@ -1,7 +1,7 @@
 import { useQuery, UseQueryOptions } from "@tanstack/react-query";
 import { attendanceService } from "@/services/attendance-service";
 import { QUERY_KEYS } from "@/constants/query-keys";
-import { AttendanceResponse } from "@/types/attendance";
+import { AttendanceResponse, AttendanceDashboardCount, AttendanceWithSummaryResponse } from "@/types/attendance";
 
 /**
  * Hook to fetch all attendance records with pagination
@@ -15,6 +15,34 @@ export function useAttendanceQuery(
   return useQuery<AttendanceResponse>({
     queryKey: [...QUERY_KEYS.attendance.list(), { page, limit, status }],
     queryFn: () => attendanceService.getAll(page, limit, status),
+    ...options
+  });
+}
+
+/**
+ * Hook to fetch attendance with summary for a date range
+ */
+export function useAttendanceWithSummaryQuery(
+  startDate: string,
+  endDate: string,
+  page: number = 1,
+  limit: number = 10,
+  options?: Partial<UseQueryOptions<AttendanceWithSummaryResponse>>
+) {
+  return useQuery<AttendanceWithSummaryResponse>({
+    queryKey: QUERY_KEYS.attendance.withSummary({ startDate, endDate, page, limit }),
+    queryFn: () => attendanceService.getWithSummary(startDate, endDate, page, limit),
+    ...options
+  });
+}
+
+/**
+ * Hook to fetch attendance dashboard stats
+ */
+export function useAttendanceDashboardCountQuery(options?: Partial<UseQueryOptions<AttendanceDashboardCount>>) {
+  return useQuery<AttendanceDashboardCount>({
+    queryKey: QUERY_KEYS.attendance.dashboardCount(),
+    queryFn: () => attendanceService.getDashboardCount(),
     ...options
   });
 }

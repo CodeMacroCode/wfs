@@ -52,6 +52,25 @@ export function useEmployeesDropdownInfiniteQuery(params?: EmployeeQueryParams, 
 }
 
 /**
+ * Hook to fetch the employee-id dropdown (punch machine IDs) with infinite scrolling
+ */
+export function useEmployeeIdInfiniteQuery(params?: EmployeeQueryParams, enabled: boolean = true) {
+  return useInfiniteQuery({
+    queryKey: [...QUERY_KEYS.users.all, 'employee-id', 'infinite', params],
+    queryFn: ({ pageParam = 1 }) =>
+      employeeService.getEmployeeIdDropdown({ ...params, page: pageParam, limit: 10 }),
+    initialPageParam: 1,
+    enabled,
+    getNextPageParam: (lastPage) => {
+      if (lastPage.pagination.page < lastPage.pagination.totalPages) {
+        return lastPage.pagination.page + 1;
+      }
+      return undefined;
+    },
+  });
+}
+
+/**
  * Hook to fetch a single employee by ID
  */
 export function useEmployeeQuery(id: string | null) {

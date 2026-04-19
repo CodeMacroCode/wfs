@@ -50,8 +50,6 @@ export function InfiniteScrollSelect<T>({
 }: InfiniteScrollSelectProps<T>) {
   const [open, setOpen] = React.useState(false)
   const [searchTerm, setSearchTerm] = React.useState("")
-  const observerTarget = React.useRef<HTMLDivElement>(null)
-  const scrollContainerRef = React.useRef<HTMLDivElement>(null)
 
   const handleOpenChange = (newOpen: boolean) => {
     setOpen(newOpen)
@@ -64,33 +62,16 @@ export function InfiniteScrollSelect<T>({
     onSearchChange?.(val)
   }
 
-  React.useEffect(() => {
-    if (!open) return
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage && !isLoading) {
-          loadMore()
-        }
-      },
-      {
-        root: scrollContainerRef.current,
-        threshold: 0.1,
-        rootMargin: '40px'
-      }
-    )
-
-    const target = observerTarget.current
-    if (target) {
-      observer.observe(target)
+  const handleScroll = React.useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    const container = e.currentTarget
+    if (!container || !hasNextPage || isFetchingNextPage || isLoading) return
+    const { scrollTop, scrollHeight, clientHeight } = container
+    if (scrollTop + clientHeight >= scrollHeight - 100) {
+      loadMore()
     }
+  }, [hasNextPage, isFetchingNextPage, isLoading, loadMore])
 
-    return () => {
-      if (target) {
-        observer.unobserve(target)
-      }
-    }
-  }, [loadMore, hasNextPage, isFetchingNextPage, isLoading, open])
+
 
   const selectedItem = React.useMemo(() =>
     items.find((item) => getValue(item) === value),
@@ -127,7 +108,7 @@ export function InfiniteScrollSelect<T>({
           />
         </div>
         <div
-          ref={scrollContainerRef}
+          onScroll={handleScroll}
           className="max-h-[280px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200"
         >
           <div className="p-1">
@@ -161,9 +142,11 @@ export function InfiniteScrollSelect<T>({
                 </span>
               </button>
             ))}
-            <div ref={observerTarget} className="h-10 w-full flex items-center justify-center">
-              {isFetchingNextPage && <Loader2 className="h-4 w-4 animate-spin text-indigo-500 opacity-50" />}
-            </div>
+            {isFetchingNextPage && (
+              <div className="h-10 w-full flex items-center justify-center">
+                <Loader2 className="h-4 w-4 animate-spin text-indigo-500 opacity-50" />
+              </div>
+            )}
           </div>
         </div>
       </PopoverContent>

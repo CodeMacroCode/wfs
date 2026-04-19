@@ -8,6 +8,18 @@ import { useLeavesQuery } from "@/hooks/queries/use-leave"
 import { PaginationState } from "@tanstack/react-table"
 import { LeaveTable } from "./leave-table"
 import { Card } from "@/components/ui/card"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { ChevronDown, Calendar as CalendarIcon } from "lucide-react"
+
+const months = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+]
 
 export default function LeaveManagement() {
     const [pagination, setPagination] = React.useState<PaginationState>({
@@ -15,9 +27,16 @@ export default function LeaveManagement() {
         pageSize: 10,
     })
 
+    const [currentDate, setCurrentDate] = React.useState(new Date())
+
+    const monthStr = (currentDate.getMonth() + 1).toString().padStart(2, '0')
+    const yearStr = currentDate.getFullYear().toString()
+
     const { data, isLoading, refetch, isFetching } = useLeavesQuery(
         pagination.pageIndex + 1,
-        pagination.pageSize
+        pagination.pageSize,
+        monthStr,
+        yearStr
     )
 
     const leaves = data?.data || []
@@ -41,6 +60,66 @@ export default function LeaveManagement() {
                     </p>
                 </div>
                 <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm">
+                        <CalendarIcon className="h-4 w-4 text-slate-400" />
+                        <div className="flex items-center divide-x divide-slate-100">
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <button className="px-2 text-sm font-bold text-slate-700 hover:text-[#2eb88a] transition-colors flex items-center gap-1 group outline-none whitespace-nowrap">
+                                        {months[currentDate.getMonth()]}
+                                        <ChevronDown className="h-3 w-3 text-slate-300 group-hover:text-[#2eb88a] transition-colors" />
+                                    </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className="max-h-64 overflow-y-auto rounded-xl border-slate-100 shadow-xl">
+                                    {months.map((month, idx) => (
+                                        <DropdownMenuItem 
+                                            key={month} 
+                                            onClick={() => {
+                                                const newDate = new Date(currentDate)
+                                                newDate.setMonth(idx)
+                                                setCurrentDate(newDate)
+                                            }}
+                                            className="rounded-lg focus:bg-teal-50 font-medium"
+                                        >
+                                            {month}
+                                        </DropdownMenuItem>
+                                    ))}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <button className="px-2 text-sm font-bold text-slate-700 hover:text-[#2eb88a] transition-colors flex items-center gap-1 group outline-none">
+                                        {currentDate.getFullYear()}
+                                        <ChevronDown className="h-3 w-3 text-slate-300 group-hover:text-[#2eb88a] transition-colors" />
+                                    </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className="max-h-64 overflow-y-auto rounded-xl border-slate-100 shadow-xl">
+                                    {(() => {
+                                        const currentYear = new Date().getFullYear();
+                                        const years = [];
+                                        for (let i = currentYear - 10; i <= currentYear + 1; i++) {
+                                            years.push(i);
+                                        }
+                                        return years;
+                                    })().reverse().map((year) => (
+                                        <DropdownMenuItem 
+                                            key={year} 
+                                            onClick={() => {
+                                                const newDate = new Date(currentDate)
+                                                newDate.setFullYear(year)
+                                                setCurrentDate(newDate)
+                                            }}
+                                            className="rounded-lg focus:bg-teal-50 font-medium"
+                                        >
+                                            {year}
+                                        </DropdownMenuItem>
+                                    ))}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
+                    </div>
+
                     <Button
                         variant="outline"
                         size="icon"

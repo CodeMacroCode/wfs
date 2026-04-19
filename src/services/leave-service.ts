@@ -38,10 +38,15 @@ export const leaveService = {
   /**
    * Get all leave requests for management
    */
-  getAll: async (page: number = 1, limit: number = 10): Promise<{ data: any[], total: number }> => {
+  getAll: async (
+    page: number = 1, 
+    limit: number = 10,
+    month?: string,
+    year?: string
+  ): Promise<{ data: any[], total: number }> => {
     try {
       return await apiClient.get('/leave', {
-        params: { page, limit }
+        params: { page, limit, month, year }
       });
     } catch (error: unknown) {
       toast.error('Failed to fetch leave records');
