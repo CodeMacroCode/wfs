@@ -4,7 +4,6 @@ import {
   Plus,
   Upload,
   MoreVertical,
-  Filter,
   ArrowRight,
   Zap,
   Droplets,
@@ -16,7 +15,18 @@ import { AttendanceUploadDialog } from "@/components/dashboard/attendance-upload
 import { MarkLeaveDialog } from "@/components/dashboard/mark-leave-dialog"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { format } from "date-fns"
+import { format, eachDayOfInterval, startOfWeek, endOfWeek, subDays } from "date-fns"
+import { useQueries } from "@tanstack/react-query"
+import { attendanceService } from "@/services/attendance-service"
+import { QUERY_KEYS } from "@/constants/query-keys"
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select"
+import { DateRange } from "react-day-picker"
 import {
   BarChart,
   Bar,
@@ -39,15 +49,6 @@ import { AttendanceTable } from "@/app/dashboard/attendance/attendance-table"
 import { EditEmployeeDialog } from "@/components/employee/employee-dialogs"
 import { DeleteEmployeeDialog } from "@/components/employee/delete-employee-dialog"
 
-const weeklyStats = [
-  { day: "Mon", present: 85, onLeave: 12, absent: 3 },
-  { day: "Tue", present: 88, onLeave: 9, absent: 3 },
-  { day: "Wed", present: 82, onLeave: 15, absent: 3 },
-  { day: "Thu", present: 90, onLeave: 7, absent: 3 },
-  { day: "Fri", present: 75, onLeave: 18, absent: 7 },
-  { day: "Sat", present: 60, onLeave: 25, absent: 15 },
-  { day: "Sun", present: 65, onLeave: 20, absent: 15 }
-]
 
 const companyData = [
   { name: "Fourtech", value: 55, color: "#0f4c3a", count: 688 },
@@ -109,6 +110,33 @@ export default function DashboardPage() {
   const [selectedStat, setSelectedStat] = useState<EmployeeStatus | "all" | null>(null)
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null)
   const [deletingEmployeeId, setDeletingEmployeeId] = useState<string | null>(null)
+  
+  // Weekly Graph Preset State
+  const [selectedPreset, setSelectedPreset] = useState("this_week")
+
+  const getRangeFromPreset = (preset: string) => {
+    const now = new Date()
+    switch (preset) {
+      case "this_week":
+        return {
+          from: startOfWeek(now, { weekStartsOn: 1 }),
+          to: now // Monday to current day
+        }
+      case "last_week":
+        const lastWeek = subDays(now, 7)
+        return {
+          from: startOfWeek(lastWeek, { weekStartsOn: 1 }),
+          to: endOfWeek(lastWeek, { weekStartsOn: 1 })
+        }
+      default:
+        return {
+          from: startOfWeek(now, { weekStartsOn: 1 }),
+          to: now
+        }
+    }
+  }
+
+  const graphRange = getRangeFromPreset(selectedPreset) as DateRange
 
   const {
     pagination,
@@ -132,9 +160,36 @@ export default function DashboardPage() {
   const attendanceList = attendanceData?.data || []
   const dashboardStats = attendanceData?.summary
 
+  // Graph Data Fetching (Parallel requests for each day in range)
+  const daysInRange = graphRange?.from && graphRange?.to 
+    ? eachDayOfInterval({ start: graphRange.from, end: graphRange.to })
+    : []
+
+  const dailyStatsQueries = useQueries({
+    queries: daysInRange.map(date => {
+      const dateStr = format(date, "yyyy-MM-dd")
+      return {
+        queryKey: QUERY_KEYS.attendance.withSummary({ startDate: dateStr, endDate: dateStr, page: 1, limit: 1 }),
+        queryFn: () => attendanceService.getWithSummary(dateStr, dateStr, 1, 1),
+        staleTime: 60000,
+      }
+    })
+  })
+
+  const isGraphLoading = dailyStatsQueries.some(q => q.isLoading)
+  const graphData = daysInRange.map((date, index) => {
+    const summary = dailyStatsQueries[index].data?.summary
+    return {
+      day: format(date, "EEE dd"), // Show day and date (e.g. Mon 20)
+      present: summary?.present ?? 0,
+      onLeave: summary?.onLeave ?? 0,
+      absent: summary?.absent ?? 0,
+    }
+  })
+
   const statsConfig = {
     all: { title: "Total Labor Force", color: { bg: "bg-[#f1f5f9]", text: "text-slate-900", titleText: "text-slate-500" } },
-    present: { title: "Processed Present", color: { bg: "bg-[#f0f9f1]", text: "text-slate-900", titleText: "text-emerald-700" } },
+    present: { title: "Present", color: { bg: "bg-[#f0f9f1]", text: "text-slate-900", titleText: "text-emerald-700" } },
     absent: { title: "Absentees", color: { bg: "bg-white", text: "text-slate-900", titleText: "text-slate-600" } },
     "on-leave": { title: "On Leave", color: { bg: "bg-[#f0fdfa]", text: "text-slate-900", titleText: "text-[#0d9488]" } },
     "not-marked": { title: "Attendance Not Marked", color: { bg: "bg-[#0a3622]", text: "text-white", titleText: "text-emerald-500/70" } },
@@ -325,37 +380,50 @@ export default function DashboardPage() {
             <div className="space-y-1">
               <h3 className="text-xl font-bold text-slate-900 italic font-heading">Weekly Attendance</h3>
             </div>
-            <div className="flex items-center gap-2 text-xs font-bold bg-slate-50 px-4 py-2 rounded-xl border border-gray-100 text-slate-600 cursor-pointer hover:bg-slate-100 transition-colors">
-              This Week
-              <Filter className="h-3.5 w-3.5 ml-1" />
+            <div className="flex items-center gap-2">
+              <Select value={selectedPreset} onValueChange={setSelectedPreset}>
+                <SelectTrigger className="w-[180px] h-10 rounded-xl border-slate-200 bg-white shadow-sm font-semibold text-xs text-slate-700 focus:ring-emerald-500/10">
+                  <SelectValue placeholder="Select Range" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl border-slate-100 shadow-xl">
+                  <SelectItem value="this_week" className="text-xs font-semibold">This Week</SelectItem>
+                  <SelectItem value="last_week" className="text-xs font-semibold">Last Week</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <div className="flex-1 w-full min-h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={weeklyStats} margin={{ top: 0, right: 0, left: -20, bottom: 0 }} barGap={8}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis
-                  dataKey="day"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: "#94a3b8", fontSize: 11, fontWeight: 700 }}
-                  dy={15}
-                />
-                <YAxis
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: "#94a3b8", fontSize: 11, fontWeight: 700 }}
-                  tickFormatter={(val) => `${val}%`}
-                  domain={[0, 100]}
-                />
-                <Tooltip
-                  cursor={{ fill: '#f8fafc' }}
-                  contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontWeight: 'bold' }}
-                />
-                <Bar dataKey="present" fill="#86efac" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="onLeave" fill="#2dd4bf" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="absent" fill="#0f4c3c" radius={[4, 4, 0, 0]} />
-              </BarChart>
+              {isGraphLoading ? (
+                <div className="h-full w-full flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+                </div>
+              ) : (
+                <BarChart data={graphData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }} barGap={8}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                  <XAxis
+                    dataKey="day"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: "#94a3b8", fontSize: 11, fontWeight: 700 }}
+                    dy={15}
+                  />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: "#94a3b8", fontSize: 11, fontWeight: 700 }}
+                    tickFormatter={(val) => `${val}`}
+                    domain={[0, 'auto']}
+                  />
+                  <Tooltip
+                    cursor={{ fill: '#f8fafc' }}
+                    contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontWeight: 'bold' }}
+                  />
+                  <Bar dataKey="present" fill="#86efac" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="onLeave" fill="#2dd4bf" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="absent" fill="#0f4c3c" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              )}
             </ResponsiveContainer>
           </div>
           <div className="flex items-center gap-8 mt-10 px-4">

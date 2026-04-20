@@ -5,11 +5,11 @@ import { X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { EmployeeStatus } from "@/types/employee"
 import { useDataTable } from "@/hooks/use-data-table"
-import { useAttendanceQuery } from "@/hooks/queries/use-attendance"
+import { useAttendanceWithSummaryQuery } from "@/hooks/queries/use-attendance"
+import { format } from "date-fns"
 import { useEmployeesQuery } from "@/hooks/queries/use-employees-query"
 import { AttendanceTable } from "@/app/dashboard/attendance/attendance-table"
 import { EmployeeTable } from "@/app/dashboard/employee/employee-table"
-import { AttendanceStatus } from "@/types/attendance"
 
 interface ExpandedStatCardProps {
   category: EmployeeStatus | "all"
@@ -31,11 +31,11 @@ export function ExpandedStatCard({
   const isEmployeeView = category === "all";
 
   // Mapping categories to attendance statuses
-  const categoryToStatus: Record<string, AttendanceStatus | undefined> = {
+  const categoryToStatus: Record<string, string | undefined> = {
     present: "Present",
     absent: "Absent",
     "on-leave": "On Leave",
-    "not-marked": "Absent", // Assuming not marked counts as absent in the report view
+    "not-marked": "Not Marked",
   }
 
   // Local data fetching for the expanded view
@@ -53,10 +53,14 @@ export function ExpandedStatCard({
 
   // Attendance Query (for specific statuses)
   // Enabled only when NOT in the full employee master view
-  const { data: attendanceData, isLoading: isAttendanceLoading } = useAttendanceQuery(
+  const today = format(new Date(), "yyyy-MM-dd")
+  const { data: attendanceData, isLoading: isAttendanceLoading } = useAttendanceWithSummaryQuery(
+    today,
+    today,
     apiParams.page, 
     10, // Force limit 10 to override any cached values
     isEmployeeView ? undefined : categoryToStatus[category],
+    undefined,
     { 
       staleTime: 60000,
       enabled: !isEmployeeView

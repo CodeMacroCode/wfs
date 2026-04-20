@@ -7,6 +7,7 @@ import { useDataTable } from "@/hooks/use-data-table"
 import { useEmployeesQuery } from "@/hooks/queries/use-employees-query"
 import { Employee, EmployeeQueryParams } from "@/types/employee"
 import { RegisterEmployeeDialog, EditEmployeeDialog } from "@/components/employee/employee-dialogs"
+import { AvailableEmployeeIdDialog } from "@/components/employee/available-employee-id-dialog"
 import { DeleteEmployeeDialog } from "@/components/employee/delete-employee-dialog"
 import { DataTableExport } from "@/components/ui/data-table-export"
 import { employeeService } from "@/services/employee-service"
@@ -58,6 +59,7 @@ export default function EmployeeMaster() {
             filename="employee_report"
             fetchData={() => employeeService.getAll({ ...apiParams, limit: "all" } as EmployeeQueryParams)}
           />
+          <AvailableEmployeeIdDialog />
           <RegisterEmployeeDialog />
         </div>
       </div>
