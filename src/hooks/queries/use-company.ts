@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { companyService } from '@/services/company-service';
 import { QUERY_KEYS } from '@/constants/query-keys';
 import { CompanyQueryParams, CreateCompanyDto } from '@/types/company';
@@ -64,5 +64,24 @@ export function useCompanyDropdownQuery() {
     queryKey: [...QUERY_KEYS.company.all, 'dropdown'],
     queryFn: () => companyService.getDropdown(),
     staleTime: 5 * 60 * 1000,
+  });
+}
+
+/**
+ * Hook to fetch companies for dropdown with infinite scrolling
+ */
+export function useCompanyDropdownInfiniteQuery(params?: CompanyQueryParams) {
+  return useInfiniteQuery({
+    queryKey: [...QUERY_KEYS.company.all, 'dropdown', 'infinite', params],
+    queryFn: ({ pageParam = 1 }) =>
+      companyService.getDropdown({ ...params, page: pageParam as number, limit: 10 }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      // Safely check for pagination as the API might not return it for all dropdowns
+      if (lastPage?.pagination && lastPage.pagination.page < lastPage.pagination.totalPages) {
+        return lastPage.pagination.page + 1;
+      }
+      return undefined;
+    },
   });
 }

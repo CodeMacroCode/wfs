@@ -24,7 +24,7 @@ export function useEmployeesInfiniteQuery(params?: EmployeeQueryParams) {
       employeeService.getAll({ ...params, page: pageParam, limit: 10 }),
     initialPageParam: 1,
     getNextPageParam: (lastPage) => {
-      if (lastPage.pagination.page < lastPage.pagination.totalPages) {
+      if (lastPage?.pagination && lastPage.pagination.page < lastPage.pagination.totalPages) {
         return lastPage.pagination.page + 1;
       }
       return undefined;
@@ -43,7 +43,7 @@ export function useEmployeesDropdownInfiniteQuery(params?: EmployeeQueryParams, 
     initialPageParam: 1,
     enabled,
     getNextPageParam: (lastPage) => {
-      if (lastPage.pagination.page < lastPage.pagination.totalPages) {
+      if (lastPage?.pagination && lastPage.pagination.page < lastPage.pagination.totalPages) {
         return lastPage.pagination.page + 1;
       }
       return undefined;
@@ -62,7 +62,7 @@ export function useEmployeeIdInfiniteQuery(params?: EmployeeQueryParams, enabled
     initialPageParam: 1,
     enabled,
     getNextPageParam: (lastPage) => {
-      if (lastPage.pagination.page < lastPage.pagination.totalPages) {
+      if (lastPage?.pagination && lastPage.pagination.page < lastPage.pagination.totalPages) {
         return lastPage.pagination.page + 1;
       }
       return undefined;

@@ -46,4 +46,10 @@ export interface CompanyDropdownResponse {
     name: string;
     prefix: string;
   }[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
 }

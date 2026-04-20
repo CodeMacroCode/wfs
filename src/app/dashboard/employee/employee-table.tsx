@@ -25,6 +25,7 @@ interface EmployeeTableProps {
     showActions?: boolean
     hideSearch?: boolean
     isDashboardView?: boolean
+    extraActions?: React.ReactNode
 }
 
 export const getEmployeeColumns = (
@@ -42,6 +43,9 @@ export const getEmployeeColumns = (
                     {row.original.employeeObjId?.employeeId}
                 </span>
             ),
+            meta: {
+                exportValue: (item: Employee) => item.employeeObjId?.employeeId || item.uniqueId?.toString() || ""
+            }
         },
         {
             accessorKey: "name",
@@ -51,6 +55,9 @@ export const getEmployeeColumns = (
                     <span className="font-semibold text-slate-800">{row.original.name}</span>
                 </div>
             ),
+            meta: {
+                exportValue: (item: Employee) => item.name
+            }
         },
         {
             accessorKey: "designation",
@@ -59,7 +66,10 @@ export const getEmployeeColumns = (
                 <div className="flex items-center justify-center">
                     <span className="text-sm text-slate-600 capitalize">{row.original.designation}</span>
                 </div>
-            )
+            ),
+            meta: {
+                exportValue: (item: Employee) => item.designation
+            }
         },
         {
             accessorKey: "email",
@@ -72,6 +82,9 @@ export const getEmployeeColumns = (
                     )}
                 </div>
             ),
+            meta: {
+                exportValue: (item: Employee) => `${item.email}${item.mobileNo ? ` (${item.mobileNo})` : ""}`
+            }
         },
     ];
 
@@ -86,7 +99,10 @@ export const getEmployeeColumns = (
                         <span className="text-xs text-slate-400">{row.original.emergencyContact.phone}</span>
                     )}
                 </div>
-            )
+            ),
+            meta: {
+                exportValue: (item: Employee) => item.emergencyContact?.name ? `${item.emergencyContact.name}${item.emergencyContact.phone ? ` (${item.emergencyContact.phone})` : ""}` : "N/A"
+            }
         });
         cols.push({
             accessorKey: "doj",
@@ -98,6 +114,166 @@ export const getEmployeeColumns = (
                     </span>
                 </div>
             ),
+            meta: {
+                exportValue: (item: Employee) => item.doj ? format(new Date(item.doj), "dd MMM yyyy") : "N/A"
+            }
+        });
+        cols.push({
+            accessorKey: "companyId",
+            header: "Company",
+            cell: ({ row }) => (
+                <div className="flex items-center justify-center text-center">
+                    <span className="text-sm text-slate-600">{(row.original.companyId as any)?.name || "N/A"}</span>
+                </div>
+            ),
+            meta: {
+                exportValue: (item: Employee) => (item.companyId as any)?.name || "N/A"
+            }
+        });
+
+        cols.push({
+            accessorKey: "gender",
+            header: "Gender",
+            cell: ({ row }) => (
+                <div className="flex items-center justify-center text-center">
+                    <span className="text-sm text-slate-600 capitalize">{row.original.gender}</span>
+                </div>
+            ),
+            meta: {
+                exportValue: (item: Employee) => item.gender
+            }
+        });
+
+        cols.push({
+            accessorKey: "dob",
+            header: "Date of Birth",
+            cell: ({ row }) => (
+                <div className="flex items-center justify-center text-center">
+                    <span className="text-sm text-slate-600">
+                        {row.original.dob ? format(new Date(row.original.dob), "dd MMM yyyy") : "N/A"}
+                    </span>
+                </div>
+            ),
+            meta: {
+                exportValue: (item: Employee) => item.dob ? format(new Date(item.dob), "dd MMM yyyy") : "N/A"
+            }
+        });
+
+        cols.push({
+            accessorKey: "mobileNo",
+            header: "Mobile No",
+            cell: ({ row }) => (
+                <div className="flex items-center justify-center text-center">
+                    <span className="text-sm text-slate-600">{row.original.mobileNo || "N/A"}</span>
+                </div>
+            ),
+            meta: {
+                exportValue: (item: Employee) => item.mobileNo || "N/A"
+            }
+        });
+
+        cols.push({
+            accessorKey: "department",
+            header: "Department",
+            cell: ({ row }) => (
+                <div className="flex items-center justify-center text-center">
+                    <span className="text-sm text-slate-600">{row.original.department || "N/A"}</span>
+                </div>
+            ),
+            meta: {
+                exportValue: (item: Employee) => item.department || "N/A"
+            }
+        });
+
+        cols.push({
+            accessorKey: "aadharNo",
+            header: "Aadhar No",
+            cell: ({ row }) => (
+                <div className="flex items-center justify-center text-center">
+                    <span className="text-sm text-slate-600">{row.original.aadharNo || "N/A"}</span>
+                </div>
+            ),
+            meta: {
+                exportValue: (item: Employee) => item.aadharNo || "N/A"
+            }
+        });
+
+        cols.push({
+            accessorKey: "pfNo",
+            header: "PF No",
+            cell: ({ row }) => (
+                <div className="flex items-center justify-center text-center">
+                    <span className="text-sm text-slate-600">{row.original.pfNo || "N/A"}</span>
+                </div>
+            ),
+            meta: {
+                exportValue: (item: Employee) => item.pfNo || "N/A"
+            }
+        });
+
+        cols.push({
+            accessorKey: "esiNo",
+            header: "ESI No",
+            cell: ({ row }) => (
+                <div className="flex items-center justify-center text-center">
+                    <span className="text-sm text-slate-600">{row.original.esiNo || "N/A"}</span>
+                </div>
+            ),
+            meta: {
+                exportValue: (item: Employee) => item.esiNo || "N/A"
+            }
+        });
+
+        cols.push({
+            accessorKey: "attendancePolicyId",
+            header: "Attendance Policy",
+            cell: ({ row }) => (
+                <div className="flex items-center justify-center text-center">
+                    <span className="text-sm text-slate-600">{(row.original.attendancePolicyId as any)?.name || "N/A"}</span>
+                </div>
+            ),
+            meta: {
+                exportValue: (item: Employee) => (item.attendancePolicyId as any)?.name || "N/A"
+            }
+        });
+
+        cols.push({
+            accessorKey: "maritalStatus",
+            header: "Marital Status",
+            cell: ({ row }) => (
+                <div className="flex items-center justify-center text-center">
+                    <span className="text-sm text-slate-600 capitalize">{row.original.maritalStatus || "N/A"}</span>
+                </div>
+            ),
+            meta: {
+                exportValue: (item: Employee) => item.maritalStatus || "N/A"
+            }
+        });
+
+        cols.push({
+            accessorKey: "bloodGroup",
+            header: "Blood Group",
+            cell: ({ row }) => (
+                <div className="flex items-center justify-center text-center">
+                    <span className="text-sm text-slate-600">{row.original.bloodGroup || "N/A"}</span>
+                </div>
+            ),
+            meta: {
+                exportValue: (item: Employee) => item.bloodGroup || "N/A"
+            }
+        });
+
+        cols.push({
+            accessorKey: "reference",
+            header: "Reference",
+            cell: ({ row }) => (
+                <div className="flex items-center justify-center text-center">
+                    <span className="text-sm text-slate-600 truncate max-w-[150px]">{row.original.reference || "N/A"}</span>
+                </div>
+            ),
+            meta: {
+                exportValue: (item: Employee) => item.reference || "N/A"
+            }
         });
     }
 
@@ -165,6 +341,7 @@ export function EmployeeTable({
     showActions,
     hideSearch,
     isDashboardView,
+    extraActions,
 }: EmployeeTableProps) {
     const router = useRouter()
     
@@ -200,6 +377,7 @@ export function EmployeeTable({
             onSearchChange={onSearchChange}
             showSrNo={true}
             hideSearch={hideSearch}
+            extraActions={extraActions}
         />
     )
 }

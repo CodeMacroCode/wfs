@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import { useForm, useFieldArray, useWatch, Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -77,10 +77,6 @@ const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   profileImage: z.any().optional(),
   email: z.string().email("Invalid email address"),
-  password: z
-    .string()
-    .min(6, "Password must be at least 6 characters")
-    .optional(),
   role: z.enum(["user", "hr", "admin"]),
   uniqueId: z.string().optional(),      // punch machine employeeId string (e.g. "Tech-001")
   employeeObjId: z.string().optional(), // _id of the selected employee-id record
@@ -138,19 +134,33 @@ export function EmployeeForm({
   const { data: companyData } = useCompanyQuery({ limit: 100 });
   const { data: employeeIdData } = useEmployeeIdDropdownQuery();
 
+  // Helper to extract ID from potentially populated field
+  const extractId = (val: any) => {
+    if (!val) return "";
+    if (typeof val === 'object' && val._id) return val._id;
+    return val.toString();
+  };
+
+  // Helper to format ISO date to yyyy-MM-dd
+  const formatISOToDate = (isoString?: string) => {
+    if (!isoString) return "";
+    const date = parseISO(isoString);
+    if (!isValid(date)) return "";
+    return format(date, "yyyy-MM-dd");
+  };
+
   const form = useForm<EmployeeFormValues>({
     resolver: zodResolver(formSchema) as Resolver<EmployeeFormValues>,
     defaultValues: {
       name: initialValues?.name || "",
       email: initialValues?.email || "",
-      password: initialValues?.password || (isEdit ? undefined : ""),
-      profileImage: initialValues?.profilePicture || null,
+      profileImage: initialValues?.profileImage || initialValues?.profilePicture || null,
       role: initialValues?.role || "user",
       uniqueId: initialValues?.uniqueId?.toString() || "",
-      employeeObjId: "",
-      companyId: initialValues?.companyId || "",
-      attendancePolicyId: initialValues?.attendancePolicyId || "",
-      payrollPolicyId: initialValues?.payrollPolicyId || "",
+      employeeObjId: extractId(initialValues?.employeeObjId),
+      companyId: extractId(initialValues?.companyId),
+      attendancePolicyId: extractId(initialValues?.attendancePolicyId),
+      payrollPolicyId: extractId(initialValues?.payrollPolicyId),
       otherName: initialValues?.otherName || "",
       category: initialValues?.category || "",
       gender: (initialValues?.gender?.toLowerCase() as "male" | "female" | "other") || "male",
@@ -158,7 +168,7 @@ export function EmployeeForm({
       motherName: initialValues?.motherName || "",
       maritalStatus: (initialValues?.maritalStatus?.toLowerCase() as "single" | "married" | "divorced" | "widowed") || "single",
       familyDetails: initialValues?.familyDetails || [],
-      dob: initialValues?.dob || "",
+      dob: formatISOToDate(initialValues?.dob),
       bloodGroup: initialValues?.bloodGroup || "",
       emergencyContact: {
         name: (initialValues?.emergencyContact as EmergencyContact)?.name || "",
@@ -166,7 +176,7 @@ export function EmployeeForm({
         phone: (initialValues?.emergencyContact as EmergencyContact)?.phone || (typeof initialValues?.emergencyContact === 'string' ? initialValues?.emergencyContact : ""),
       },
       reference: initialValues?.reference || "",
-      academicQualification: initialValues?.academicQualification || [{ degree: "", institute: "", year: "" }],
+      academicQualification: initialValues?.academicQualification?.length ? initialValues.academicQualification : [{ degree: "", institute: "", year: "" }],
       previousWorkExperience: initialValues?.previousWorkExperience || [],
       designation: initialValues?.designation || "",
       department: initialValues?.department || "",
@@ -174,7 +184,7 @@ export function EmployeeForm({
       aadharNo: initialValues?.aadharNo || "",
       pfNo: initialValues?.pfNo || "",
       esiNo: initialValues?.esiNo || "",
-      doj: initialValues?.doj || "",
+      doj: formatISOToDate(initialValues?.doj),
       permanentAddress: initialValues?.permanentAddress || "",
       currentAddress: initialValues?.currentAddress || "",
       mobileNo: initialValues?.mobileNo || "",
@@ -293,7 +303,19 @@ export function EmployeeForm({
   const attendancePolicies = attendancePoliciesData?.policies || [];
   const payrollPolicies = (payrollPoliciesData as { data?: { _id: string; name: string }[] })?.data || [];
   const companies = companyData?.data || [];
-  const employeeIds = employeeIdData?.data || [];
+  
+  // Memoize employee IDs to ensure the current employee's ID is included during edits
+  const employeeIds = useMemo(() => {
+    const list = [...(employeeIdData?.data || [])];
+    if (isEdit && initialValues?.employeeObjId && typeof initialValues.employeeObjId === 'object') {
+      const currentId = initialValues.employeeObjId as { _id: string; employeeId: string };
+      const exists = list.some(item => item._id === currentId._id);
+      if (!exists && currentId._id && currentId.employeeId) {
+        list.unshift(currentId);
+      }
+    }
+    return list;
+  }, [employeeIdData?.data, isEdit, initialValues?.employeeObjId]);
 
   return (
     <Form {...form}>
@@ -462,19 +484,6 @@ export function EmployeeForm({
                     </FormItem>
                   )}
                 />
-                {!isEdit && (
-                  <FormField
-                    control={form.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Password</FormLabel>
-                        <FormControl><Input type="password" placeholder="••••••" {...field} /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
               </div>
             </div>
 

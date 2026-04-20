@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Employee } from "@/types/employee";
-import { User, MapPin, Briefcase, BadgeCheck } from "lucide-react";
+import { User, MapPin, Briefcase, BadgeCheck, FileText, Quote } from "lucide-react";
 import Image from "next/image";
 
 interface ProfileHeaderProps {
@@ -29,13 +29,32 @@ export function ProfileHeader({ employee }: ProfileHeaderProps) {
       {/* Profile Info Overlay */}
       <div className="px-8 pb-4">
         <div className="flex flex-col md:flex-row items-end gap-6 -mt-12 mb-4 relative z-10">
-          {/* Avatar */}
-          <div className="w-32 h-32 rounded-full border-4 border-white shadow-xl overflow-hidden bg-white shrink-0">
-            {previewUrl ? (
-              <Image src={previewUrl} alt={employee.name} width={128} height={128} className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-400">
-                <User className="w-12 h-12" />
+          {/* Avatar & Notes */}
+          <div className="flex flex-col gap-4 items-center shrink-0">
+            <div className="w-32 h-32 rounded-full border-4 border-white shadow-xl overflow-hidden bg-white shrink-0">
+              {previewUrl ? (
+                <Image src={previewUrl} alt={employee.name} width={128} height={128} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-400">
+                  <User className="w-12 h-12" />
+                </div>
+              )}
+            </div>
+
+            {employee.notes && (
+              <div className="w-40 md:w-48 p-3 bg-amber-50/40 rounded-xl border border-amber-100/50 relative group transition-all hover:bg-amber-50/60 mt-1 shadow-xs">
+                <div className="absolute -top-1.5 -right-1.5 bg-amber-100 text-amber-600 rounded-full p-1 border border-white shadow-sm">
+                  <Quote className="w-2 h-2" />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1 opacity-40 group-hover:opacity-60 transition-opacity">
+                    <FileText className="w-2.5 h-2.5 text-amber-700" />
+                    <span className="text-[8px] font-bold text-amber-900 uppercase tracking-widest">Admin Note</span>
+                  </div>
+                  <p className="text-[11px] text-slate-600 italic font-medium leading-relaxed line-clamp-4">
+                    &ldquo;{employee.notes}&rdquo;
+                  </p>
+                </div>
               </div>
             )}
           </div>

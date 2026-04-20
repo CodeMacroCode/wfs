@@ -110,6 +110,7 @@ export interface EmployeeQueryParams {
   sort?: string;
   order?: "asc" | "desc";
   search?: string;
+  companyId?: string;
 }
 
 export interface EmployeeDropdownItem {

@@ -71,9 +71,9 @@ export const companyService = {
   /**
    * Get company dropdown list
    */
-  getDropdown: async (): Promise<CompanyDropdownResponse> => {
+  getDropdown: async (params?: CompanyQueryParams): Promise<CompanyDropdownResponse> => {
     try {
-      return await apiClient.get<void, CompanyDropdownResponse>('/company/dropdown');
+      return await apiClient.get<void, CompanyDropdownResponse>('/company/dropdown', { params });
     } catch (error: unknown) {
       toast.error('Failed to fetch company dropdown');
       throw error;
