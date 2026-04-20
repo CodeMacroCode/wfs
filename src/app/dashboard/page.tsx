@@ -393,7 +393,7 @@ export default function DashboardPage() {
         </motion.div>
       </div>
 
-      {/* Gender Stats Row */}
+      {/* Gender Stats Row
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="border-none shadow-none bg-[#f0f7ff] rounded-[20px] p-5 flex flex-col justify-between hover:bg-blue-100/50 transition-colors">
           <div className="flex items-center justify-between mb-4">
@@ -439,7 +439,7 @@ export default function DashboardPage() {
             <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">Other Designations</p>
           </div>
         </Card>
-      </div>
+      </div> */}
 
       {/* Charts Row */}
       <div className="grid gap-4 lg:grid-cols-3">
