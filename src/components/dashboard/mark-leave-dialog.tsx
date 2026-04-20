@@ -165,7 +165,7 @@ export function MarkLeaveDialog({ trigger, open: controlledOpen, onOpenChange: c
                       onSearchChange={setSearchTerm}
                       placeholder="Select employee"
                       getLabel={(emp: EmployeeDropdownItem) => emp.name}
-                      getValue={(emp: EmployeeDropdownItem) => emp._id}
+                      getValue={(emp: EmployeeDropdownItem) => emp.employeeId}
                       renderItem={(emp: EmployeeDropdownItem) => (
                         <div className="flex flex-col gap-0.5">
                           <span className="font-bold text-slate-700 italic">{emp.name}</span>

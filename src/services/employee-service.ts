@@ -1,11 +1,12 @@
 import apiClient from '@/lib/api-client';
-import { 
-  EmployeesResponse, 
-  RegisterEmployeeDto, 
-  UpdateEmployeeDto, 
+import {
+  EmployeesResponse,
+  RegisterEmployeeDto,
+  UpdateEmployeeDto,
   EmployeeQueryParams,
   Employee,
-  EmployeeDropdownResponse
+  EmployeeDropdownResponse,
+  EmployeeStatsResponse
 } from '@/types/employee';
 import { toast } from 'sonner';
 
@@ -116,6 +117,18 @@ export const employeeService = {
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to generate employee IDs';
       toast.error(errorMessage);
+      throw error;
+    }
+  },
+
+  /**
+   * Get employee statistics
+   */
+  getStats: async (): Promise<EmployeeStatsResponse> => {
+    try {
+      return await apiClient.get<void, EmployeeStatsResponse>('/user/stats');
+    } catch (error: unknown) {
+      toast.error('Failed to fetch employee statistics');
       throw error;
     }
   },

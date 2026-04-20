@@ -78,7 +78,7 @@ export default function EmployeeMaster() {
             columns={exportColumns}
             filename="employee_report"
             fetchData={() => employeeService.getAll({ ...apiParams, limit: "all" } as EmployeeQueryParams)}
-            defaultSelectedColumns={['name', 'uniqueId', 'emergencyContact', 'designation']}
+            defaultSelectedColumns={['name', 'uniqueId', 'designation']}
           />
           <AvailableEmployeeIdDialog />
           <RegisterEmployeeDialog />

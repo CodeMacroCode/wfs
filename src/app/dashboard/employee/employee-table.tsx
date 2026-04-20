@@ -34,6 +34,8 @@ export const getEmployeeColumns = (
     onView?: (employee: Employee) => void,
     isDashboardView?: boolean,
 ): ColumnDef<Employee>[] => {
+    type PopulatedField = { name: string; _id: string };
+
     const cols: ColumnDef<Employee>[] = [
         {
             accessorKey: "uniqueId",
@@ -62,7 +64,7 @@ export const getEmployeeColumns = (
         {
             accessorKey: "designation",
             header: "Designation",
-            cell: ({row}) => (
+            cell: ({ row }) => (
                 <div className="flex items-center justify-center">
                     <span className="text-sm text-slate-600 capitalize">{row.original.designation}</span>
                 </div>
@@ -89,6 +91,19 @@ export const getEmployeeColumns = (
     ];
 
     if (!isDashboardView) {
+        cols.push({
+            accessorKey: "companyId",
+            header: "Company",
+            cell: ({ row }) => (
+                <div className="flex items-center justify-center text-center">
+                    <span className="text-sm text-slate-600">{(row.original.companyId as unknown as PopulatedField)?.name || "N/A"}</span>
+                </div>
+            ),
+            meta: {
+                exportValue: (item: Employee) => (item.companyId as unknown as PopulatedField)?.name || "N/A"
+            }
+        });
+
         cols.push({
             accessorKey: "emergencyContact",
             header: "Emergency Contact",
@@ -118,18 +133,7 @@ export const getEmployeeColumns = (
                 exportValue: (item: Employee) => item.doj ? format(new Date(item.doj), "dd MMM yyyy") : "N/A"
             }
         });
-        cols.push({
-            accessorKey: "companyId",
-            header: "Company",
-            cell: ({ row }) => (
-                <div className="flex items-center justify-center text-center">
-                    <span className="text-sm text-slate-600">{(row.original.companyId as any)?.name || "N/A"}</span>
-                </div>
-            ),
-            meta: {
-                exportValue: (item: Employee) => (item.companyId as any)?.name || "N/A"
-            }
-        });
+
 
         cols.push({
             accessorKey: "gender",
@@ -185,96 +189,96 @@ export const getEmployeeColumns = (
             }
         });
 
-        cols.push({
-            accessorKey: "aadharNo",
-            header: "Aadhar No",
-            cell: ({ row }) => (
-                <div className="flex items-center justify-center text-center">
-                    <span className="text-sm text-slate-600">{row.original.aadharNo || "N/A"}</span>
-                </div>
-            ),
-            meta: {
-                exportValue: (item: Employee) => item.aadharNo || "N/A"
-            }
-        });
+        // cols.push({
+        //     accessorKey: "aadharNo",
+        //     header: "Aadhar No",
+        //     cell: ({ row }) => (
+        //         <div className="flex items-center justify-center text-center">
+        //             <span className="text-sm text-slate-600">{row.original.aadharNo || "N/A"}</span>
+        //         </div>
+        //     ),
+        //     meta: {
+        //         exportValue: (item: Employee) => item.aadharNo || "N/A"
+        //     }
+        // });
 
-        cols.push({
-            accessorKey: "pfNo",
-            header: "PF No",
-            cell: ({ row }) => (
-                <div className="flex items-center justify-center text-center">
-                    <span className="text-sm text-slate-600">{row.original.pfNo || "N/A"}</span>
-                </div>
-            ),
-            meta: {
-                exportValue: (item: Employee) => item.pfNo || "N/A"
-            }
-        });
+        // cols.push({
+        //     accessorKey: "pfNo",
+        //     header: "PF No",
+        //     cell: ({ row }) => (
+        //         <div className="flex items-center justify-center text-center">
+        //             <span className="text-sm text-slate-600">{row.original.pfNo || "N/A"}</span>
+        //         </div>
+        //     ),
+        //     meta: {
+        //         exportValue: (item: Employee) => item.pfNo || "N/A"
+        //     }
+        // });
 
-        cols.push({
-            accessorKey: "esiNo",
-            header: "ESI No",
-            cell: ({ row }) => (
-                <div className="flex items-center justify-center text-center">
-                    <span className="text-sm text-slate-600">{row.original.esiNo || "N/A"}</span>
-                </div>
-            ),
-            meta: {
-                exportValue: (item: Employee) => item.esiNo || "N/A"
-            }
-        });
+        // cols.push({
+        //     accessorKey: "esiNo",
+        //     header: "ESI No",
+        //     cell: ({ row }) => (
+        //         <div className="flex items-center justify-center text-center">
+        //             <span className="text-sm text-slate-600">{row.original.esiNo || "N/A"}</span>
+        //         </div>
+        //     ),
+        //     meta: {
+        //         exportValue: (item: Employee) => item.esiNo || "N/A"
+        //     }
+        // });
 
-        cols.push({
-            accessorKey: "attendancePolicyId",
-            header: "Attendance Policy",
-            cell: ({ row }) => (
-                <div className="flex items-center justify-center text-center">
-                    <span className="text-sm text-slate-600">{(row.original.attendancePolicyId as any)?.name || "N/A"}</span>
-                </div>
-            ),
-            meta: {
-                exportValue: (item: Employee) => (item.attendancePolicyId as any)?.name || "N/A"
-            }
-        });
+        // cols.push({
+        //     accessorKey: "attendancePolicyId",
+        //     header: "Attendance Policy",
+        //     cell: ({ row }) => (
+        //         <div className="flex items-center justify-center text-center">
+        //             <span className="text-sm text-slate-600">{(row.original.attendancePolicyId as unknown as PopulatedField)?.name || "N/A"}</span>
+        //         </div>
+        //     ),
+        //     meta: {
+        //         exportValue: (item: Employee) => (item.attendancePolicyId as unknown as PopulatedField)?.name || "N/A"
+        //     }
+        // });
 
-        cols.push({
-            accessorKey: "maritalStatus",
-            header: "Marital Status",
-            cell: ({ row }) => (
-                <div className="flex items-center justify-center text-center">
-                    <span className="text-sm text-slate-600 capitalize">{row.original.maritalStatus || "N/A"}</span>
-                </div>
-            ),
-            meta: {
-                exportValue: (item: Employee) => item.maritalStatus || "N/A"
-            }
-        });
+        // cols.push({
+        //     accessorKey: "maritalStatus",
+        //     header: "Marital Status",
+        //     cell: ({ row }) => (
+        //         <div className="flex items-center justify-center text-center">
+        //             <span className="text-sm text-slate-600 capitalize">{row.original.maritalStatus || "N/A"}</span>
+        //         </div>
+        //     ),
+        //     meta: {
+        //         exportValue: (item: Employee) => item.maritalStatus || "N/A"
+        //     }
+        // });
 
-        cols.push({
-            accessorKey: "bloodGroup",
-            header: "Blood Group",
-            cell: ({ row }) => (
-                <div className="flex items-center justify-center text-center">
-                    <span className="text-sm text-slate-600">{row.original.bloodGroup || "N/A"}</span>
-                </div>
-            ),
-            meta: {
-                exportValue: (item: Employee) => item.bloodGroup || "N/A"
-            }
-        });
+        // cols.push({
+        //     accessorKey: "bloodGroup",
+        //     header: "Blood Group",
+        //     cell: ({ row }) => (
+        //         <div className="flex items-center justify-center text-center">
+        //             <span className="text-sm text-slate-600">{row.original.bloodGroup || "N/A"}</span>
+        //         </div>
+        //     ),
+        //     meta: {
+        //         exportValue: (item: Employee) => item.bloodGroup || "N/A"
+        //     }
+        // });
 
-        cols.push({
-            accessorKey: "reference",
-            header: "Reference",
-            cell: ({ row }) => (
-                <div className="flex items-center justify-center text-center">
-                    <span className="text-sm text-slate-600 truncate max-w-[150px]">{row.original.reference || "N/A"}</span>
-                </div>
-            ),
-            meta: {
-                exportValue: (item: Employee) => item.reference || "N/A"
-            }
-        });
+        // cols.push({
+        //     accessorKey: "reference",
+        //     header: "Reference",
+        //     cell: ({ row }) => (
+        //         <div className="flex items-center justify-center text-center">
+        //             <span className="text-sm text-slate-600 truncate max-w-[150px]">{row.original.reference || "N/A"}</span>
+        //         </div>
+        //     ),
+        //     meta: {
+        //         exportValue: (item: Employee) => item.reference || "N/A"
+        //     }
+        // });
     }
 
     if (onEdit || onDelete || onView) {
@@ -344,7 +348,7 @@ export function EmployeeTable({
     extraActions,
 }: EmployeeTableProps) {
     const router = useRouter()
-    
+
     // Default onView redirect only if showActions is not explicitly false
     const effectiveOnView = React.useMemo(() => {
         if (showActions === false) return undefined
@@ -353,8 +357,8 @@ export function EmployeeTable({
 
     const columns = React.useMemo(
         () => getEmployeeColumns(
-            showActions === false ? undefined : onEdit, 
-            showActions === false ? undefined : onDelete, 
+            showActions === false ? undefined : onEdit,
+            showActions === false ? undefined : onDelete,
             effectiveOnView,
             isDashboardView
         ),

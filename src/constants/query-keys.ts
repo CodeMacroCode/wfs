@@ -1,9 +1,12 @@
+const userKeys = {
+  all: ['users'] as const,
+  list: () => [...userKeys.all, 'list'] as const,
+  detail: (id: string) => [...userKeys.all, 'detail', id] as const,
+  stats: () => [...userKeys.all, 'stats'] as const,
+};
+
 export const QUERY_KEYS = {
-  users: {
-    all: ['users'] as const,
-    list: () => [...QUERY_KEYS.users.all, 'list'] as const,
-    detail: (id: string) => [...QUERY_KEYS.users.all, 'detail', id] as const,
-  },
+  users: userKeys,
   inventory: {
     all: ['inventory'] as const,
     list: (filters?: unknown) => [...QUERY_KEYS.inventory.all, 'list', { filters }] as const,

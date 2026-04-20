@@ -6,8 +6,6 @@ import {
   FileSpreadsheet,
   FileText,
   Loader2,
-  CheckCircle2,
-  XCircle,
   Check,
   X
 } from "lucide-react"
@@ -30,7 +28,6 @@ import * as XLSX from "xlsx"
 import jsPDF from "jspdf"
 import autoTable from "jspdf-autotable"
 import { toast } from "sonner"
-import { cn } from "@/lib/utils"
 
 interface DataTableExportProps<TData> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -42,9 +39,10 @@ interface DataTableExportProps<TData> {
 }
 
 // Helper for nested property access
-const getNestedValue = (obj: any, path: string) => {
+const getNestedValue = (obj: Record<string, unknown>, path: string): string | number => {
   if (!path) return ""
-  return path.split('.').reduce((acc, part) => acc && acc[part], obj)
+  const value = path.split('.').reduce((acc: unknown, part: string) => (acc as Record<string, unknown>)?.[part], obj);
+  return (typeof value === 'string' || typeof value === 'number') ? value : "";
 }
 
 export function DataTableExport<TData>({
@@ -69,16 +67,22 @@ export function DataTableExport<TData>({
   // State for selected columns
   const [selectedColumnIds, setSelectedColumnIds] = React.useState<Set<string>>(new Set())
 
+  // Helper to get consistent column ID
+  const getColumnId = React.useCallback((col: ColumnDef<TData, unknown>): string => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (col.id || (col as any).accessorKey || "") as string
+  }, [])
+
   // Initialize selected columns when dialog opens
   React.useEffect(() => {
     if (open) {
-      const allIds = exportableColumns.map(col => (col as any).accessorKey || col.id);
+      const allIds = exportableColumns.map(getColumnId).filter(Boolean);
       const initialSelected = defaultSelectedColumns 
         ? allIds.filter(id => defaultSelectedColumns.includes(id))
         : allIds;
       setSelectedColumnIds(new Set(initialSelected));
     }
-  }, [open, exportableColumns, defaultSelectedColumns])
+  }, [open, exportableColumns, defaultSelectedColumns, getColumnId])
 
   const toggleColumn = (id: string) => {
     const newSelected = new Set(selectedColumnIds)
@@ -91,10 +95,7 @@ export function DataTableExport<TData>({
   }
 
   const selectAll = () => {
-    setSelectedColumnIds(new Set(exportableColumns.map(col => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return col.id || (col as any).accessorKey
-    })))
+    setSelectedColumnIds(new Set(exportableColumns.map(getColumnId).filter(Boolean)))
   }
 
   const deselectAll = () => {
@@ -113,31 +114,28 @@ export function DataTableExport<TData>({
       }
 
       const activeColumns = exportableColumns.filter(col => {
-         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-         const id = col.id || (col as any).accessorKey
-         return selectedColumnIds.has(id)
+         const id = getColumnId(col)
+         return id && selectedColumnIds.has(id)
       })
 
       // Map data to column headers
       return sourceData.map((item) => {
         const row: Record<string, string | number> = {}
         activeColumns.forEach(col => {
+          const id = getColumnId(col)
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const key = ((col as any).accessorKey || col.id) as string
-          const header = typeof col.header === "string" ? col.header : col.id || key
+          const castCol = col as any
+          const header = typeof castCol.header === "string" ? castCol.header : id
           
-          // Use meta.exportValue if provided, otherwise generic nested access
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const meta = col.meta as any
-          let value: any = ""
+          let value: string | number = "";
           
-          if (meta?.exportValue) {
-            value = meta.exportValue(item)
+          if (castCol.meta?.exportValue) {
+            value = castCol.meta.exportValue(item);
           } else {
-            value = getNestedValue(item, key)
+            value = getNestedValue(item as Record<string, unknown>, id);
           }
 
-          row[header] = (value as string | number) || ""
+          row[header] = value || "";
         })
         return row
       })
@@ -181,15 +179,15 @@ export function DataTableExport<TData>({
       const doc = new jsPDF("landscape")
 
       const activeColumns = exportableColumns.filter(col => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const id = col.id || (col as any).accessorKey
-        return selectedColumnIds.has(id)
+        const id = getColumnId(col)
+        return id && selectedColumnIds.has(id)
       })
 
-      const headers = activeColumns.map(col =>
+      const headers = activeColumns.map(col => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        typeof col.header === "string" ? col.header : col.id || (col as any).accessorKey
-      )
+        const castCol = col as any
+        return typeof castCol.header === "string" ? castCol.header : getColumnId(col)
+      })
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const body = rows.map(row => Object.values(row)) as any[][]
@@ -275,9 +273,10 @@ export function DataTableExport<TData>({
           <ScrollArea className="h-[250px] border rounded-xl bg-slate-50/50 p-4">
             <div className="space-y-4">
               {exportableColumns.map((col) => {
+                const id = getColumnId(col)
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const id = col.id || (col as any).accessorKey
-                const header = typeof col.header === "string" ? col.header : id
+                const castCol = col as any
+                const header = typeof castCol.header === "string" ? castCol.header : id
                 return (
                   <div key={id} className="flex items-center space-x-3 group">
                     <Checkbox

@@ -135,10 +135,12 @@ export function EmployeeForm({
   const { data: employeeIdData } = useEmployeeIdDropdownQuery();
 
   // Helper to extract ID from potentially populated field
-  const extractId = (val: any) => {
+  const extractId = (val: unknown) => {
     if (!val) return "";
-    if (typeof val === 'object' && val._id) return val._id;
-    return val.toString();
+    if (typeof val === 'object' && val !== null && '_id' in val) {
+      return (val as { _id: string })._id;
+    }
+    return String(val);
   };
 
   // Helper to format ISO date to yyyy-MM-dd
@@ -311,11 +313,12 @@ export function EmployeeForm({
       const currentId = initialValues.employeeObjId as { _id: string; employeeId: string };
       const exists = list.some(item => item._id === currentId._id);
       if (!exists && currentId._id && currentId.employeeId) {
-        list.unshift(currentId);
+        // Satisfaction of the EmployeeDropdownItem type which requires more fields in some contexts
+        list.unshift(currentId as typeof list[0]);
       }
     }
     return list;
-  }, [employeeIdData?.data, isEdit, initialValues?.employeeObjId]);
+  }, [employeeIdData?.data, isEdit, initialValues]);
 
   return (
     <Form {...form}>

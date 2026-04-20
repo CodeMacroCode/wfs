@@ -1,7 +1,17 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient, UseQueryOptions } from '@tanstack/react-query';
 import { employeeService } from '@/services/employee-service';
 import { QUERY_KEYS } from '@/constants/query-keys';
-import { RegisterEmployeeDto, UpdateEmployeeDto, EmployeeQueryParams, EmployeesResponse } from '@/types/employee';
+import { RegisterEmployeeDto, UpdateEmployeeDto, EmployeeQueryParams, EmployeesResponse, EmployeeStatsResponse } from '@/types/employee';
+
+/**
+ * Hook to fetch employee stats for the dashboard
+ */
+export function useEmployeeStatsQuery() {
+  return useQuery<EmployeeStatsResponse>({
+    queryKey: QUERY_KEYS.users.stats(),
+    queryFn: () => employeeService.getStats(),
+  });
+}
 
 /**
  * Hook to fetch employees with pagination and filters

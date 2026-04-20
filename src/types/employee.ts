@@ -116,10 +116,32 @@ export interface EmployeeQueryParams {
 export interface EmployeeDropdownItem {
   _id: string;
   name: string;
+  employeeId: string;
 }
 
 export interface EmployeeDropdownResponse {
   success: boolean;
   data: EmployeeDropdownItem[];
   pagination: PaginationInfo;
+}
+export interface EmployeeStats {
+  overall: {
+    totalUsers: number;
+    male: number;
+    female: number;
+    other: number;
+  };
+  companyWise: {
+    totalUsers: number;
+    male: number;
+    female: number;
+    other: number;
+    companyId: string;
+    companyName: string;
+  }[];
+}
+
+export interface EmployeeStatsResponse {
+  success: boolean;
+  data: EmployeeStats;
 }

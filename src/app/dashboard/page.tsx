@@ -3,13 +3,15 @@
 import {
   Plus,
   Upload,
-  MoreVertical,
   ArrowRight,
   Zap,
   Droplets,
   Wifi,
   FileText,
-  AlertCircle
+  AlertCircle,
+  Users2,
+  UserCheck,
+  User,
 } from "lucide-react"
 import { AttendanceUploadDialog } from "@/components/dashboard/attendance-upload-dialog"
 import { MarkLeaveDialog } from "@/components/dashboard/mark-leave-dialog"
@@ -19,12 +21,12 @@ import { format, eachDayOfInterval, startOfWeek, endOfWeek, subDays } from "date
 import { useQueries } from "@tanstack/react-query"
 import { attendanceService } from "@/services/attendance-service"
 import { QUERY_KEYS } from "@/constants/query-keys"
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from "@/components/ui/select"
 import { DateRange } from "react-day-picker"
 import {
@@ -39,7 +41,6 @@ import {
   Pie,
   Cell
 } from "recharts"
-import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Employee, EmployeeStatus } from "@/types/employee"
 import { ExpandedStatCard } from "@/components/dashboard/ExpandedStatCard"
@@ -48,13 +49,11 @@ import { useAttendanceWithSummaryQuery } from "@/hooks/queries/use-attendance"
 import { AttendanceTable } from "@/app/dashboard/attendance/attendance-table"
 import { EditEmployeeDialog } from "@/components/employee/employee-dialogs"
 import { DeleteEmployeeDialog } from "@/components/employee/delete-employee-dialog"
+import { useEmployeeStatsQuery } from "@/hooks/queries/use-employees-query"
+import { useState, useMemo } from "react"
+import React from "react"
 
-
-const companyData = [
-  { name: "Fourtech", value: 55, color: "#0f4c3a", count: 688 },
-  { name: "Goel Enterprises", value: 35, color: "#2dd4bf", count: 437 },
-  { name: "Others", value: 10, color: "#475569", count: 125 }
-]
+const CHART_COLORS = ["#0f4c3a", "#2dd4bf", "#1fb2a6", "#0d9488", "#475569"]
 
 const billAlerts = [
   {
@@ -110,9 +109,13 @@ export default function DashboardPage() {
   const [selectedStat, setSelectedStat] = useState<EmployeeStatus | "all" | null>(null)
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null)
   const [deletingEmployeeId, setDeletingEmployeeId] = useState<string | null>(null)
-  
+
   // Weekly Graph Preset State
   const [selectedPreset, setSelectedPreset] = useState("this_week")
+  
+  // New Stats and Company State
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string>("overall")
+  const { data: statsData, isLoading: isStatsLoading } = useEmployeeStatsQuery()
 
   const getRangeFromPreset = (preset: string) => {
     const now = new Date()
@@ -151,7 +154,7 @@ export default function DashboardPage() {
   const { data: attendanceData, isLoading: isAttendanceLoading } = useAttendanceWithSummaryQuery(
     today,
     today,
-    apiParams.page, 
+    apiParams.page,
     apiParams.limit as number,
     undefined,
     undefined,
@@ -161,7 +164,7 @@ export default function DashboardPage() {
   const dashboardStats = attendanceData?.summary
 
   // Graph Data Fetching (Parallel requests for each day in range)
-  const daysInRange = graphRange?.from && graphRange?.to 
+  const daysInRange = graphRange?.from && graphRange?.to
     ? eachDayOfInterval({ start: graphRange.from, end: graphRange.to })
     : []
 
@@ -192,8 +195,26 @@ export default function DashboardPage() {
     present: { title: "Present", color: { bg: "bg-[#f0f9f1]", text: "text-slate-900", titleText: "text-emerald-700" } },
     absent: { title: "Absentees", color: { bg: "bg-white", text: "text-slate-900", titleText: "text-slate-600" } },
     "on-leave": { title: "On Leave", color: { bg: "bg-[#f0fdfa]", text: "text-slate-900", titleText: "text-[#0d9488]" } },
-    "not-marked": { title: "Attendance Not Marked", color: { bg: "bg-[#0a3622]", text: "text-white", titleText: "text-emerald-500/70" } },
+    "not-marked": { title: "Attendance Not Marked", color: { bg: "bg-[#0a3622]", text: "white", titleText: "text-emerald-500/70" } },
   }
+
+  // Derive Display Data for Company Distribution
+  const companyDistributionData = useMemo(() => {
+    if (!statsData?.data?.companyWise) return []
+    
+    return statsData.data.companyWise.map((company, index) => ({
+      name: company.companyName,
+      value: Math.round((company.totalUsers / statsData.data.overall.totalUsers) * 100) || 0,
+      count: company.totalUsers,
+      color: CHART_COLORS[index % CHART_COLORS.length],
+      id: company.companyId
+    }))
+  }, [statsData])
+
+  const currentStats = useMemo(() => {
+    if (selectedCompanyId === "overall") return statsData?.data?.overall
+    return statsData?.data?.companyWise.find(c => c.companyId === selectedCompanyId)
+  }, [selectedCompanyId, statsData])
 
   return (
     <div className="flex flex-col gap-6 p-2 md:p-4">
@@ -260,7 +281,7 @@ export default function DashboardPage() {
               <motion.h3 layoutId="title-all" className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total Labor Force</motion.h3>
               <div className="flex flex-col">
                 <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
-                  {dashboardStats?.totalUsers ?? 0}
+                  {isStatsLoading ? "..." : (statsData?.data.overall.totalUsers ?? 0)}
                 </span>
                 <span className="text-[10px] font-bold text-slate-400 uppercase">Click to view</span>
               </div>
@@ -372,6 +393,54 @@ export default function DashboardPage() {
         </motion.div>
       </div>
 
+      {/* Gender Stats Row */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card className="border-none shadow-none bg-[#f0f7ff] rounded-[20px] p-5 flex flex-col justify-between hover:bg-blue-100/50 transition-colors">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-[11px] font-bold text-blue-700 uppercase tracking-wider">Male Employees</h3>
+            <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
+              <User className="h-4 w-4 text-blue-600" />
+            </div>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
+              {isStatsLoading ? "..." : (currentStats?.male ?? 0)}
+            </span>
+            <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">Total Male Staff</p>
+          </div>
+        </Card>
+
+        <Card className="border-none shadow-none bg-[#fff1f2] rounded-[20px] p-5 flex flex-col justify-between hover:bg-rose-100/50 transition-colors">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-[11px] font-bold text-rose-700 uppercase tracking-wider">Female Employees</h3>
+            <div className="h-8 w-8 rounded-full bg-rose-100 flex items-center justify-center">
+              <UserCheck className="h-4 w-4 text-rose-600" />
+            </div>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
+              {isStatsLoading ? "..." : (currentStats?.female ?? 0)}
+            </span>
+            <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">Total Female Staff</p>
+          </div>
+        </Card>
+
+        <Card className="border-none shadow-none bg-[#f8fafc] rounded-[20px] p-5 flex flex-col justify-between ring-1 ring-slate-100 hover:bg-slate-50 transition-colors">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Other / Unspecified</h3>
+            <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center">
+              <Users2 className="h-4 w-4 text-slate-500" />
+            </div>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
+              {isStatsLoading ? "..." : (currentStats?.other ?? 0)}
+            </span>
+            <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">Other Designations</p>
+          </div>
+        </Card>
+      </div>
+
       {/* Charts Row */}
       <div className="grid gap-4 lg:grid-cols-3">
         {/* Weekly Attendance */}
@@ -444,11 +513,23 @@ export default function DashboardPage() {
 
         {/* Company Distribution */}
         <Card className="border-none ring-1 ring-gray-100 shadow-none rounded-[28px] p-8 flex flex-col">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-xl font-bold text-slate-900 font-heading">Company Distribution</h3>
-            <button className="text-slate-300 hover:text-slate-500 transition-colors">
-              <MoreVertical className="h-5 w-5" />
-            </button>
+          <div className="flex items-center justify-between mb-6">
+            <div className="space-y-1">
+              <h3 className="text-xl font-bold text-slate-900 font-heading">Company Distribution</h3>
+            </div>
+            <Select value={selectedCompanyId} onValueChange={setSelectedCompanyId}>
+              <SelectTrigger className="w-[160px] h-9 border-slate-200 bg-white shadow-sm font-semibold text-[11px] text-slate-700 rounded-xl focus:ring-emerald-500/10">
+                <SelectValue placeholder="Company" />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl border-slate-100 shadow-xl">
+                <SelectItem value="overall" className="text-xs font-semibold">All Companies</SelectItem>
+                {statsData?.data.companyWise.map(company => (
+                  <SelectItem key={company.companyId} value={company.companyId} className="text-xs font-semibold">
+                    {company.companyName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <p className="text-xs font-semibold text-slate-400 mb-8">Employee count per organization.</p>
 
@@ -456,7 +537,7 @@ export default function DashboardPage() {
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={companyData}
+                  data={companyDistributionData}
                   cx="50%"
                   cy="50%"
                   innerRadius={75}
@@ -468,21 +549,27 @@ export default function DashboardPage() {
                   animationDuration={1500}
                   cornerRadius={6}
                 >
-                  {companyData.map((entry, index) => (
+                  {companyDistributionData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
               </PieChart>
             </ResponsiveContainer>
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-3xl font-extrabold text-slate-900">1,250</span>
+              <span className="text-3xl font-extrabold text-slate-900">
+                {isStatsLoading ? "..." : (statsData?.data.overall.totalUsers ?? 0)}
+              </span>
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">Total</span>
             </div>
           </div>
 
           <div className="mt-8 space-y-4">
-            {companyData.map((item, index) => (
-              <div key={`legend-${index}`} className="flex items-center justify-between group hover:bg-slate-50 p-2 -mx-2 rounded-xl transition-colors cursor-pointer">
+            {companyDistributionData.map((item, index) => (
+              <div 
+                key={`legend-${index}`} 
+                onClick={() => setSelectedCompanyId(item.id)}
+                className={`flex items-center justify-between group hover:bg-slate-50 p-2 -mx-2 rounded-xl transition-colors cursor-pointer ${selectedCompanyId === item.id ? 'bg-slate-50 ring-1 ring-slate-100' : ''}`}
+              >
                 <div className="flex items-center gap-4">
                   <div className="h-7 w-12 flex items-center justify-center rounded-lg text-[11px] font-black text-white shadow-sm" style={{ backgroundColor: item.color }}>
                     {item.value}%
@@ -507,7 +594,7 @@ export default function DashboardPage() {
             <h3 className="text-xl font-bold text-slate-900 font-heading">Recent Attendance Activity</h3>
             <p className="text-xs font-semibold text-slate-400">Real-time log of employee punch-in and punch-out activities.</p>
           </div>
-          
+
           <AttendanceTable
             data={attendanceList}
             isLoading={isAttendanceLoading}
