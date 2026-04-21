@@ -3,6 +3,19 @@
  */
 export type AttendanceStatus = 'Present' | 'Absent' | 'Late' | 'Half-Day' | 'On Leave';
 
+export type ManualAttendanceStatus = 'Present' | 'Absent' | 'Half-Day' | 'WeeklyOff' | 'Holiday';
+
+/**
+ * Payload for marking manual attendance
+ */
+export interface MarkManualAttendanceDto {
+  userId: string;
+  date: string;
+  status: ManualAttendanceStatus;
+  punchIn?: string | null;
+  punchOut?: string | null;
+}
+
 /**
  * Single attendance record based on real API response
  */
@@ -12,6 +25,9 @@ export interface Attendance {
     _id: string;
     name: string;
     email: string;
+    employeeId?: string;
+    designation?: string;
+    companyName?: string;
   };
   date: string;
   punchIn: string | null;

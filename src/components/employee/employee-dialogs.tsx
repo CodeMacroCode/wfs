@@ -17,7 +17,7 @@ import {
 } from "@/hooks/queries/use-employees-query"
 import { Employee, RegisterEmployeeDto } from "@/types/employee"
 
-export function RegisterEmployeeDialog() {
+export function RegisterEmployeeDialog({ trigger }: { trigger?: React.ReactNode }) {
   const [open, setOpen] = React.useState(false)
   const { mutate: register, isPending } = useRegisterEmployeeMutation()
 
@@ -30,9 +30,11 @@ export function RegisterEmployeeDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-[#2eb88a] hover:bg-[#259b74] text-white cursor-pointer">
-          Add Employee
-        </Button>
+        {trigger || (
+          <Button className="bg-[#2eb88a] hover:bg-[#259b74] text-white cursor-pointer">
+            Add Employee
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[700px]">
         <DialogHeader>

@@ -94,10 +94,10 @@ export function useEmployeeQuery(id: string | null) {
 /**
  * Hook to fetch the employee-id dropdown (punch machine IDs)
  */
-export function useEmployeeIdDropdownQuery() {
+export function useEmployeeIdDropdownQuery(params?: EmployeeQueryParams) {
   return useQuery({
-    queryKey: [...QUERY_KEYS.users.all, 'employee-id-dropdown'],
-    queryFn: () => employeeService.getEmployeeIdDropdown(),
+    queryKey: [...QUERY_KEYS.users.all, 'employee-id-dropdown', params],
+    queryFn: () => employeeService.getEmployeeIdDropdown(params),
     staleTime: 5 * 60 * 1000,
   });
 }

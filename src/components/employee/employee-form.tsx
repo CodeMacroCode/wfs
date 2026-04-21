@@ -20,7 +20,9 @@ import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -38,6 +40,7 @@ import { useAttendancePoliciesQuery } from "@/hooks/queries/use-attendance-polic
 import { usePayrollPoliciesQuery } from "@/hooks/queries/use-payroll-policies";
 import { useCompanyQuery } from "@/hooks/queries/use-company";
 import { useEmployeeIdDropdownQuery } from "@/hooks/queries/use-employees-query";
+import { AvailableEmployeeIdDialog } from "./available-employee-id-dialog";
 
 const emergencyContactSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -109,6 +112,7 @@ const formSchema = z.object({
   mobileNo: z.string().length(10, "Mobile No must be exactly 10 digits").regex(/^\d+$/, "Mobile No must contain only digits"),
   notes: z.string().optional(),
   documents: z.array(documentSchema).optional(),
+  password: z.string().optional(),
   createdBy: z.string().optional(),
 });
 
@@ -128,11 +132,9 @@ export function EmployeeForm({
   isEdit = false,
 }: EmployeeFormProps) {
   const user = authStorage.getUser();
-
   const { data: attendancePoliciesData } = useAttendancePoliciesQuery();
   const { data: payrollPoliciesData } = usePayrollPoliciesQuery();
   const { data: companyData } = useCompanyQuery({ limit: 100 });
-  const { data: employeeIdData } = useEmployeeIdDropdownQuery();
 
   // Helper to extract ID from potentially populated field
   const extractId = (val: unknown) => {
@@ -192,9 +194,25 @@ export function EmployeeForm({
       mobileNo: initialValues?.mobileNo || "",
       notes: initialValues?.notes || "",
       documents: initialValues?.documents || [],
+      password: "123456",
       createdBy: initialValues?.createdBy || user?.id || "",
     },
   });
+
+  const companies = companyData?.data || [];
+  const companyId = useWatch({ control: form.control, name: "companyId" });
+  const selectedCompany = companies.find(c => c._id === companyId);
+  const prefix = selectedCompany?.prefix;
+
+  const { data: employeeIdData } = useEmployeeIdDropdownQuery({ companyId, prefix });
+
+  // Reset employeeObjId when companyId changes to ensure consistency
+  useEffect(() => {
+    // Only reset if it's not the initial load or if companyId actually changed from its previous value
+    if (form.formState.isDirty && form.getValues("employeeObjId")) {
+      form.setValue("employeeObjId", "", { shouldDirty: true });
+    }
+  }, [companyId, form]);
 
   const currentAddress = useWatch({ control: form.control, name: "currentAddress" });
   const [sameAsCurrent, setSameAsCurrent] = useState(false);
@@ -304,7 +322,6 @@ export function EmployeeForm({
 
   const attendancePolicies = attendancePoliciesData?.policies || [];
   const payrollPolicies = (payrollPoliciesData as { data?: { _id: string; name: string }[] })?.data || [];
-  const companies = companyData?.data || [];
   
   // Memoize employee IDs to ensure the current employee's ID is included during edits
   const employeeIds = useMemo(() => {
@@ -362,12 +379,28 @@ export function EmployeeForm({
                         <FormControl>
                           <SelectTrigger><SelectValue placeholder="Select employee ID" /></SelectTrigger>
                         </FormControl>
-                        <SelectContent>
-                          {employeeIds.map((emp) => (
-                            <SelectItem key={emp._id} value={emp._id}>
-                              {emp.employeeId}
-                            </SelectItem>
-                          ))}
+                        <SelectContent position="popper" className="mt-1">
+                          {employeeIds.length > 0 ? (
+                            employeeIds.map((emp) => (
+                              <SelectItem key={emp._id} value={emp._id}>
+                                {emp.employeeId}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <SelectGroup>
+                              <SelectLabel className="text-center py-4 px-2">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-loose">
+                                  No available IDs<br />for this company
+                                </p>
+                              </SelectLabel>
+                              <div className="px-2 pb-2" onPointerDown={(e) => e.stopPropagation()}>
+                                <AvailableEmployeeIdDialog 
+                                  triggerLabel="Create Employee ID" 
+                                  triggerClassName="w-full bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100" 
+                                />
+                              </div>
+                            </SelectGroup>
+                          )}
                         </SelectContent>
                       </Select>
                       <FormMessage />

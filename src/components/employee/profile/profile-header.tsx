@@ -22,7 +22,7 @@ export function ProfileHeader({ employee }: ProfileHeaderProps) {
       <div className="h-48 w-full rounded-t-2xl bg-linear-to-r from-emerald-400 via-teal-500 to-cyan-600 relative overflow-hidden shadow-sm">
         <div className="absolute inset-0 opacity-10 blur-3xl bg-white/20 animate-pulse" />
         <div className="absolute top-4 left-4">
-           {/* Backward button could go here if needed */}
+          {/* Backward button could go here if needed */}
         </div>
       </div>
 
@@ -68,7 +68,7 @@ export function ProfileHeader({ employee }: ProfileHeaderProps) {
                 Active Employee
               </div>
             </div>
-            
+
             <div className="flex flex-wrap items-center gap-4 text-slate-500 text-sm font-medium">
               <div className="flex items-center gap-1.5">
                 <Briefcase className="w-4 h-4 text-slate-300" />
@@ -77,7 +77,9 @@ export function ProfileHeader({ employee }: ProfileHeaderProps) {
               <div className="text-slate-300">•</div>
               <div className="flex items-center gap-1.5">
                 <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">ID:</span>
-                <span className="font-mono text-emerald-600 font-bold">{employee.uniqueId}</span>
+                <span className="font-mono text-emerald-600 font-bold">
+                  {employee.employeeObjId?.employeeId || employee.uniqueId}
+                </span>
               </div>
               <div className="text-slate-300">•</div>
               <div className="flex items-center gap-1.5">

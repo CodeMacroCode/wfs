@@ -1,5 +1,5 @@
 import apiClient from '@/lib/api-client';
-import { SalaryPayload, SalaryListResponse } from '@/types/salary';
+import { SalaryPayload, SalaryListResponse, PayrollCalculationResult } from '@/types/salary';
 import { toast } from 'sonner';
 
 /**
@@ -11,7 +11,7 @@ export const salaryService = {
    */
   createSalary: async (data: SalaryPayload): Promise<void> => {
     try {
-      await apiClient.post<SalaryPayload, void>('/api/employee-salary', data);
+      await apiClient.post<SalaryPayload, void>('/employee-salary/add', data);
       toast.success('Salary updated successfully');
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to update salary';
@@ -53,10 +53,25 @@ export const salaryService = {
    */
   updateSalary: async (userId: string, data: SalaryPayload): Promise<void> => {
     try {
-      await apiClient.put<SalaryPayload, void>(`/update/${userId}`, data);
+      await apiClient.put<SalaryPayload, void>(`/employee-salary/update/${userId}`, data);
       toast.success('Salary configuration updated');
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to update salary';
+      toast.error(errorMessage);
+      throw error;
+    }
+  },
+
+  /**
+   * Calculate employee salary for a specific month
+   */
+  calculatePayroll: async (employeeId: string, month: string): Promise<PayrollCalculationResult> => {
+    try {
+      return await apiClient.get<void, PayrollCalculationResult>('/employee-salary/calculate', {
+        params: { employeeId, month }
+      });
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to calculate salary';
       toast.error(errorMessage);
       throw error;
     }

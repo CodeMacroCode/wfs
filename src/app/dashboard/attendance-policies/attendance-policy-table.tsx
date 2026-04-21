@@ -86,8 +86,8 @@ export function AttendancePolicyTable({ data, isLoading }: AttendancePolicyTable
       header: "Created By",
       cell: ({ row }) => (
         <div className="flex flex-col">
-          <span className="font-bold text-slate-700">{row.original.createdBy.name}</span>
-          <span className="text-[10px] font-bold text-slate-400 truncate max-w-[120px]">{row.original.createdBy.email}</span>
+          <span className="font-bold text-slate-700">{row.original.createdBy?.name || "System"}</span>
+          <span className="text-[10px] font-bold text-slate-400 truncate max-w-[120px]">{row.original.createdBy?.email || "Internal"}</span>
         </div>
       ),
     },

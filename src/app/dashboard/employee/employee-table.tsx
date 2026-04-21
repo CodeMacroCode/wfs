@@ -65,12 +65,24 @@ export const getEmployeeColumns = (
             accessorKey: "designation",
             header: "Designation",
             cell: ({ row }) => (
-                <div className="flex items-center justify-center">
-                    <span className="text-sm text-slate-600 capitalize">{row.original.designation}</span>
+                <div className="flex items-center justify-center gap-2">
+                    <span className="text-sm text-slate-600 font-bold capitalize">{row.original.designation}</span>
                 </div>
             ),
             meta: {
                 exportValue: (item: Employee) => item.designation
+            }
+        },
+        {
+            accessorKey: "company",
+            header: "Company",
+            cell: ({ row }) => (
+                <div className="flex items-center justify-center text-center">
+                    <span className="text-sm text-slate-700 font-bold">{(row.original.companyId as unknown as PopulatedField)?.name || "N/A"}</span>
+                </div>
+            ),
+            meta: {
+                exportValue: (item: Employee) => (item.companyId as unknown as PopulatedField)?.name || "N/A"
             }
         },
         {
@@ -91,19 +103,6 @@ export const getEmployeeColumns = (
     ];
 
     if (!isDashboardView) {
-        cols.push({
-            accessorKey: "companyId",
-            header: "Company",
-            cell: ({ row }) => (
-                <div className="flex items-center justify-center text-center">
-                    <span className="text-sm text-slate-600">{(row.original.companyId as unknown as PopulatedField)?.name || "N/A"}</span>
-                </div>
-            ),
-            meta: {
-                exportValue: (item: Employee) => (item.companyId as unknown as PopulatedField)?.name || "N/A"
-            }
-        });
-
         cols.push({
             accessorKey: "emergencyContact",
             header: "Emergency Contact",

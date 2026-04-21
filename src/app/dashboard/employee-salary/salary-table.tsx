@@ -6,8 +6,10 @@ import {
   User, 
   Calendar, 
   Trash2,
-  Edit
+  Edit,
+  Calculator
 } from "lucide-react"
+import { CalculateSalaryDialog } from "./calculate-salary-dialog"
 import { Badge } from "@/components/ui/badge"
 import { DataTable } from "@/components/ui/data-table"
 import { SalaryListItem } from "@/types/salary"
@@ -34,7 +36,13 @@ export function SalaryTable({
   onDelete,
   onEdit
 }: SalaryTableProps) {
+  const [calculatingEmployee, setCalculatingEmployee] = React.useState<{ id: string, name: string } | null>(null)
+  const [isCalculateOpen, setIsCalculateOpen] = React.useState(false)
   
+  const getEmployeeData = (item: SalaryListItem) => {
+    return item.user || item.userId || null;
+  }
+
   const getSalaryTypeBadge = (item: SalaryListItem) => {
     if (item.monthly) return (
         <Badge variant="outline" className="bg-indigo-50 text-indigo-600 border-indigo-100/50 gap-1.5 px-3 py-1 rounded-full font-bold uppercase text-[10px]">
@@ -72,10 +80,10 @@ export function SalaryTable({
           </div>
           <div className="flex flex-col">
             <span className="font-bold text-slate-900 line-clamp-1">
-              {row.original.userId?.name || "Unknown"}
+              {getEmployeeData(row.original)?.name || "Unknown"}
             </span>
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
-              {row.original.userId?.email || "N/A"}
+              {getEmployeeData(row.original)?.email || "N/A"}
             </span>
           </div>
         </div>
@@ -114,13 +122,32 @@ export function SalaryTable({
     {
       id: "actions",
       header: "",
-      cell: ({ row }) => (
-        <div className="flex justify-end gap-2 pr-2">
+      cell: ({ row }) => {
+        const emp = getEmployeeData(row.original);
+        return (
+          <div className="flex justify-end gap-2 pr-2">
+            <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (emp) {
+                    setCalculatingEmployee({
+                      id: typeof emp === 'string' ? emp : emp._id,
+                      name: typeof emp === 'string' ? 'Employee' : emp.name
+                    })
+                    setIsCalculateOpen(true)
+                  }
+                }}
+                className="h-8 px-3 bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white border-indigo-100/50 rounded-lg transition-all font-bold text-[10px] uppercase tracking-wider gap-2 shadow-sm"
+            >
+                <Calculator className="h-3 w-3" />
+                Calculate
+            </Button>
             <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => {
-                  if (row.original.userId?._id) {
+                  if (emp) {
                     onEdit?.(row.original)
                   }
                 }}
@@ -133,8 +160,8 @@ export function SalaryTable({
                 variant="ghost"
                 size="icon"
                 onClick={() => {
-                  if (row.original.userId?._id) {
-                    onDelete?.(row.original.userId._id)
+                  if (emp) {
+                    onDelete?.(typeof emp === 'string' ? emp : emp._id)
                   }
                 }}
                 className="h-8 w-8 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
@@ -142,12 +169,14 @@ export function SalaryTable({
             >
                 <Trash2 className="h-4 w-4" />
             </Button>
-        </div>
-      ),
+          </div>
+        );
+      },
     },
   ]
 
   return (
+    <>
     <DataTable
       columns={columns}
       data={data}
@@ -157,5 +186,13 @@ export function SalaryTable({
       totalItems={totalItems}
       showSrNo={true}
     />
+
+    <CalculateSalaryDialog
+      employeeId={calculatingEmployee?.id || null}
+      employeeName={calculatingEmployee?.name || null}
+      open={isCalculateOpen}
+      onOpenChange={setIsCalculateOpen}
+    />
+    </>
   )
 }

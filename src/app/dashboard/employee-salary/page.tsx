@@ -1,15 +1,17 @@
 "use client"
 
 import * as React from "react"
-import { Banknote, User, Loader2, Save, Plus } from "lucide-react"
+import { useEmployeesDropdownInfiniteQuery } from "@/hooks/queries/use-employees-query"
+import { useCompanyDropdownInfiniteQuery } from "@/hooks/queries/use-company"
+import { useCreateSalaryMutation, useSalariesQuery, useDeleteSalaryMutation, useUpdateSalaryMutation } from "@/hooks/queries/use-salary"
+import { SalaryType, SalaryPayload, SalaryListItem } from "@/types/salary"
+import { EmployeeDropdownItem } from "@/types/employee"
+import { CompanyListItem } from "@/types/company"
+import { Building2, Banknote, User, Loader2, Save, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { InfiniteScrollSelect } from "@/components/ui/infinite-scroll-select"
-import { useEmployeesDropdownInfiniteQuery } from "@/hooks/queries/use-employees-query"
-import { useCreateSalaryMutation, useSalariesQuery, useDeleteSalaryMutation, useUpdateSalaryMutation } from "@/hooks/queries/use-salary"
-import { SalaryType, SalaryPayload, SalaryListItem } from "@/types/salary"
-import { EmployeeDropdownItem } from "@/types/employee"
 import { cn } from "@/lib/utils"
 import { PaginationState } from "@tanstack/react-table"
 import { SalaryTable } from "./salary-table"
@@ -24,6 +26,8 @@ import {
 
 export default function EmployeeSalaryPage() {
     const [open, setOpen] = React.useState(false)
+    const [selectedCompany, setSelectedCompany] = React.useState<{ id: string, name: string } | null>(null)
+    const [companySearchTerm, setCompanySearchTerm] = React.useState("")
     const [selectedEmployee, setSelectedEmployee] = React.useState<{ id: string, name: string } | null>(null)
     const [salaryType, setSalaryType] = React.useState<SalaryType>("monthly")
     const [rate, setRate] = React.useState<string>("")
@@ -35,12 +39,23 @@ export default function EmployeeSalaryPage() {
     })
 
     const {
+        data: companyData,
+        fetchNextPage: fetchNextCompanies,
+        hasNextPage: hasMoreCompanies,
+        isFetchingNextPage: isFetchingMoreCompanies,
+        isLoading: isCompaniesLoading,
+    } = useCompanyDropdownInfiniteQuery({ search: companySearchTerm })
+
+    const {
         data: employeeData,
         fetchNextPage,
         hasNextPage,
         isFetchingNextPage,
         isLoading: isEmployeesLoading,
-    } = useEmployeesDropdownInfiniteQuery({ search: searchTerm })
+    } = useEmployeesDropdownInfiniteQuery({ 
+        search: searchTerm,
+        companyId: selectedCompany?.id 
+    })
 
     const { data: salaryListData, isLoading: isSalaryLoading } = useSalariesQuery(
         pagination.pageIndex + 1,
@@ -52,6 +67,7 @@ export default function EmployeeSalaryPage() {
     const deleteSalaryMutation = useDeleteSalaryMutation()
 
     const allEmployees = employeeData?.pages.flatMap(page => page.data) || []
+    const allCompanies = companyData?.pages.flatMap(page => page.data) || []
 
     const handleDelete = (userId: string) => {
         if (window.confirm("Are you sure you want to delete this salary configuration?")) {
@@ -60,8 +76,11 @@ export default function EmployeeSalaryPage() {
     }
 
     const handleEdit = (item: SalaryListItem) => {
-        setEditingSalary(item.userId._id)
-        setSelectedEmployee({ id: item.userId._id, name: item.userId.name })
+        const emp = item.user || item.userId
+        if (!emp) return
+
+        setEditingSalary(emp._id)
+        setSelectedEmployee({ id: emp._id, name: emp.name })
         
         let type: SalaryType = "monthly"
         let rateValue = ""
@@ -114,6 +133,7 @@ export default function EmployeeSalaryPage() {
     const handleCloseDialog = () => {
         setRate("")
         setSelectedEmployee(null)
+        setSelectedCompany(null)
         setEditingSalary(null)
         setSalaryType("monthly")
         setOpen(false)
@@ -162,6 +182,33 @@ export default function EmployeeSalaryPage() {
                         </DialogHeader>
 
                         <form onSubmit={handleSubmit} className="p-8 space-y-6">
+                            {/* Company Selection */}
+                            {!editingSalary && (
+                                <div className="space-y-3">
+                                    <Label className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                                        <Building2 className="h-4 w-4 text-slate-400" />
+                                        Select Company
+                                    </Label>
+                                    <InfiniteScrollSelect
+                                        value={selectedCompany?.id}
+                                        onValueChange={(val, item: CompanyListItem) => {
+                                            setSelectedCompany({ id: val, name: item.name });
+                                            setSelectedEmployee(null); // Reset employee when company changes
+                                        }}
+                                        items={allCompanies}
+                                        loadMore={fetchNextCompanies}
+                                        hasNextPage={!!hasMoreCompanies}
+                                        isFetchingNextPage={isFetchingMoreCompanies}
+                                        isLoading={isCompaniesLoading}
+                                        getLabel={(item: CompanyListItem) => `${item.name}`}
+                                        getValue={(item: CompanyListItem) => item._id}
+                                        placeholder="Filter by company..."
+                                        onSearchChange={setCompanySearchTerm}
+                                        className="h-12 rounded-xl border-slate-200"
+                                    />
+                                </div>
+                            )}
+
                             {/* Employee Selection */}
                             <div className="space-y-3">
                                 <Label className="text-sm font-bold text-slate-700 flex items-center gap-2">
@@ -169,6 +216,7 @@ export default function EmployeeSalaryPage() {
                                     Select Employee
                                 </Label>
                                 <InfiniteScrollSelect
+                                    key={selectedCompany?.id} // Force re-render when company changes
                                     value={selectedEmployee?.id}
                                     onValueChange={(val, item: EmployeeDropdownItem) => setSelectedEmployee({ id: val, name: item.name })}
                                     items={allEmployees}
@@ -176,13 +224,18 @@ export default function EmployeeSalaryPage() {
                                     hasNextPage={!!hasNextPage}
                                     isFetchingNextPage={isFetchingNextPage}
                                     isLoading={isEmployeesLoading}
-                                    getLabel={(item: EmployeeDropdownItem) => `${item.name}`}
+                                    getLabel={(item: EmployeeDropdownItem) => `[${item.employeeId}] ${item.name}`}
                                     getValue={(item: EmployeeDropdownItem) => item._id}
-                                    placeholder="Search by name..."
+                                    placeholder={selectedCompany ? "Search in company..." : "Search by name or ID..."}
                                     onSearchChange={setSearchTerm}
                                     className="h-12 rounded-xl border-slate-200"
-                                    disabled={!!editingSalary}
+                                    disabled={!!editingSalary || (!selectedCompany && !editingSalary)}
                                 />
+                                {!selectedCompany && !editingSalary && (
+                                    <p className="text-[10px] text-amber-500 font-bold uppercase italic mt-1">
+                                        Please select a company first.
+                                    </p>
+                                )}
                                 {editingSalary && (
                                     <p className="text-[10px] text-indigo-500 font-bold uppercase italic mt-1">
                                         Employee cannot be changed during update.

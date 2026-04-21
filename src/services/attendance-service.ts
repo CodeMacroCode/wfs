@@ -1,5 +1,5 @@
 import apiClient from '@/lib/api-client';
-import { AttendanceResponse, AttendanceDashboardCount, AttendanceWithSummaryResponse } from '@/types/attendance';
+import { AttendanceResponse, AttendanceDashboardCount, AttendanceWithSummaryResponse, MarkManualAttendanceDto } from '@/types/attendance';
 import { toast } from 'sonner';
 
 /**
@@ -86,6 +86,20 @@ export const attendanceService = {
       const apiError = error as { data?: { message?: string }; message?: string };
       const errorMessage = apiError.data?.message || apiError.message || 'Failed to upload attendance';
       toast.error(errorMessage);
+      throw error;
+    }
+  },
+
+  /**
+   * Mark manual attendance for a user
+   * @param data - The manual attendance data
+   */
+  markManualAttendance: async (data: MarkManualAttendanceDto): Promise<void> => {
+    try {
+      await apiClient.put<MarkManualAttendanceDto, void>('/attendance/mark-manual-attendance', data);
+      toast.success('Attendance marked successfully');
+    } catch (error: unknown) {
+      toast.error('Failed to mark manual attendance');
       throw error;
     }
   },

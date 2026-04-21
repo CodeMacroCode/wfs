@@ -39,13 +39,15 @@ export interface CompanyQueryParams {
   search?: string;
 }
 
+export interface CompanyListItem {
+  _id: string;
+  name: string;
+  prefix?: string;
+}
+
 export interface CompanyDropdownResponse {
   success: boolean;
-  data: {
-    _id: string;
-    name: string;
-    prefix: string;
-  }[];
+  data: CompanyListItem[];
   pagination: {
     total: number;
     page: number;

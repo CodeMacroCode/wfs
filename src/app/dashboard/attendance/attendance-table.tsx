@@ -9,7 +9,9 @@ import {
   CheckCircle2, 
   XCircle, 
   AlertCircle,
-  TrendingUp
+  TrendingUp,
+  Briefcase,
+  Building2,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { DataTable } from "@/components/ui/data-table"
@@ -104,10 +106,30 @@ export function AttendanceTable({
             <span className="font-bold text-slate-900 line-clamp-1">
               {row.original.userId?.name || "Unknown"}
             </span>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
-              ID: {row.original.uniqueId || row.original.userId?._id?.slice(-6) || "N/A"}
+            <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-tighter">
+              {row.original.userId?.employeeId}
             </span>
           </div>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "designation",
+      header: "Designation",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2 text-slate-600 font-bold whitespace-nowrap">
+          <Briefcase className="h-3.5 w-3.5 text-slate-400" />
+          <span>{row.original.userId?.designation || "N/A"}</span>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "company",
+      header: "Company",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2 text-slate-600 font-bold whitespace-nowrap">
+          <Building2 className="h-3.5 w-3.5 text-slate-400" />
+          <span>{row.original.userId?.companyName || "N/A"}</span>
         </div>
       ),
     },

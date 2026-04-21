@@ -12,10 +12,17 @@ export interface SalaryPayload {
 
 export interface SalaryListItem {
   _id: string;
-  userId: {
+  userId?: {
     _id: string;
     name: string;
-    email: string;
+    employeeId: string;
+    email?: string;
+  };
+  user?: {
+    _id: string;
+    name: string;
+    employeeId: string;
+    email?: string;
   };
   hourly: boolean;
   monthly: boolean;
@@ -25,6 +32,24 @@ export interface SalaryListItem {
   dailyRate?: number;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface PayrollCalculationResult {
+  employeeId: string;
+  employeeName: string;
+  month: string;
+  totalWorkedMinutes: number;
+  totalOvertimeHours: number;
+  totalPaidDays: number;
+  basePay: number;
+  overtimePay: number;
+  netPay: number;
+  payrollDetails: {
+    basic: number;
+    hra: number;
+    pfEmployee: number;
+    [key: string]: number; // Support additional fields if any
+  };
 }
 
 export interface SalaryListResponse {

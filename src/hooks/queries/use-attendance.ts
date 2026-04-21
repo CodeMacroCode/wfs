@@ -1,7 +1,12 @@
-import { useQuery, UseQueryOptions } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, UseQueryOptions } from "@tanstack/react-query";
 import { attendanceService } from "@/services/attendance-service";
 import { QUERY_KEYS } from "@/constants/query-keys";
-import { AttendanceResponse, AttendanceDashboardCount, AttendanceWithSummaryResponse } from "@/types/attendance";
+import { 
+  AttendanceResponse, 
+  AttendanceDashboardCount, 
+  AttendanceWithSummaryResponse,
+  MarkManualAttendanceDto 
+} from "@/types/attendance";
 
 /**
  * Hook to fetch all attendance records with pagination
@@ -57,5 +62,21 @@ export function useMonthlyAttendanceQuery(userId: string, month: string, year: s
     queryKey: [...QUERY_KEYS.attendance.list(), 'monthly', { userId, month, year }],
     queryFn: () => attendanceService.getMonthlyAttendance(userId, month, year),
     enabled: !!userId && !!month && !!year,
+  });
+}
+
+/**
+ * Hook to mark manual attendance
+ */
+export function useMarkManualAttendanceMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: MarkManualAttendanceDto) => attendanceService.markManualAttendance(data),
+    onSuccess: () => {
+      // Invalidate attendance queries to refresh data
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.attendance.all });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.users.stats() });
+    },
   });
 }

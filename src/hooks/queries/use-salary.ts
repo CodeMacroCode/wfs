@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { salaryService } from "@/services/salary-service";
-import { SalaryPayload, SalaryListResponse } from "@/types/salary";
+import { SalaryPayload, SalaryListResponse, PayrollCalculationResult } from "@/types/salary";
 
 /**
  * Hook to fetch all employee salaries with pagination
@@ -52,5 +52,16 @@ export function useUpdateSalaryMutation() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['salaries'] });
     },
+  });
+}
+
+/**
+ * Hook to calculate employee salary for a specific month
+ */
+export function useCalculatePayrollQuery(employeeId: string, month: string) {
+  return useQuery<PayrollCalculationResult>({
+    queryKey: ['payroll-calculation', { employeeId, month }],
+    queryFn: () => salaryService.calculatePayroll(employeeId, month),
+    enabled: !!employeeId && !!month,
   });
 }

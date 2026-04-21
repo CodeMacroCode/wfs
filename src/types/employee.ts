@@ -54,6 +54,7 @@ export interface Employee {
   motherName: string;
   maritalStatus: "single" | "married" | "divorced" | "widowed";
   spouseName?: string;
+  employeeId?: string;
   familyDetails?: FamilyMember[];
   dob: string;
   bloodGroup: string;
@@ -111,6 +112,7 @@ export interface EmployeeQueryParams {
   order?: "asc" | "desc";
   search?: string;
   companyId?: string;
+  prefix?: string;
 }
 
 export interface EmployeeDropdownItem {

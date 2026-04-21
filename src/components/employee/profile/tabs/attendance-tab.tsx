@@ -212,8 +212,9 @@ export function AttendanceTab({ employeeId }: AttendanceTabProps) {
               const isToday = isSameDay(day, new Date());
               const StatusIcon = attendance ? statusIcons[attendance.status] : null;
 
-              // Find if this day falls within any leave period
+              // Find if this day falls within any leave period (excluding rejected ones)
               const activeLeave = leaves.find(leave => 
+                leave.status !== 'Rejected' &&
                 isWithinInterval(startOfDay(day), {
                   start: startOfDay(new Date(leave.fromDate)),
                   end: endOfDay(new Date(leave.toDate))
@@ -275,8 +276,20 @@ export function AttendanceTab({ employeeId }: AttendanceTabProps) {
                       )}
 
                       {activeLeave && (
-                         <div className="px-1 pt-1 border-t border-slate-100/50 mt-1">
-                          <span className="text-[9px] font-bold text-blue-500 italic block truncate">
+                         <div className="flex flex-col gap-0.5 mt-1 pt-1 border-t border-slate-100/50">
+                          <div className="flex items-center justify-between">
+                            <span className={cn(
+                              "text-[8px] font-black uppercase tracking-tighter",
+                              activeLeave.status === 'Approved' ? "text-emerald-500" : 
+                              activeLeave.status === 'Rejected' ? "text-rose-500" : "text-amber-500"
+                            )}>
+                              {activeLeave.status}
+                            </span>
+                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-tighter">
+                              {activeLeave.isPaid ? "Paid" : "Unpaid"}
+                            </span>
+                          </div>
+                          <span className="text-[9px] font-bold text-blue-500 italic truncate">
                             {activeLeave.leaveType} Leave
                           </span>
                         </div>
@@ -291,9 +304,21 @@ export function AttendanceTab({ employeeId }: AttendanceTabProps) {
                         <Info className="h-3 w-3" />
                         On Leave
                       </div>
-                      <div className="px-1">
-                        <span className="text-[10px] font-bold text-blue-500 italic">
-                          {activeLeave.leaveType}
+                      <div className="px-1 flex flex-col gap-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-bold text-blue-500 italic">
+                            {activeLeave.leaveType}
+                          </span>
+                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">
+                            {activeLeave.isPaid ? "Paid" : "Unpaid"}
+                          </span>
+                        </div>
+                        <span className={cn(
+                          "text-[9px] font-black uppercase tracking-tighter",
+                          activeLeave.status === 'Approved' ? "text-emerald-500" : 
+                          activeLeave.status === 'Rejected' ? "text-rose-500" : "text-amber-500"
+                        )}>
+                          {activeLeave.status}
                         </span>
                       </div>
                     </div>

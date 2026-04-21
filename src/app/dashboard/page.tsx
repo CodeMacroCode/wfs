@@ -9,12 +9,12 @@ import {
   Wifi,
   FileText,
   AlertCircle,
-  Users2,
-  UserCheck,
-  User,
+  ClipboardCheck,
 } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { AttendanceUploadDialog } from "@/components/dashboard/attendance-upload-dialog"
 import { MarkLeaveDialog } from "@/components/dashboard/mark-leave-dialog"
+import { MarkManualAttendanceDialog } from "@/components/dashboard/mark-attendance-dialog"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { format, eachDayOfInterval, startOfWeek, endOfWeek, subDays } from "date-fns"
@@ -47,13 +47,10 @@ import { ExpandedStatCard } from "@/components/dashboard/ExpandedStatCard"
 import { useDataTable } from "@/hooks/use-data-table"
 import { useAttendanceWithSummaryQuery } from "@/hooks/queries/use-attendance"
 import { AttendanceTable } from "@/app/dashboard/attendance/attendance-table"
-import { EditEmployeeDialog } from "@/components/employee/employee-dialogs"
+import { EditEmployeeDialog, RegisterEmployeeDialog } from "@/components/employee/employee-dialogs"
 import { DeleteEmployeeDialog } from "@/components/employee/delete-employee-dialog"
 import { useEmployeeStatsQuery } from "@/hooks/queries/use-employees-query"
 import { useState, useMemo } from "react"
-import React from "react"
-
-const CHART_COLORS = ["#0f4c3a", "#2dd4bf", "#1fb2a6", "#0d9488", "#475569"]
 
 const billAlerts = [
   {
@@ -106,6 +103,7 @@ const billAlerts = [
 
 
 export default function DashboardPage() {
+  const router = useRouter()
   const [selectedStat, setSelectedStat] = useState<EmployeeStatus | "all" | null>(null)
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null)
   const [deletingEmployeeId, setDeletingEmployeeId] = useState<string | null>(null)
@@ -198,23 +196,42 @@ export default function DashboardPage() {
     "not-marked": { title: "Attendance Not Marked", color: { bg: "bg-[#0a3622]", text: "white", titleText: "text-emerald-500/70" } },
   }
 
-  // Derive Display Data for Company Distribution
-  const companyDistributionData = useMemo(() => {
-    if (!statsData?.data?.companyWise) return []
-    
-    return statsData.data.companyWise.map((company, index) => ({
-      name: company.companyName,
-      value: Math.round((company.totalUsers / statsData.data.overall.totalUsers) * 100) || 0,
-      count: company.totalUsers,
-      color: CHART_COLORS[index % CHART_COLORS.length],
-      id: company.companyId
-    }))
-  }, [statsData])
-
   const currentStats = useMemo(() => {
     if (selectedCompanyId === "overall") return statsData?.data?.overall
     return statsData?.data?.companyWise.find(c => c.companyId === selectedCompanyId)
   }, [selectedCompanyId, statsData])
+
+  // Derive Display Data for Gender Distribution
+  const genderDistributionData = useMemo(() => {
+    if (!currentStats) return []
+    
+    const { male = 0, female = 0, other = 0, totalUsers = 0 } = currentStats
+    const total = totalUsers || 1
+
+    return [
+      { 
+        name: "Male", 
+        value: Math.round((male / total) * 100), 
+        count: male, 
+        color: "#0f172a", // Slate 900
+        id: "male"
+      },
+      { 
+        name: "Female", 
+        value: Math.round((female / total) * 100), 
+        count: female, 
+        color: "#2dd4bf", // Teal 400
+        id: "female"
+      },
+      { 
+        name: "Other", 
+        value: Math.round((other / total) * 100), 
+        count: other, 
+        color: "#94a3b8", // Slate 400
+        id: "other"
+      }
+    ]
+  }, [currentStats])
 
   return (
     <div className="flex flex-col gap-6 p-2 md:p-4">
@@ -235,6 +252,14 @@ export default function DashboardPage() {
               </Button>
             }
           />
+          <MarkManualAttendanceDialog
+            trigger={
+              <Button variant="outline" className="border-gray-200 text-slate-700 bg-white hover:bg-gray-50 flex gap-2 h-10 px-4 rounded-xl shadow-sm transition-all active:scale-95">
+                <ClipboardCheck className="h-4 w-4" />
+                <span className="font-semibold text-sm">Mark Attendance</span>
+              </Button>
+            }
+          />
           <AttendanceUploadDialog
             trigger={
               <Button
@@ -246,9 +271,14 @@ export default function DashboardPage() {
               </Button>
             }
           />
-          <Button className="bg-[#2dd4bf] hover:bg-[#26bba8] text-white font-bold text-sm flex gap-2 h-10 px-5 rounded-xl border-none shadow-sm transition-all active:scale-95">
-            <span>New Employee</span>
-          </Button>
+          <RegisterEmployeeDialog
+            trigger={
+              <Button className="bg-[#2dd4bf] hover:bg-[#26bba8] text-white font-bold text-sm flex gap-2 h-10 px-5 rounded-xl border-none shadow-sm transition-all active:scale-95">
+                <Plus className="h-4 w-4" />
+                <span>New Employee</span>
+              </Button>
+            }
+          />
         </div>
       </div>
 
@@ -511,11 +541,11 @@ export default function DashboardPage() {
           </div>
         </Card>
 
-        {/* Company Distribution */}
+        {/* Gender Distribution */}
         <Card className="border-none ring-1 ring-gray-100 shadow-none rounded-[28px] p-8 flex flex-col">
           <div className="flex items-center justify-between mb-6">
             <div className="space-y-1">
-              <h3 className="text-xl font-bold text-slate-900 font-heading">Company Distribution</h3>
+              <h3 className="text-xl font-bold text-slate-900 font-heading">Gender Distribution</h3>
             </div>
             <Select value={selectedCompanyId} onValueChange={setSelectedCompanyId}>
               <SelectTrigger className="w-[160px] h-9 border-slate-200 bg-white shadow-sm font-semibold text-[11px] text-slate-700 rounded-xl focus:ring-emerald-500/10">
@@ -531,13 +561,13 @@ export default function DashboardPage() {
               </SelectContent>
             </Select>
           </div>
-          <p className="text-xs font-semibold text-slate-400 mb-8">Employee count per organization.</p>
+          <p className="text-xs font-semibold text-slate-400 mb-8">Gender-wise breakdown of employees.</p>
 
           <div className="flex-1 relative min-h-[220px]">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={companyDistributionData}
+                  data={genderDistributionData}
                   cx="50%"
                   cy="50%"
                   innerRadius={75}
@@ -549,7 +579,7 @@ export default function DashboardPage() {
                   animationDuration={1500}
                   cornerRadius={6}
                 >
-                  {companyDistributionData.map((entry, index) => (
+                  {genderDistributionData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
@@ -557,18 +587,17 @@ export default function DashboardPage() {
             </ResponsiveContainer>
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
               <span className="text-3xl font-extrabold text-slate-900">
-                {isStatsLoading ? "..." : (statsData?.data.overall.totalUsers ?? 0)}
+                {isStatsLoading ? "..." : (currentStats?.totalUsers ?? 0)}
               </span>
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">Total</span>
             </div>
           </div>
 
           <div className="mt-8 space-y-4">
-            {companyDistributionData.map((item, index) => (
+            {genderDistributionData.map((item, index) => (
               <div 
                 key={`legend-${index}`} 
-                onClick={() => setSelectedCompanyId(item.id)}
-                className={`flex items-center justify-between group hover:bg-slate-50 p-2 -mx-2 rounded-xl transition-colors cursor-pointer ${selectedCompanyId === item.id ? 'bg-slate-50 ring-1 ring-slate-100' : ''}`}
+                className="flex items-center justify-between group hover:bg-slate-50 p-2 -mx-2 rounded-xl transition-colors"
               >
                 <div className="flex items-center gap-4">
                   <div className="h-7 w-12 flex items-center justify-center rounded-lg text-[11px] font-black text-white shadow-sm" style={{ backgroundColor: item.color }}>
@@ -620,10 +649,9 @@ export default function DashboardPage() {
         <Card className="border-none ring-1 ring-gray-100 shadow-none rounded-[28px] flex flex-col p-8 bg-white overflow-hidden">
           <div className="flex flex-col gap-1 mb-10">
             <div className="flex items-center justify-between">
-              <h3 className="text-xl font-bold text-slate-900 font-heading">Bill Payment Alerts</h3>
+              <h3 className="text-xl font-bold text-slate-900 font-heading">Event and Alerts</h3>
               <AlertCircle className="h-5 w-5 text-rose-500 animate-pulse" />
             </div>
-            <p className="text-xs font-semibold text-slate-400">Pending and upcoming utility bills.</p>
           </div>
 
           <div className="flex-1 space-y-10 relative before:absolute before:left-[21px] before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-50">
@@ -648,8 +676,11 @@ export default function DashboardPage() {
             ))}
           </div>
 
-          <Button className="w-full mt-12 bg-slate-50 border border-slate-100 text-slate-500 font-black text-[11px] h-14 shadow-none hover:bg-slate-100 hover:text-slate-700 rounded-2xl group transition-all uppercase tracking-widest">
-            Manage All Bills
+          <Button 
+            onClick={() => router.push("/dashboard/reminders")}
+            className="w-full mt-12 bg-slate-50 border border-slate-100 text-slate-500 font-black text-[11px] h-14 shadow-none hover:bg-slate-100 hover:text-slate-700 rounded-2xl group transition-all uppercase tracking-widest"
+          >
+            Manage All Events & Alerts
             <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1.5" />
           </Button>
         </Card>

@@ -8,7 +8,6 @@ import {
   MapPin, 
   Briefcase, 
   GraduationCap, 
-  Heart, 
   Users, 
   Mail,
   IdCard,
@@ -33,7 +32,7 @@ export function OverviewTab({ employee }: OverviewTabProps) {
           <DataItem label="Date of Birth" value={employee.dob ? new Date(employee.dob).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : "-"} />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8">
-          <DataItem label="Blood Group" value={employee.bloodGroup} icon={Heart} />
+          <DataItem label="Blood Group" value={employee.bloodGroup} />
           <DataItem label="Marital Status" value={employee.maritalStatus} />
           <DataItem label="Other Name" value={employee.otherName || "-"} />
         </div>

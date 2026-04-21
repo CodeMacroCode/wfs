@@ -9,7 +9,7 @@ export interface AttendancePolicy {
     _id: string;
     name: string;
     email: string;
-  };
+  } | null;
   createdAt: string;
   updatedAt: string;
   __v: number;
