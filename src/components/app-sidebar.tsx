@@ -24,6 +24,7 @@ import {
   Search,
   PaperclipIcon,
   Bell,
+  Fuel,
 } from "lucide-react"
 import Link from "next/link"
 import * as React from "react"
@@ -32,18 +33,18 @@ const items = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Calendar", url: "/dashboard/calendar", icon: Calendar },
   { title: "Employees", url: "/dashboard/employee", icon: Users },
-  { title: "Document Center", url: "/dashboard/document", icon: PaperclipIcon },
   { title: "Attendance", url: "/dashboard/attendance", icon: UserCheck },
+  { title: "Leave Management", url: "/dashboard/leave-management", icon: CalendarX },
+  { title: "Document Center", url: "/dashboard/document", icon: PaperclipIcon },
+  { title: "Employee Salary", url: "/dashboard/employee-salary", icon: Banknote },
   { title: "Payroll Policies", url: "/dashboard/payroll-policies", icon: UserCheck },
   { title: "Attendance Policies", url: "/dashboard/attendance-policies", icon: UserCheck },
   { title: "Roster", url: "/dashboard/roaster", icon: UserCheck },
-  { title: "Leave Management", url: "/dashboard/leave-management", icon: CalendarX },
   { title: "Recruitment", url: "/dashboard/recruitment", icon: Search },
   { title: "Asset Tracking", url: "/dashboard/asset-tracking", icon: Search },
-  // { title: "Payroll", url: "/dashboard/payroll", icon: Banknote },
-  { title: "Company Master", url: "/dashboard/company-master", icon: Users },
   { title: "Reminders", url: "/dashboard/reminders", icon: Bell },
-  { title: "Employee Salary", url: "/dashboard/employee-salary", icon: Banknote },
+  { title: "Company Master", url: "/dashboard/company-master", icon: Users },
+  {title: "Fuel Expenses", url: "/dashboard/fuel-expenses", icon: Fuel},
 ]
 
 function Logo({ collapsed }: { collapsed?: boolean }) {

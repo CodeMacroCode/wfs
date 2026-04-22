@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { RefreshCw, Upload, Plus } from "lucide-react"
+import { RefreshCw, Upload, Plus, CalendarIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { AttendanceUploadDialog } from "@/components/dashboard/attendance-upload-dialog"
 import { MarkLeaveDialog } from "@/components/dashboard/mark-leave-dialog"
@@ -9,7 +9,8 @@ import { useAttendanceWithSummaryQuery } from "@/hooks/queries/use-attendance"
 import { useCompanyDropdownQuery } from "@/hooks/queries/use-company"
 import { PaginationState } from "@tanstack/react-table"
 import { AttendanceTable } from "./attendance-table"
-import { DatePickerWithRange } from "@/components/ui/date-range-picker"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Calendar } from "@/components/ui/calendar"
 import { 
     Select, 
     SelectContent, 
@@ -17,7 +18,7 @@ import {
     SelectTrigger, 
     SelectValue 
 } from "@/components/ui/select"
-import { DateRange } from "react-day-picker"
+// Remove DateRange import
 import { format } from "date-fns"
 import { Card } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
@@ -36,16 +37,13 @@ export default function AttendancePage() {
         pageSize: 10,
     })
 
-    const [date, setDate] = React.useState<DateRange | undefined>({
-        from: new Date(),
-        to: new Date()
-    })
+    const [date, setDate] = React.useState<Date>(new Date())
     const [status, setStatus] = React.useState<string | undefined>(undefined)
     const [companyId, setCompanyId] = React.useState<string>("all")
 
     const { data, isLoading, refetch, isFetching } = useAttendanceWithSummaryQuery(
-        date?.from ? format(date.from, "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
-        date?.to ? format(date.to, "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
+        date ? format(date, "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
+        date ? format(date, "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
         pagination.pageIndex + 1,
         pagination.pageSize,
         status,
@@ -83,14 +81,35 @@ export default function AttendancePage() {
                         />
                     </div>
                     <div className="flex flex-col gap-1.5">
-                        <Label className="text-[10px] uppercase font-black text-slate-400 ml-1">Range Filter</Label>
-                        <DatePickerWithRange 
-                            date={date} 
-                            setDate={(newDate) => {
-                                setDate(newDate)
-                                setPagination(prev => ({ ...prev, pageIndex: 0 }))
-                            }} 
-                        />
+                        <Label className="text-[10px] uppercase font-black text-slate-400 ml-1">Daily Log</Label>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    className={cn(
+                                        "w-[180px] h-10 pl-3 text-left font-semibold text-xs rounded-xl border-slate-200 bg-white shadow-sm hover:bg-slate-50 transition-all",
+                                        !date && "text-muted-foreground"
+                                    )}
+                                >
+                                    <CalendarIcon className="mr-2 h-4 w-4 text-emerald-500" />
+                                    {date ? format(date, "dd MMM yyyy") : <span>Pick a date</span>}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0 rounded-2xl border-slate-100 shadow-2xl" align="end">
+                                <Calendar
+                                    mode="single"
+                                    selected={date}
+                                    onSelect={(d) => {
+                                        if (d) {
+                                            setDate(d)
+                                            setPagination(prev => ({ ...prev, pageIndex: 0 }))
+                                        }
+                                    }}
+                                    initialFocus
+                                    className="rounded-2xl"
+                                />
+                            </PopoverContent>
+                        </Popover>
                     </div>
                     <Button
                         variant="outline"

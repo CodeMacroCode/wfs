@@ -1,16 +1,15 @@
 import { Employee } from "./employee";
 
 export type AssetType = "Laptop" | "Safety Gear" | "Specialized Tool" | "Uniform" | "Mobile Device" | "Electronics" | "Other" | (string & {});
-export type AssetStatus = "Issued" | "Returned" | "Under Maintenance" | "Damaged";
-
+export type AssetStatus = "In Stock" | "Issued" | "Returned" | "Under Maintenance" | "Damaged";
 export interface Asset {
-  id: string;
-  _id?: string;
+  id?: string;
+  _id: string;
   name: string;
   type: AssetType;
   serialNumber: string;
-  issuedTo: string | Employee; // Employee ID or Populated Employee Object
-  issuedDate: string;
+  issuedTo?: string | Employee; // Optional: Employee ID or Populated Employee Object
+  issuedDate?: string; // Optional: Date when issued
   returnDate?: string;
   status: AssetStatus;
   maintenanceDueDate: string;

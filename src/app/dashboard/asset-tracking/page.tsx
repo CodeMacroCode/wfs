@@ -1,12 +1,12 @@
 "use client"
 
 import * as React from "react"
-import { Filter } from "lucide-react"
+import { Filter, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Asset, AssetType, CreateAssetDto } from "@/types/asset"
 import { AssetTable, getAssetColumns } from "@/components/asset-tracking/asset-table"
 import { DataTableExport } from "@/components/ui/data-table-export"
-import { IssueAssetDialog, EditAssetDialog } from "@/components/asset-tracking/asset-dialogs"
+import { AddAssetDialog, EditAssetDialog } from "@/components/asset-tracking/asset-dialogs"
 import { assetService } from "@/services/asset-service"
 import {
     Select,
@@ -101,10 +101,10 @@ export default function AssetTrackingPage() {
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="space-y-1">
                     <h2 className="text-2xl font-bold tracking-tight text-slate-900 border-b-4 border-indigo-500 w-fit pb-1">
-                        Asset Tracking & Maintenance
+                        Asset Inventory & Tracking
                     </h2>
                     <p className="text-sm text-slate-500">
-                        Manage company assets issued to employees and monitor maintenance schedules.
+                        Manage company assets, equipment inventory, and monitor maintenance schedules.
                     </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -117,16 +117,16 @@ export default function AssetTrackingPage() {
                         className="bg-indigo-600 hover:bg-indigo-700 gap-2 text-white shadow-lg shadow-indigo-500/20"
                         onClick={() => setIsIssueOpen(true)}
                     >
-
-                        Issue New Asset
+                        <Plus className="h-4 w-4" />
+                        Add New Asset
                     </Button>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="p-4 bg-white rounded-2xl border border-slate-100 shadow-sm flex flex-col gap-1 transition-all hover:shadow-md">
-                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Assets</span>
-                    <span className="text-2xl font-bold text-slate-900">{assets.length}</span>
+                    <span className="text-xs font-semibold text-emerald-500 uppercase tracking-wider">Available In Stock</span>
+                    <span className="text-2xl font-bold text-slate-900">{assets.filter(a => a.status === "In Stock" || !a.issuedTo).length}</span>
                 </div>
                 <div className="p-4 bg-white rounded-2xl border border-slate-100 shadow-sm flex flex-col gap-1 transition-all hover:shadow-md">
                     <span className="text-xs font-semibold text-indigo-500 uppercase tracking-wider">Currently Issued</span>
@@ -137,8 +137,8 @@ export default function AssetTrackingPage() {
                     <span className="text-2xl font-bold text-slate-900">{maintenanceAlertsCount}</span>
                 </div>
                 <div className="p-4 bg-white rounded-2xl border border-slate-100 shadow-sm flex flex-col gap-1 transition-all hover:shadow-md">
-                    <span className="text-xs font-semibold text-purple-500 uppercase tracking-wider">Returned</span>
-                    <span className="text-2xl font-bold text-slate-900">{assets.filter(a => a.status === "Returned").length}</span>
+                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Assets</span>
+                    <span className="text-2xl font-bold text-slate-900">{assets.length}</span>
                 </div>
             </div>
 
@@ -153,10 +153,12 @@ export default function AssetTrackingPage() {
                             <SelectContent>
                                 <SelectItem value="All">All Asset Types</SelectItem>
                                 <SelectItem value="Laptop">Laptops</SelectItem>
+                                <SelectItem value="Vehicle">Vehicles</SelectItem>
+                                <SelectItem value="Office Equipment">Office Equipment</SelectItem>
+                                <SelectItem value="Mobile Device">Mobile Devices</SelectItem>
                                 <SelectItem value="Safety Gear">Safety Gear</SelectItem>
                                 <SelectItem value="Specialized Tool">Specialized Tools</SelectItem>
                                 <SelectItem value="Uniform">Uniforms</SelectItem>
-                                <SelectItem value="Mobile Device">Mobile Devices</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
@@ -177,7 +179,7 @@ export default function AssetTrackingPage() {
             />
 
 
-            <IssueAssetDialog
+            <AddAssetDialog
                 open={isIssueOpen}
                 onOpenChange={setIsIssueOpen}
                 onAdd={handleAdd}

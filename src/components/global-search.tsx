@@ -36,22 +36,14 @@ const SEARCH_DATA: SearchResult[] = [
   { title: "Asset Tracking", description: "Company equipment and maintenance", url: "/dashboard/asset-tracking", icon: Box, category: "Pages" },
   { title: "Attendance", description: "Daily logs and clock-ins", url: "/dashboard/attendance", icon: UserCheck, category: "Pages" },
   { title: "Payroll", description: "Salary and payments", url: "/dashboard/payroll", icon: FileText, category: "Pages" },
-  
-  // EMPLOYEES
-  { title: "Robert Fox", description: "Project Manager • Workforce Admin", url: "/dashboard/employee", icon: Users, category: "Employees" },
-  { title: "Sarah Conners", description: "HR Director • Human Resources", url: "/dashboard/employee", icon: Users, category: "Employees" },
-  { title: "David Miller", description: "Lead Developer • Tech Team", url: "/dashboard/employee", icon: Users, category: "Employees" },
-  
-  // RECRUITMENT
-  { title: "John Doe", description: "Senior React Developer • Selected", url: "/dashboard/recruitment", icon: Briefcase, category: "Recruitment" },
-  { title: "Jane Smith", description: "Product Designer • Pending Review", url: "/dashboard/recruitment", icon: Briefcase, category: "Recruitment" },
-  { title: "Alice Johnson", description: "Backend Engineer • Not Selected", url: "/dashboard/recruitment", icon: Briefcase, category: "Recruitment" },
-  
-  // ASSETS
-  { title: "MacBook Pro M2", description: "SN: MBP-99283-A • Issued to John Doe", url: "/dashboard/asset-tracking", icon: Box, category: "Assets" },
-  { title: "Industrial Safety Helmet", description: "SN: SH-8821 • Issued to Jane Smith", url: "/dashboard/asset-tracking", icon: Box, category: "Assets" },
-  { title: "Precision Laser Level", description: "SN: PLL-5542 • Under Maintenance", url: "/dashboard/asset-tracking", icon: Box, category: "Assets" },
-  { title: "Standard Uniform Set", description: "SN: U-1122 • Issued to Alice Johnson", url: "/dashboard/asset-tracking", icon: Box, category: "Assets" },
+  { title: "Bills", description: "Bills and payments", url: "/dashboard/bills", icon: FileText, category: "Pages" },
+  { title: "Calendar", description: "Calendar and events", url: "/dashboard/calendar", icon: FileText, category: "Pages" },
+  { title: "Company Master", description: "Company and master data", url: "/dashboard/company-master", icon: FileText, category: "Pages" },
+  { title: "Document", description: "Documents and files", url: "/dashboard/document", icon: FileText, category: "Pages" },
+  { title: "Leave Management", description: "Leave management", url: "/dashboard/leave-management", icon: FileText, category: "Pages" },
+  { title: "Payroll Policies", description: "Payroll policies", url: "/dashboard/payroll-policies", icon: FileText, category: "Pages" },
+  { title: "Reminders", description: "Reminders and notifications", url: "/dashboard/reminders", icon: FileText, category: "Pages" },
+  { title: "Roster", description: "Roster and scheduling", url: "/dashboard/roaster", icon: FileText, category: "Pages" },
 ]
 
 export function GlobalSearch() {

@@ -27,16 +27,16 @@ import { Employee } from "@/types/employee"
 import { Textarea } from "@/components/ui/textarea"
 import { EmployeeSelect } from "@/components/employee/employee-select"
 
-const PREDEFINED_TYPES = ["Laptop", "Safety Gear", "Specialized Tool", "Uniform", "Mobile Device", "Electronics"];
+const PREDEFINED_TYPES = ["Laptop", "Vehicle", "Mobile Device", "Office Equipment", "Safety Gear", "Specialized Tool", "Uniform", "Electronics"];
 
 const formSchema = z.object({
   name: z.string().min(2, "Asset name is required"),
   type: z.string().min(1, "Asset type is required"),
   otherType: z.string().optional(),
   serialNumber: z.string().min(2, "Serial number is required"),
-  issuedTo: z.string().min(1, "Employee is required"),
-  issuedDate: z.string().min(1, "Issue date is required"),
-  status: z.enum(["Issued", "Returned", "Under Maintenance", "Damaged"] as const),
+  issuedTo: z.string().optional(),
+  issuedDate: z.string().optional(),
+  status: z.enum(["In Stock", "Issued", "Returned", "Under Maintenance", "Damaged"] as const),
   maintenanceDueDate: z.string().min(1, "Maintenance date is required"),
   extraNote: z.string().optional(),
 }).refine((data) => {
@@ -76,8 +76,8 @@ export function AssetForm({
       issuedTo: typeof initialValues?.issuedTo === "object" && initialValues.issuedTo !== null
         ? (initialValues.issuedTo as Employee)._id || (initialValues.issuedTo as Employee).id || ""
         : initialValues?.issuedTo || "",
-      issuedDate: initialValues?.issuedDate ? initialValues.issuedDate.split('T')[0] : new Date(now).toISOString().split('T')[0],
-      status: initialValues?.status || "Issued",
+      issuedDate: initialValues?.issuedDate ? initialValues.issuedDate.split('T')[0] : "",
+      status: initialValues?.status || "In Stock",
       maintenanceDueDate: initialValues?.maintenanceDueDate ? initialValues.maintenanceDueDate.split('T')[0] : new Date(now + 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       extraNote: initialValues?.extraNote || "",
     };
@@ -111,7 +111,7 @@ export function AssetForm({
     const payload = {
       ...restOfData,
       type: actualType as string,
-      issuedDate: new Date(data.issuedDate).toISOString(),
+      issuedDate: data.issuedDate ? new Date(data.issuedDate).toISOString() : undefined,
       maintenanceDueDate: new Date(data.maintenanceDueDate).toISOString(),
     }
     onSubmit(payload)
@@ -234,6 +234,7 @@ export function AssetForm({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
+                    <SelectItem value="In Stock">In Stock</SelectItem>
                     <SelectItem value="Issued">Issued</SelectItem>
                     <SelectItem value="Returned">Returned</SelectItem>
                     <SelectItem value="Under Maintenance">Under Maintenance</SelectItem>
@@ -280,7 +281,7 @@ export function AssetForm({
 
         <div className="flex justify-end gap-2 pt-4">
           <Button type="submit" className="bg-[#1e293b] hover:bg-[#334155] text-white" disabled={isLoading}>
-            {isLoading ? "Saving..." : isEdit ? "Update Asset" : "Issue Asset"}
+            {isLoading ? "Saving..." : isEdit ? "Update Asset" : "Add Asset"}
           </Button>
         </div>
       </form>

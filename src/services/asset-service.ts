@@ -38,7 +38,7 @@ export const assetService = {
    */
   update: async (id: string, data: UpdateAssetDto): Promise<void> => {
     try {
-      await apiClient.put<UpdateAssetDto, void>(`/assets/${id}`, data);
+      await apiClient.patch<UpdateAssetDto, void>(`/assets/${id}`, data);
       toast.success('Asset updated successfully');
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to update asset';

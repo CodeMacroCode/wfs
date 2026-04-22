@@ -55,12 +55,18 @@ export const getAssetColumns = (
       header: "Issued To",
       cell: ({ row }) => {
         const issuedTo = row.original.issuedTo
+        if (!issuedTo) {
+          return <span className="text-xs text-slate-400 italic font-medium px-2 py-0.5 bg-slate-50 rounded-md border border-slate-100">In Stock</span>
+        }
+
         const displayName = typeof issuedTo === "object" && issuedTo !== null 
           ? issuedTo.name 
           : issuedTo
         
         return (
-          <span className="text-sm text-slate-600 font-medium">{displayName}</span>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-slate-600 font-medium">{displayName}</span>
+          </div>
         )
       },
     },
@@ -90,8 +96,12 @@ export const getAssetColumns = (
             ? "destructive"
             : "outline"
 
+        const statusStyles = status === "In Stock" 
+          ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+          : ""
+
         return (
-          <Badge variant={variant} className="rounded-full px-3">
+          <Badge variant={variant} className={cn("rounded-full px-3", statusStyles)}>
             {status}
           </Badge>
         )
@@ -136,7 +146,7 @@ export const getAssetColumns = (
               variant="ghost"
               size="icon"
               className="text-slate-400 hover:text-destructive hover:bg-destructive/5 rounded-full h-8 w-8 p-0"
-              onClick={() => onDelete(asset.id)}
+              onClick={() => onDelete((asset._id || asset.id) as string)}
             >
               <Trash2 className="h-4 w-4" />
             </Button>

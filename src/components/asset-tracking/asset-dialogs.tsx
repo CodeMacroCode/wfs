@@ -10,13 +10,13 @@ import {
 import { AssetForm } from "./asset-form"
 import { Asset, CreateAssetDto } from "@/types/asset"
 
-interface IssueAssetDialogProps {
+interface AddAssetDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onAdd: (data: CreateAssetDto) => void
 }
 
-export function IssueAssetDialog({ open, onOpenChange, onAdd }: IssueAssetDialogProps) {
+export function AddAssetDialog({ open, onOpenChange, onAdd }: AddAssetDialogProps) {
   const onSubmit = (data: CreateAssetDto) => {
     onAdd(data)
     onOpenChange(false)
@@ -26,7 +26,7 @@ export function IssueAssetDialog({ open, onOpenChange, onAdd }: IssueAssetDialog
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Issue New Asset</DialogTitle>
+          <DialogTitle>Add New Asset</DialogTitle>
         </DialogHeader>
         <AssetForm onSubmit={onSubmit} />
       </DialogContent>
@@ -45,7 +45,7 @@ export function EditAssetDialog({ asset, open, onOpenChange, onUpdate }: EditAss
   if (!asset) return null
 
   const onSubmit = (data: Partial<Asset>) => {
-    onUpdate(asset.id, data)
+    onUpdate((asset._id || asset.id) as string, data)
     onOpenChange(false)
   }
 
