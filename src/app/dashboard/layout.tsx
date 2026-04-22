@@ -107,17 +107,6 @@ function AttendanceLayoutInner({ children }: { children: React.ReactNode }) {
               >
                 <DropdownMenuLabel className="text-slate-400">My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator className="bg-gray-100" />
-                <DropdownMenuGroup>
-                  <DropdownMenuItem className="cursor-pointer transition-colors focus:bg-gray-50 focus:text-slate-900">
-                    <User className="mr-2 h-4 w-4" />
-                    <span>Profile</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="cursor-pointer transition-colors focus:bg-gray-50 focus:text-slate-900">
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Settings</span>
-                  </DropdownMenuItem>
-                </DropdownMenuGroup>
-                <DropdownMenuSeparator className="bg-gray-100" />
                 <DropdownMenuItem className="cursor-pointer transition-colors focus:bg-gray-50 focus:text-slate-900">
                   <KeyRound className="mr-2 h-4 w-4" />
                   <span>Change Password</span>

@@ -45,7 +45,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Employee, EmployeeStatus } from "@/types/employee"
 import { ExpandedStatCard } from "@/components/dashboard/ExpandedStatCard"
 import { useDataTable } from "@/hooks/use-data-table"
-import { useAttendanceWithSummaryQuery } from "@/hooks/queries/use-attendance"
+import { useAttendanceWithSummaryQuery, useAttendanceDashboardCountQuery } from "@/hooks/queries/use-attendance"
 import { AttendanceTable } from "@/app/dashboard/attendance/attendance-table"
 import { EditEmployeeDialog, RegisterEmployeeDialog } from "@/components/employee/employee-dialogs"
 import { DeleteEmployeeDialog } from "@/components/employee/delete-employee-dialog"
@@ -158,8 +158,13 @@ export default function DashboardPage() {
     undefined,
     { staleTime: 60000 }
   )
+
+  const { data: dashboardCount, isLoading: isDashboardCountLoading } = useAttendanceDashboardCountQuery({
+    staleTime: 60000
+  })
+
   const attendanceList = attendanceData?.data || []
-  const dashboardStats = attendanceData?.summary
+  const dashboardStats = dashboardCount || attendanceData?.summary
 
   // Graph Data Fetching (Parallel requests for each day in range)
   const daysInRange = graphRange?.from && graphRange?.to
@@ -311,7 +316,7 @@ export default function DashboardPage() {
               <motion.h3 layoutId="title-all" className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total Labor Force</motion.h3>
               <div className="flex flex-col">
                 <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
-                  {isStatsLoading ? "..." : (statsData?.data.overall.totalUsers ?? 0)}
+                  {isDashboardCountLoading ? "..." : (dashboardCount?.totalUsers ?? 0)}
                 </span>
                 <span className="text-[10px] font-bold text-slate-400 uppercase">Click to view</span>
               </div>
@@ -336,7 +341,7 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between">
                 <div className="flex flex-col">
                   <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
-                    {dashboardStats?.present ?? 0}
+                    {isDashboardCountLoading ? "..." : (dashboardStats?.present ?? 0)}
                   </span>
                   <span className="text-[10px] font-bold text-slate-400 uppercase">Employees</span>
                 </div>
@@ -362,7 +367,7 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between">
                 <div className="flex flex-col">
                   <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
-                    {dashboardStats?.absent ?? 0}
+                    {isDashboardCountLoading ? "..." : (dashboardStats?.absent ?? 0)}
                   </span>
                   <span className="text-[10px] font-bold text-slate-400 uppercase">Employees</span>
                 </div>
@@ -388,7 +393,7 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between">
                 <div className="flex flex-col">
                   <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
-                    {dashboardStats?.onLeave ?? 0}
+                    {isDashboardCountLoading ? "..." : (dashboardStats?.onLeave ?? 0)}
                   </span>
                   <span className="text-[10px] font-bold text-slate-400 uppercase">Employees</span>
                 </div>
@@ -414,7 +419,7 @@ export default function DashboardPage() {
               <motion.h3 layoutId="title-not-marked" className="text-[11px] font-bold text-emerald-500/70 uppercase tracking-wider">Not Marked</motion.h3>
               <div className="flex flex-col">
                 <span className="text-3xl font-extrabold text-white tracking-tight">
-                  {dashboardStats?.notMarked ?? 0}
+                  {isDashboardCountLoading ? "..." : (dashboardStats?.notMarked ?? 0)}
                 </span>
                 <span className="text-[10px] font-bold text-white/40 uppercase">Employees</span>
               </div>
@@ -498,7 +503,7 @@ export default function DashboardPage() {
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
                 </div>
               ) : (
-                <BarChart data={graphData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }} barGap={8}>
+                <BarChart data={graphData} margin={{ top: 0, right: 0, left: -20, bottom: 30 }} barGap={8}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                   <XAxis
                     dataKey="day"
