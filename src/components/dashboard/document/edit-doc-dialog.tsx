@@ -4,7 +4,7 @@ import * as React from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { CloudUpload, Loader2, X, FileText, Bell, Calendar as CalendarIcon } from "lucide-react"
+import { CloudUpload, Loader2, X, FileText, Pencil } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -31,99 +31,64 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Calendar } from "@/components/ui/calendar"
-import { format } from "date-fns"
-import { cn } from "@/lib/utils"
-import { useUploadDocMutation } from "@/hooks/queries/use-doc-center"
-import { useCreateReminderMutation } from "@/hooks/queries/use-reminders"
-import { toast } from "sonner"
+import { useUpdateDocMutation } from "@/hooks/queries/use-doc-center"
+import { DocumentItem } from "@/types/doc-center"
 
 const formSchema = z.object({
   title: z.string().min(2, "Title must be at least 2 characters"),
   documentType: z.string().min(1, "Document type is required"),
   customDocumentType: z.string().optional(),
-  files: z.array(z.instanceof(File)).min(1, "At least one file is required"),
-  // Reminder fields
-  enableReminder: z.boolean(),
-  reminderDate: z.date().optional(),
-  reminderFrequency: z.enum(["Daily", "Weekly", "Monthly", "Yearly", "Once"]),
+  files: z.array(z.instanceof(File)).optional(),
 }).refine((data) => {
-  if (data.documentType === "Other" && (!data.customDocumentType || data.customDocumentType.trim() === "")) {
+  const standardTypes = ["Bill", "Personal", "Picks", "Documents"];
+  if (!standardTypes.includes(data.documentType) && (!data.customDocumentType || data.customDocumentType.trim() === "")) {
     return false;
   }
   return true;
 }, {
   message: "Please specify the document type",
   path: ["customDocumentType"],
-}).refine((data) => {
-  if (data.enableReminder && !data.reminderDate) {
-    return false;
-  }
-  return true;
-}, {
-  message: "Please select a reminder date",
-  path: ["reminderDate"],
 });
 
-interface UploadDocDialogProps {
+interface EditDocDialogProps {
+  document: DocumentItem
   trigger?: React.ReactNode
 }
 
-export function UploadDocDialog({ trigger }: UploadDocDialogProps) {
+export function EditDocDialog({ document: doc, trigger }: EditDocDialogProps) {
   const [open, setOpen] = React.useState(false)
   const fileInputRef = React.useRef<HTMLInputElement>(null)
-  const uploadMutation = useUploadDocMutation()
-  const reminderMutation = useCreateReminderMutation()
+  const updateMutation = useUpdateDocMutation()
+
+  const standardTypes = ["Bill", "Personal", "Picks", "Documents"];
+  const isCustomType = !standardTypes.includes(doc.documentType);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      title: "",
-      documentType: "",
-      customDocumentType: "",
+      title: doc.title,
+      documentType: isCustomType ? "Other" : doc.documentType,
+      customDocumentType: isCustomType ? doc.documentType : "",
       files: [],
-      enableReminder: false,
-      reminderFrequency: "Once",
     },
   })
 
   const docType = useWatch({ control: form.control, name: "documentType" })
   const selectedFiles = useWatch({ control: form.control, name: "files" }) || []
-  const enableReminder = useWatch({ control: form.control, name: "enableReminder" })
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      // 1. Upload Document
-      const docData = await uploadMutation.mutateAsync({
-        title: values.title,
-        documentType: values.documentType === "Other" ? values.customDocumentType! : values.documentType,
-        files: values.files,
+      await updateMutation.mutateAsync({
+        id: doc._id,
+        data: {
+          title: values.title,
+          documentType: values.documentType === "Other" ? values.customDocumentType! : values.documentType,
+          files: values.files && values.files.length > 0 ? values.files : undefined,
+        },
       })
-
-      // 2. Create Reminder if enabled
-      if (values.enableReminder && values.reminderDate) {
-        const uploadedDoc = docData as { data?: { _id: string } };
-        await reminderMutation.mutateAsync({
-          title: `Renewal: ${values.title}`,
-          description: `Reminder for document renewal: ${values.title}`,
-          nextOccurrence: values.reminderDate.toISOString(),
-          frequency: values.reminderFrequency,
-          enabled: true,
-          metadata: {
-            documentId: uploadedDoc.data?._id,
-            documentTitle: values.title
-          }
-        })
-      }
-
-      toast.success("Document and reminder processed successfully")
       setOpen(false)
-      form.reset()
-    } catch (error: unknown) {
-      const err = error as { message?: string };
-      toast.error(err?.message || "Failed to process request")
+    } catch {
+      // Error handled in mutation
     }
   }
 
@@ -145,17 +110,16 @@ export function UploadDocDialog({ trigger }: UploadDocDialogProps) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger || (
-          <Button variant="default" className="bg-[#2eb88a] hover:bg-[#259b74]">
-            <CloudUpload className="mr-2 h-4 w-4" />
-            Upload Document
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-full">
+            <Pencil className="h-4 w-4" />
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-black italic">Upload Document</DialogTitle>
+          <DialogTitle className="text-2xl font-black italic">Edit Document</DialogTitle>
           <DialogDescription className="font-medium text-slate-500">
-            Add new documents and set renewal reminders.
+            Update document details or add more files.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -221,7 +185,7 @@ export function UploadDocDialog({ trigger }: UploadDocDialogProps) {
               name="files"
               render={() => (
                 <FormItem>
-                  <FormLabel className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Files</FormLabel>
+                  <FormLabel className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Add More Files (Optional)</FormLabel>
                   <FormControl>
                     <div className="space-y-3">
                       <Input
@@ -238,10 +202,7 @@ export function UploadDocDialog({ trigger }: UploadDocDialogProps) {
                       >
                         <CloudUpload className="mx-auto h-8 w-8 text-slate-300" />
                         <p className="mt-2 text-sm text-slate-500 font-bold">
-                          Click to select files
-                        </p>
-                        <p className="text-[10px] text-slate-400 mt-1 uppercase font-black">
-                          PDF, DOC, JPG, PNG (Max 5MB)
+                          Click to select additional files
                         </p>
                       </div>
 
@@ -277,120 +238,28 @@ export function UploadDocDialog({ trigger }: UploadDocDialogProps) {
               )}
             />
 
-            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-4">
-              <FormField
-                control={form.control}
-                name="enableReminder"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        className="rounded-md border-slate-300 data-[state=checked]:bg-[#2eb88a] data-[state=checked]:border-[#2eb88a]"
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                        <Bell className="h-4 w-4 text-amber-500" />
-                        Set Renewal Reminder
-                      </FormLabel>
-                    </div>
-                  </FormItem>
-                )}
-              />
-
-              {enableReminder && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-1 duration-200">
-                  <FormField
-                    control={form.control}
-                    name="reminderDate"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Renewal Date</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant={"outline"}
-                                className={cn(
-                                  "w-full pl-3 text-left font-bold rounded-xl border-slate-200 h-11",
-                                  !field.value && "text-muted-foreground"
-                                )}
-                              >
-                                {field.value ? (
-                                  format(field.value, "PPP")
-                                ) : (
-                                  <span>Pick a date</span>
-                                )}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0 rounded-2xl shadow-2xl border-slate-100" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={field.value}
-                              onSelect={field.onChange}
-                              disabled={(date) => date < new Date()}
-                              initialFocus
-                              className="rounded-2xl"
-                            />
-                          </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="reminderFrequency"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Frequency</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger className="rounded-xl border-slate-200 focus:border-[#2eb88a] focus:ring-[#2eb88a]/20 h-11 font-bold">
-                              <SelectValue placeholder="Select frequency" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent className="rounded-xl border-slate-100 shadow-xl">
-                            <SelectItem value="Once">Once</SelectItem>
-                            <SelectItem value="Weekly">Weekly</SelectItem>
-                            <SelectItem value="Monthly">Monthly</SelectItem>
-                            <SelectItem value="Yearly">Yearly</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              )}
-            </div>
-
             <DialogFooter className="pt-2">
               <Button
                 type="button"
                 variant="ghost"
                 onClick={() => setOpen(false)}
-                disabled={uploadMutation.isPending || reminderMutation.isPending}
+                disabled={updateMutation.isPending}
                 className="font-bold text-slate-500 rounded-xl"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
-                className="bg-[#2eb88a] hover:bg-[#259b74] rounded-xl font-black italic px-8 shadow-lg shadow-emerald-500/20 transition-all active:scale-95"
-                disabled={uploadMutation.isPending || reminderMutation.isPending || selectedFiles.length === 0}
+                className="bg-[#2eb88a] hover:bg-[#259b74] rounded-xl font-black italic px-8 shadow-lg shadow-emerald-500/20 transition-all active:scale-95 text-white"
+                disabled={updateMutation.isPending}
               >
-                {uploadMutation.isPending || reminderMutation.isPending ? (
+                {updateMutation.isPending ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Processing...
+                    Saving...
                   </>
                 ) : (
-                  "Upload Document"
+                  "Update Document"
                 )}
               </Button>
             </DialogFooter>

@@ -8,6 +8,14 @@ import { useDebounce } from "@/hooks/use-debounce"
 import { FilterX } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+
 export default function DocumentPage() {
   const [search, setSearch] = React.useState("")
   const [documentType, setDocumentType] = React.useState<string | undefined>(undefined)
@@ -22,7 +30,7 @@ export default function DocumentPage() {
     page: pagination.pageIndex + 1,
     limit: pagination.pageSize,
     search: debouncedSearch,
-    documentType: documentType || undefined,
+    documentType: documentType === "All" ? undefined : documentType,
   })
 
   const handleResetFilters = () => {
@@ -47,19 +55,36 @@ export default function DocumentPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="w-full md:w-64">
+          <Select 
+            value={documentType || "All"} 
+            onValueChange={(val) => setDocumentType(val)}
+          >
+            <SelectTrigger className="rounded-xl border-slate-200 h-10 font-bold bg-white">
+              <SelectValue placeholder="All Types" />
+            </SelectTrigger>
+            <SelectContent className="rounded-xl border-slate-100 shadow-xl">
+              <SelectItem value="All">All Types</SelectItem>
+              <SelectItem value="Bill">Bill</SelectItem>
+              <SelectItem value="Personal">Personal</SelectItem>
+              <SelectItem value="Picks">Picks</SelectItem>
+              <SelectItem value="Documents">Documents</SelectItem>
+              <SelectItem value="Other">Other</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
         {(search || documentType) && (
-          <div className="md:col-span-1">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleResetFilters}
-              className="text-slate-500 border-slate-200 hover:bg-slate-50"
-            >
-              <FilterX className="mr-2 h-4 w-4" />
-              Reset Filters
-            </Button>
-          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleResetFilters}
+            className="text-rose-500 hover:text-rose-600 hover:bg-rose-50 font-bold"
+          >
+            <FilterX className="mr-2 h-4 w-4" />
+            Reset Filters
+          </Button>
         )}
       </div>
 

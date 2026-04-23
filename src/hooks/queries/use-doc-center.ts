@@ -68,3 +68,17 @@ export function useUpdateDocFilesMutation() {
     },
   });
 }
+/**
+ * Hook to update an existing document (Patch)
+ */
+export function useUpdateDocMutation() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: { title?: string; documentType?: string; files?: File[]; metadata?: Record<string, unknown> } }) => 
+      docCenterService.patch(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.docCenter.all });
+    },
+  });
+}

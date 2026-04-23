@@ -23,7 +23,7 @@ export const docCenterService = {
    * Create a new document (Upload)
    * Uses FormData for multipart/form-data support
    */
-  create: async (data: CreateDocDto): Promise<void> => {
+  create: async (data: CreateDocDto): Promise<unknown> => {
     try {
       const formData = new FormData();
       formData.append('title', data.title);
@@ -38,14 +38,16 @@ export const docCenterService = {
         formData.append('files', data.files);
       }
 
-      await apiClient.post<FormData, void>('/doccenter', formData, {
+      const response = await apiClient.post<FormData, unknown>('/doccenter', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
       toast.success('Document uploaded successfully');
+      return response;
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to upload document';
+      const err = error as { data?: { message?: string }; message?: string };
+      const errorMessage = err?.data?.message || err?.message || 'Failed to upload document';
       toast.error(errorMessage);
       throw error;
     }
@@ -96,6 +98,39 @@ export const docCenterService = {
       toast.success('Files added successfully');
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to add files';
+      toast.error(errorMessage);
+      throw error;
+    }
+  },
+  /**
+   * Update an existing document (Patch)
+   */
+  patch: async (id: string, data: { title?: string; documentType?: string; files?: File[]; metadata?: Record<string, unknown> }): Promise<unknown> => {
+    try {
+      const formData = new FormData();
+      if (data.title) formData.append('title', data.title);
+      if (data.documentType) formData.append('documentType', data.documentType);
+      
+      if (data.metadata) {
+        formData.append('metadata', JSON.stringify(data.metadata));
+      }
+
+      if (data.files && data.files.length > 0) {
+        data.files.forEach((file) => {
+          formData.append('files', file);
+        });
+      }
+
+      const response = await apiClient.patch<FormData, unknown>(`/doccenter/${id}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      toast.success('Document updated successfully');
+      return response;
+    } catch (error: unknown) {
+      const err = error as { data?: { message?: string }; message?: string };
+      const errorMessage = err?.data?.message || err?.message || 'Failed to update document';
       toast.error(errorMessage);
       throw error;
     }
