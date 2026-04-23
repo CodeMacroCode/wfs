@@ -85,67 +85,67 @@ export const getEmployeeColumns = (
                 exportValue: (item: Employee) => (item.companyId as unknown as PopulatedField)?.name || "N/A"
             }
         },
-        {
-            accessorKey: "email",
-            header: "Contact Info",
-            cell: ({ row }) => (
-                <div className="flex flex-col items-center text-center">
-                    <span className="font-medium text-slate-600 truncate">{row.original.email}</span>
-                    {row.original.mobileNo && (
-                        <span className="text-xs text-slate-400">{row.original.mobileNo}</span>
-                    )}
-                </div>
-            ),
-            meta: {
-                exportValue: (item: Employee) => `${item.email}${item.mobileNo ? ` (${item.mobileNo})` : ""}`
-            }
-        },
+        // {
+        //     accessorKey: "email",
+        //     header: "Contact Info",
+        //     cell: ({ row }) => (
+        //         <div className="flex flex-col items-center text-center">
+        //             <span className="font-medium text-slate-600 truncate">{row.original.email}</span>
+        //             {row.original.mobileNo && (
+        //                 <span className="text-xs text-slate-400">{row.original.mobileNo}</span>
+        //             )}
+        //         </div>
+        //     ),
+        //     meta: {
+        //         exportValue: (item: Employee) => `${item.email}${item.mobileNo ? ` (${item.mobileNo})` : ""}`
+        //     }
+        // },
     ];
 
     if (!isDashboardView) {
-        cols.push({
-            accessorKey: "emergencyContact",
-            header: "Emergency Contact",
-            cell: ({ row }) => (
-                <div className="flex flex-col items-center text-center">
-                    <span className="text-sm text-slate-600 capitalize">{row.original.emergencyContact?.name || "N/A"}</span>
-                    {row.original.emergencyContact?.phone && (
-                        <span className="text-xs text-slate-400">{row.original.emergencyContact.phone}</span>
-                    )}
-                </div>
-            ),
-            meta: {
-                exportValue: (item: Employee) => item.emergencyContact?.name ? `${item.emergencyContact.name}${item.emergencyContact.phone ? ` (${item.emergencyContact.phone})` : ""}` : "N/A"
-            }
-        });
-        cols.push({
-            accessorKey: "doj",
-            header: "Joining Date",
-            cell: ({ row }) => (
-                <div className="flex flex-col items-center text-center">
-                    <span className="text-sm font-medium text-slate-700">
-                        {row.original.doj ? format(new Date(row.original.doj), "dd MMM yyyy") : "N/A"}
-                    </span>
-                </div>
-            ),
-            meta: {
-                exportValue: (item: Employee) => item.doj ? format(new Date(item.doj), "dd MMM yyyy") : "N/A"
-            }
-        });
+        // cols.push({
+        //     accessorKey: "emergencyContact",
+        //     header: "Emergency Contact",
+        //     cell: ({ row }) => (
+        //         <div className="flex flex-col items-center text-center">
+        //             <span className="text-sm text-slate-600 capitalize">{row.original.emergencyContact?.name || "N/A"}</span>
+        //             {row.original.emergencyContact?.phone && (
+        //                 <span className="text-xs text-slate-400">{row.original.emergencyContact.phone}</span>
+        //             )}
+        //         </div>
+        //     ),
+        //     meta: {
+        //         exportValue: (item: Employee) => item.emergencyContact?.name ? `${item.emergencyContact.name}${item.emergencyContact.phone ? ` (${item.emergencyContact.phone})` : ""}` : "N/A"
+        //     }
+        // });
+        // cols.push({
+        //     accessorKey: "doj",
+        //     header: "Joining Date",
+        //     cell: ({ row }) => (
+        //         <div className="flex flex-col items-center text-center">
+        //             <span className="text-sm font-medium text-slate-700">
+        //                 {row.original.doj ? format(new Date(row.original.doj), "dd MMM yyyy") : "N/A"}
+        //             </span>
+        //         </div>
+        //     ),
+        //     meta: {
+        //         exportValue: (item: Employee) => item.doj ? format(new Date(item.doj), "dd MMM yyyy") : "N/A"
+        //     }
+        // });
 
 
-        cols.push({
-            accessorKey: "gender",
-            header: "Gender",
-            cell: ({ row }) => (
-                <div className="flex items-center justify-center text-center">
-                    <span className="text-sm text-slate-600 capitalize">{row.original.gender}</span>
-                </div>
-            ),
-            meta: {
-                exportValue: (item: Employee) => item.gender
-            }
-        });
+        // cols.push({
+        //     accessorKey: "gender",
+        //     header: "Gender",
+        //     cell: ({ row }) => (
+        //         <div className="flex items-center justify-center text-center">
+        //             <span className="text-sm text-slate-600 capitalize">{row.original.gender}</span>
+        //         </div>
+        //     ),
+        //     meta: {
+        //         exportValue: (item: Employee) => item.gender
+        //     }
+        // });
 
         cols.push({
             accessorKey: "dob",

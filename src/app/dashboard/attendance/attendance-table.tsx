@@ -15,12 +15,12 @@ import {
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { DataTable } from "@/components/ui/data-table"
-import { Attendance } from "@/types/attendance"
+import { Attendance, UserAttendanceItem } from "@/types/attendance"
 import { format } from "date-fns"
 import { PaginationState } from "@tanstack/react-table"
 
 interface AttendanceTableProps {
-  data: Attendance[]
+  data: (UserAttendanceItem | Attendance)[]
   isLoading: boolean
   pagination: PaginationState
   onPaginationChange: (pagination: PaginationState) => void
@@ -40,7 +40,7 @@ export function AttendanceTable({
   /**
    * Helper to format ISO time to HH:mm
    */
-  const formatTime = (isoString: string | null) => {
+  const formatTime = (isoString: string | null | undefined) => {
     if (!isoString) return "--:--"
     try {
       return format(new Date(isoString), "HH:mm")
@@ -52,7 +52,8 @@ export function AttendanceTable({
   /**
    * Helper to format ISO date to DD MMM YY
    */
-  const formatDateLabel = (isoString: string) => {
+  const formatDateLabel = (isoString: string | undefined) => {
+    if (!isoString) return "N/A"
     try {
       return format(new Date(isoString), "dd MMM yy")
     } catch {
@@ -84,6 +85,20 @@ export function AttendanceTable({
             {status}
           </Badge>
         )
+      case 'Not Marked':
+        return (
+          <Badge variant="outline" className="bg-slate-100 text-slate-500 border-slate-200 gap-1.5 px-3 py-1 rounded-full font-bold uppercase text-[10px]">
+            <AlertCircle className="h-3 w-3" />
+            {status}
+          </Badge>
+        )
+      case 'On Leave':
+        return (
+          <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-100/50 gap-1.5 px-3 py-1 rounded-full font-bold uppercase text-[10px]">
+            <Calendar className="h-3 w-3" />
+            {status}
+          </Badge>
+        )
       default:
         return (
           <Badge variant="outline" className="bg-slate-50 text-slate-600 border-slate-100 gap-1.5 px-3 py-1 rounded-full font-bold uppercase text-[10px]">
@@ -93,81 +108,107 @@ export function AttendanceTable({
     }
   }
 
-  const columns: ColumnDef<Attendance>[] = [
+  const columns: ColumnDef<UserAttendanceItem | Attendance>[] = [
     {
       accessorKey: "userId",
       header: "Employee",
-      cell: ({ row }) => (
-        <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-xl bg-slate-50 flex items-center justify-center text-slate-500 border border-slate-100/50">
-            <User className="h-4 w-4" />
+      cell: ({ row }) => {
+        const item = row.original;
+        const user = 'user' in item ? item.user : item.userId;
+        return (
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-xl bg-slate-50 flex items-center justify-center text-slate-500 border border-slate-100/50">
+              <User className="h-4 w-4" />
+            </div>
+            <div className="flex flex-col">
+              <span className="font-bold text-slate-900 line-clamp-1">
+                {user?.name || "Unknown"}
+              </span>
+              <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-tighter">
+                {user?.employeeId}
+              </span>
+            </div>
           </div>
-          <div className="flex flex-col">
-            <span className="font-bold text-slate-900 line-clamp-1">
-              {row.original.userId?.name || "Unknown"}
-            </span>
-            <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-tighter">
-              {row.original.userId?.employeeId}
-            </span>
-          </div>
-        </div>
-      ),
+        )
+      },
     },
     {
       accessorKey: "designation",
       header: "Designation",
-      cell: ({ row }) => (
-        <div className="flex items-center gap-2 text-slate-600 font-bold whitespace-nowrap">
-          <Briefcase className="h-3.5 w-3.5 text-slate-400" />
-          <span>{row.original.userId?.designation || "N/A"}</span>
-        </div>
-      ),
+      cell: ({ row }) => {
+        const item = row.original;
+        const user = 'user' in item ? item.user : item.userId;
+        return (
+          <div className="flex items-center gap-2 text-slate-600 font-bold whitespace-nowrap">
+            <Briefcase className="h-3.5 w-3.5 text-slate-400" />
+            <span>{user?.designation || "N/A"}</span>
+          </div>
+        )
+      },
     },
     {
       accessorKey: "company",
       header: "Company",
-      cell: ({ row }) => (
-        <div className="flex items-center gap-2 text-slate-600 font-bold whitespace-nowrap">
-          <Building2 className="h-3.5 w-3.5 text-slate-400" />
-          <span>{row.original.userId?.companyName || "N/A"}</span>
-        </div>
-      ),
+      cell: ({ row }) => {
+        const item = row.original;
+        const user = 'user' in item ? item.user : item.userId;
+        return (
+          <div className="flex items-center gap-2 text-slate-600 font-bold whitespace-nowrap">
+            <Building2 className="h-3.5 w-3.5 text-slate-400" />
+            <span>{user?.companyName || "N/A"}</span>
+          </div>
+        )
+      },
     },
     {
       accessorKey: "date",
       header: "Date",
-      cell: ({ row }) => (
-        <div className="flex items-center gap-2 text-slate-600 font-bold whitespace-nowrap">
-          <Calendar className="h-3.5 w-3.5 text-slate-400" />
-          <span>{formatDateLabel(row.original.date)}</span>
-        </div>
-      ),
+      cell: ({ row }) => {
+        const item = row.original;
+        const attendance = 'attendance' in item ? item.attendance : item;
+        return (
+          <div className="flex items-center gap-2 text-slate-600 font-bold whitespace-nowrap">
+            <Calendar className="h-3.5 w-3.5 text-slate-400" />
+            <span>{formatDateLabel(attendance?.date)}</span>
+          </div>
+        )
+      },
     },
     {
       accessorKey: "punchIn",
       header: "Punch In",
-      cell: ({ row }) => (
-        <div className="flex items-center gap-2 text-slate-600 font-bold">
-          <Clock className="h-3.5 w-3.5 text-emerald-500" />
-          <span>{formatTime(row.original.punchIn)}</span>
-        </div>
-      ),
+      cell: ({ row }) => {
+        const item = row.original;
+        const attendance = 'attendance' in item ? item.attendance : item;
+        return (
+          <div className="flex items-center gap-2 text-slate-600 font-bold">
+            <Clock className="h-3.5 w-3.5 text-emerald-500" />
+            <span>{formatTime(attendance?.punchIn)}</span>
+          </div>
+        )
+      },
     },
     {
       accessorKey: "punchOut",
       header: "Punch Out",
-      cell: ({ row }) => (
-        <div className="flex items-center gap-2 text-slate-600 font-bold">
-          <Clock className="h-3.5 w-3.5 text-rose-500" />
-          <span>{formatTime(row.original.punchOut)}</span>
-        </div>
-      ),
+      cell: ({ row }) => {
+        const item = row.original;
+        const attendance = 'attendance' in item ? item.attendance : item;
+        return (
+          <div className="flex items-center gap-2 text-slate-600 font-bold">
+            <Clock className="h-3.5 w-3.5 text-rose-500" />
+            <span>{formatTime(attendance?.punchOut)}</span>
+          </div>
+        )
+      },
     },
     {
       accessorKey: "totalWorkedMinutes",
       header: "Duration",
       cell: ({ row }) => {
-        const mins = Math.floor(row.original.totalWorkedMinutes || 0)
+        const item = row.original;
+        const attendance = 'attendance' in item ? item.attendance : item;
+        const mins = Math.floor(attendance?.totalWorkedMinutes || 0)
         const hours = Math.floor(mins / 60)
         const remainingMins = mins % 60
         return (
@@ -180,12 +221,16 @@ export function AttendanceTable({
     {
       accessorKey: "overtimeHours",
       header: "Overtime",
-      cell: ({ row }) => (
-        <div className="flex items-center gap-1.5 font-bold text-emerald-600">
-          <TrendingUp className="h-3.5 w-3.5" />
-          <span>{row.original.overtimeHours}h</span>
-        </div>
-      ),
+      cell: ({ row }) => {
+        const item = row.original;
+        const attendance = 'attendance' in item ? item.attendance : item;
+        return (
+          <div className="flex items-center gap-1.5 font-bold text-emerald-600">
+            <TrendingUp className="h-3.5 w-3.5" />
+            <span>{attendance?.overtimeHours || 0}h</span>
+          </div>
+        )
+      },
     },
     {
       accessorKey: "status",

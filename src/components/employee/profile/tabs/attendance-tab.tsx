@@ -40,9 +40,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface AttendanceTabProps {
   employeeId: string;
+  onLeaveClick?: () => void;
 }
 
 const statusColors: Record<AttendanceStatus, string> = {
@@ -66,7 +72,7 @@ const months = [
   "July", "August", "September", "October", "November", "December"
 ];
 
-export function AttendanceTab({ employeeId }: AttendanceTabProps) {
+export function AttendanceTab({ employeeId, onLeaveClick }: AttendanceTabProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
 
   const monthStr = (currentDate.getMonth() + 1).toString().padStart(2, '0');
@@ -276,52 +282,124 @@ export function AttendanceTab({ employeeId }: AttendanceTabProps) {
                       )}
 
                       {activeLeave && (
-                         <div className="flex flex-col gap-0.5 mt-1 pt-1 border-t border-slate-100/50">
-                          <div className="flex items-center justify-between">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div 
+                              onClick={() => onLeaveClick?.()}
+                              className="flex flex-col gap-0.5 mt-1 pt-1 border-t border-slate-100/50 cursor-pointer group/leave active:scale-95 transition-transform"
+                            >
+                                <span className={cn(
+                                  "text-[8px] font-black uppercase tracking-tighter",
+                                  activeLeave.status === 'Approved' ? "text-emerald-500" : 
+                                  activeLeave.status === 'Rejected' ? "text-rose-500" : "text-amber-500"
+                                )}>
+                                  {activeLeave.status}
+                                </span>
+                                <span className="text-[8px] font-black text-slate-400 uppercase tracking-tighter">
+                                  {activeLeave.isPaid ? "Paid" : "Unpaid"}
+                                </span>
+                              <span className="text-[9px] font-bold text-blue-500 italic truncate group-hover/leave:text-blue-600 transition-colors">
+                                {activeLeave.leaveType} Leave
+                              </span>
+                              {activeLeave.reason && (
+                                <span className="text-[8px] text-slate-400 italic truncate leading-tight mt-0.5">
+                                  &quot;{activeLeave.reason}&quot;
+                                </span>
+                              )}
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent side="bottom" className="max-w-[220px] p-0 bg-slate-900 border-slate-800 shadow-2xl rounded-xl overflow-hidden">
+                            <div className="p-3 space-y-2">
+                              <div className="flex items-center justify-between gap-4">
+                                <span className="text-[9px] font-black uppercase tracking-widest text-slate-500">Leave Detail</span>
+                                <span className={cn(
+                                  "text-[8px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-tighter",
+                                  activeLeave.status === 'Approved' ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : 
+                                  activeLeave.status === 'Rejected' ? "bg-rose-500/10 text-rose-400 border-rose-500/20" : "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                                )}>
+                                  {activeLeave.status}
+                                </span>
+                              </div>
+                              <div className="space-y-1">
+                                <p className="text-sm font-bold text-white italic font-heading">{activeLeave.leaveType} Leave</p>
+                                <p className="text-[10px] text-slate-400 font-medium">
+                                  {format(new Date(activeLeave.fromDate), "MMM d")} — {format(new Date(activeLeave.toDate), "MMM d, yyyy")}
+                                </p>
+                              </div>
+                              <div className="pt-2 border-t border-slate-800">
+                                <p className="text-[10px] font-medium leading-relaxed text-slate-300 italic">
+                                  &quot;{activeLeave.reason}&quot;
+                                </p>
+                              </div>
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
+                    </div>
+                  ) : activeLeave ? (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div 
+                          onClick={() => onLeaveClick?.()}
+                          className="flex flex-col gap-2 cursor-pointer group/leave active:scale-95 transition-transform"
+                        >
+                          <div className={cn(
+                            "flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-[10px] font-bold uppercase tracking-tight transition-all group-hover/leave:shadow-sm group-hover/leave:border-blue-200",
+                            statusColors["On Leave"]
+                          )}>
+                            <Info className="h-3 w-3" />
+                            On Leave
+                          </div>
+                          <div className="px-1 flex flex-col gap-1">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] font-bold text-blue-500 italic group-hover/leave:text-blue-600 transition-colors">
+                                {activeLeave.leaveType}
+                              </span>
+                              <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">
+                                {activeLeave.isPaid ? "Paid" : "Unpaid"}
+                              </span>
+                            </div>
                             <span className={cn(
-                              "text-[8px] font-black uppercase tracking-tighter",
+                              "text-[9px] font-black uppercase tracking-tighter",
                               activeLeave.status === 'Approved' ? "text-emerald-500" : 
                               activeLeave.status === 'Rejected' ? "text-rose-500" : "text-amber-500"
                             )}>
                               {activeLeave.status}
                             </span>
-                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-tighter">
-                              {activeLeave.isPaid ? "Paid" : "Unpaid"}
+                            {activeLeave.reason && (
+                              <span className="text-[8px] text-slate-400 italic truncate leading-tight mt-0.5">
+                                &quot;{activeLeave.reason}&quot;
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="max-w-[220px] p-0 bg-slate-900 border-slate-800 shadow-2xl rounded-xl overflow-hidden">
+                        <div className="p-3 space-y-2">
+                          <div className="flex items-center justify-between gap-4">
+                            <span className="text-[9px] font-black uppercase tracking-widest text-slate-500">Leave Detail</span>
+                            <span className={cn(
+                              "text-[8px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-tighter",
+                              activeLeave.status === 'Approved' ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : 
+                              activeLeave.status === 'Rejected' ? "bg-rose-500/10 text-rose-400 border-rose-500/20" : "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                            )}>
+                              {activeLeave.status}
                             </span>
                           </div>
-                          <span className="text-[9px] font-bold text-blue-500 italic truncate">
-                            {activeLeave.leaveType} Leave
-                          </span>
+                          <div className="space-y-1">
+                            <p className="text-sm font-bold text-white italic font-heading">{activeLeave.leaveType} Leave</p>
+                            <p className="text-[10px] text-slate-400 font-medium">
+                              {format(new Date(activeLeave.fromDate), "MMM d")} — {format(new Date(activeLeave.toDate), "MMM d, yyyy")}
+                            </p>
+                          </div>
+                          <div className="pt-2 border-t border-slate-800">
+                            <p className="text-[10px] font-medium leading-relaxed text-slate-300 italic">
+                              &quot;{activeLeave.reason}&quot;
+                            </p>
+                          </div>
                         </div>
-                      )}
-                    </div>
-                  ) : activeLeave ? (
-                    <div className="flex flex-col gap-2">
-                       <div className={cn(
-                        "flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-[10px] font-bold uppercase tracking-tight",
-                        statusColors["On Leave"]
-                      )}>
-                        <Info className="h-3 w-3" />
-                        On Leave
-                      </div>
-                      <div className="px-1 flex flex-col gap-1">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-bold text-blue-500 italic">
-                            {activeLeave.leaveType}
-                          </span>
-                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">
-                            {activeLeave.isPaid ? "Paid" : "Unpaid"}
-                          </span>
-                        </div>
-                        <span className={cn(
-                          "text-[9px] font-black uppercase tracking-tighter",
-                          activeLeave.status === 'Approved' ? "text-emerald-500" : 
-                          activeLeave.status === 'Rejected' ? "text-rose-500" : "text-amber-500"
-                        )}>
-                          {activeLeave.status}
-                        </span>
-                      </div>
-                    </div>
+                      </TooltipContent>
+                    </Tooltip>
                   ) : (
                     isCurrentMonth && day < new Date() && (
                       <div className="mt-auto opacity-30 text-[10px] font-bold text-slate-400 italic text-center pb-2">

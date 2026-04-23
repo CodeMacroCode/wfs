@@ -62,7 +62,7 @@ export default function EmployeeProfilePage() {
             {activeTab === "overview" && <OverviewTab employee={employee} />}
             {activeTab === "documents" && <DocumentsTab employee={employee} />}
             {activeTab === "i-card" && <DocumentsTab employee={employee} />}
-            {activeTab === "attendance" && <AttendanceTab employeeId={employeeId} />}
+            {activeTab === "attendance" && <AttendanceTab employeeId={employeeId} onLeaveClick={() => setActiveTab("leaves")} />}
             {activeTab === "leaves" && <LeavesTab employeeId={employeeId} />}
             
             {(activeTab !== "overview" && activeTab !== "documents" && activeTab !== "i-card" && activeTab !== "attendance" && activeTab !== "leaves") && (

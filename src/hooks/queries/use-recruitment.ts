@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { recruitmentService } from '@/services/recruitment-service';
+import { recruitmentService, type RawInterview } from '@/services/recruitment-service';
 import { QUERY_KEYS } from '@/constants/query-keys';
 import { InterviewQueryParams } from '@/types/recruitment';
 
@@ -22,6 +22,31 @@ export function useCreateRecruitmentMutation() {
     mutationFn: (formData: FormData) => recruitmentService.create(formData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.recruitment.all });
+    },
+  });
+}
+
+/**
+ * Hook to fetch a single recruitment record by ID
+ */
+export function useRecruitmentByIdQuery(id: string) {
+  return useQuery({
+    queryKey: QUERY_KEYS.recruitment.detail(id),
+    queryFn: () => recruitmentService.getById(id),
+    enabled: !!id,
+  });
+}
+
+/**
+ * Hook to update a recruitment record by ID
+ */
+export function useUpdateRecruitmentMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<RawInterview> }) => recruitmentService.update(id, data),
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.recruitment.all });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.recruitment.detail(id) });
     },
   });
 }

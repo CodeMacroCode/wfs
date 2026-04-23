@@ -2,7 +2,7 @@ import apiClient from '@/lib/api-client';
 import { RecruitmentResponse, InterviewQueryParams, Interview, InterviewStatus, InterviewMetadata } from '@/types/recruitment';
 import { toast } from 'sonner';
 
-interface RawInterview {
+export interface RawInterview {
   _id: string;
   candidateName: string;
   email: string;
@@ -87,6 +87,34 @@ export const recruitmentService = {
     } catch (error: unknown) {
       const err = error as { data?: { message?: string }; message?: string };
       const msg = err?.data?.message || err?.message || 'Failed to delete record';
+      toast.error(msg);
+      throw error;
+    }
+  },
+
+  /**
+   * Get a single recruitment record by ID
+   */
+  getById: async (id: string): Promise<Interview> => {
+    try {
+      const response = await apiClient.get<void, RawInterview>(`/recruitment/${id}`);
+      return normalizeInterview(response);
+    } catch (error: unknown) {
+      toast.error('Failed to fetch candidate details');
+      throw error;
+    }
+  },
+
+  /**
+   * Update an existing recruitment record (JSON)
+   */
+  update: async (id: string, data: Partial<RawInterview>): Promise<void> => {
+    try {
+      await apiClient.patch<Partial<RawInterview>, void>(`/recruitment/${id}`, data);
+      toast.success('Candidate record updated');
+    } catch (error: unknown) {
+      const err = error as { data?: { message?: string }; message?: string };
+      const msg = err?.data?.message || err?.message || 'Failed to update record';
       toast.error(msg);
       throw error;
     }

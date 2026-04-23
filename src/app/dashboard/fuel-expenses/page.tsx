@@ -3,5 +3,5 @@ export default function FuelExpencePage() {
         <div>
             Fuel Expenses
         </div>
-    )
+   )
 }

@@ -12,7 +12,7 @@ import { Interview } from "@/types/recruitment"
 import { EmployeeForm } from "@/components/employee/employee-form"
 import { RegisterEmployeeDto } from "@/types/employee"
 import { toast } from "sonner"
-import { useCreateRecruitmentMutation } from "@/hooks/queries/use-recruitment"
+import { useCreateRecruitmentMutation, useUpdateRecruitmentMutation } from "@/hooks/queries/use-recruitment"
 
 interface AddInterviewDialogProps {
   open: boolean
@@ -70,10 +70,12 @@ interface EditInterviewDialogProps {
   interview: Interview | null
   open: boolean
   onOpenChange: (open: boolean) => void
-  onUpdate: (id: string, data: Partial<Interview>) => void
+  onUpdate?: () => void
 }
 
 export function EditInterviewDialog({ interview, open, onOpenChange, onUpdate }: EditInterviewDialogProps) {
+  const updateMutation = useUpdateRecruitmentMutation()
+  
   if (!interview) return null
 
   // Map Interview (normalized type) → InterviewFormValues (API field names)
@@ -96,10 +98,31 @@ export function EditInterviewDialog({ interview, open, onOpenChange, onUpdate }:
     skills:       interview.metadata?.skills ?? "",
   }
 
-  const onSubmit = (data: InterviewFormValues) => {
-    onUpdate(interview.id, data as Partial<Interview>)
-    onOpenChange(false)
-    toast.success("Interview updated successfully")
+  const onSubmit = async (data: InterviewFormValues) => {
+    try {
+      // Map form values back to API expected keys
+      const apiData = {
+        candidateName: data.candidateName,
+        email: data.email,
+        contactNumber: data.contactNumber,
+        appliedPosition: data.appliedPosition,
+        selectionStatus: data.selectionStatus,
+        interviewDate: data.interviewDate,
+        interviewerName: data.interviewerName,
+        interviewerFeedback: data.interviewerFeedback,
+        experience: data.experience,
+        currentCTC: data.currentCTC,
+        expectedCTC: data.expectedCTC,
+        noticePeriod: data.noticePeriod,
+        skills: data.skills,
+      }
+
+      await updateMutation.mutateAsync({ id: interview.id, data: apiData })
+      onOpenChange(false)
+      onUpdate?.()
+    } catch {
+      // error handled in service
+    }
   }
 
   return (
@@ -116,6 +139,7 @@ export function EditInterviewDialog({ interview, open, onOpenChange, onUpdate }:
             initialValues={prefill}
             onSubmit={onSubmit}
             isEdit={true}
+            isLoading={updateMutation.isPending}
           />
         </div>
       </DialogContent>
@@ -154,7 +178,12 @@ export function OnboardEmployeeDialog({ interview, open, onOpenChange }: Onboard
             email: interview.email,
             mobileNo: interview.contact,
             designation: interview.position,
-            interviewDate: interview.interviewDate,
+            doj: interview.interviewDate,
+            currentAddress: interview.metadata?.location || "",
+            reference: "Recruitment Pipeline",
+            previousWorkExperience: interview.metadata?.experience 
+              ? [{ company: "Previous Company", role: interview.position, years: interview.metadata.experience }] 
+              : [],
             role: "user",
           }}
           onSubmit={onSubmit}

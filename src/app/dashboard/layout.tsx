@@ -4,13 +4,12 @@ import * as React from "react"
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
 import { Separator } from "@/components/ui/separator"
-import { LogOut, User, Settings, KeyRound, Search } from "lucide-react"
+import { LogOut, KeyRound, Search } from "lucide-react"
 import { DashboardBreadcrumbs } from "@/components/dashboard-breadcrumbs"
 import { GlobalSearch } from "@/components/global-search"
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,

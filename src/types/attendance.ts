@@ -44,6 +44,23 @@ export interface Attendance {
 }
 
 /**
+ * Interface for a user with their optional attendance for a specific day
+ * This matches the new /attendance/with-summary response structure
+ */
+export interface UserAttendanceItem {
+  user: {
+    _id: string;
+    name: string;
+    email: string;
+    employeeId?: string;
+    designation?: string;
+    companyName?: string;
+  };
+  attendance: Attendance | null;
+  status: string;
+}
+
+/**
  * API response for attendance list matching real response
  */
 export interface AttendanceResponse {
@@ -82,7 +99,7 @@ export interface AttendanceSummary {
  */
 export interface AttendanceWithSummaryResponse {
   summary: AttendanceSummary;
-  data: Attendance[];
+  data: UserAttendanceItem[];
   total: number;
   page: number;
   limit: number;

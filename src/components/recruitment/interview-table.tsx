@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Edit, Eye, Trash2, UserPlus } from "lucide-react"
 import { Interview } from "@/types/recruitment"
 import { PaginationState } from "@tanstack/react-table"
-import { ViewCandidateDrawer } from "@/components/recruitment/view-candidate-drawer"
+import { useRouter } from "next/navigation"
 
 interface InterviewTableProps {
   data: Interview[]
@@ -34,7 +34,10 @@ export const getInterviewColumns = (
       accessorKey: "candidateName",
       header: "Candidate",
       cell: ({ row }) => (
-        <div className="flex flex-col">
+        <div 
+          className="flex flex-col cursor-pointer hover:opacity-70 transition-opacity"
+          onClick={() => onView(row.original)}
+        >
           <span className="font-semibold text-slate-800">{row.original.candidateName}</span>
           <span className="text-xs text-slate-400">{row.original.email}</span>
         </div>
@@ -151,7 +154,7 @@ export function InterviewTable({
   onDelete,
   onOnboard,
 }: InterviewTableProps) {
-  const [viewingInterview, setViewingInterview] = React.useState<Interview | null>(null)
+  const router = useRouter()
   const [localSearch, setLocalSearch] = React.useState("")
 
   // Allow parent to control search (server-side) or fall back to local state
@@ -159,32 +162,30 @@ export function InterviewTable({
   const handleSearchChange = onSearchChangeProp ?? setLocalSearch
 
   const columns = React.useMemo(
-    () => getInterviewColumns(setViewingInterview, onEdit, onDelete, onOnboard),
-    [onEdit, onDelete, onOnboard]
+    () => getInterviewColumns(
+      (interview) => router.push(`/dashboard/recruitment/${interview.id}`), 
+      onEdit, 
+      onDelete, 
+      onOnboard
+    ),
+    [onEdit, onDelete, onOnboard, router]
   )
 
   return (
-    <>
-      <DataTable
-        columns={columns}
-        data={data}
-        isLoading={isLoading}
-        totalItems={totalItems}
-        pageCount={Math.ceil(totalItems / pagination.pageSize) || 1}
-        pagination={pagination}
-        onPaginationChange={onPaginationChange}
-        onSortingChange={() => {}}
-        searchKey="candidateName"
-        searchPlaceholder="Search candidate..."
-        searchValue={searchValue}
-        onSearchChange={handleSearchChange}
-        showSrNo={true}
-      />
-      <ViewCandidateDrawer
-        interview={viewingInterview}
-        open={!!viewingInterview}
-        onOpenChange={(open) => !open && setViewingInterview(null)}
-      />
-    </>
+    <DataTable
+      columns={columns}
+      data={data}
+      isLoading={isLoading}
+      totalItems={totalItems}
+      pageCount={Math.ceil(totalItems / pagination.pageSize) || 1}
+      pagination={pagination}
+      onPaginationChange={onPaginationChange}
+      onSortingChange={() => {}}
+      searchKey="candidateName"
+      searchPlaceholder="Search candidate..."
+      searchValue={searchValue}
+      onSearchChange={handleSearchChange}
+      showSrNo={true}
+    />
   )
 }
