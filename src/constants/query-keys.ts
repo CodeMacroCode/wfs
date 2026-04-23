@@ -71,4 +71,8 @@ export const QUERY_KEYS = {
     list: (params?: unknown) => [...QUERY_KEYS.recruitment.all, 'list', { params }] as const,
     detail: (id: string) => [...QUERY_KEYS.recruitment.all, 'detail', id] as const,
   },
+  fuel: {
+    all: ['fuel'] as const,
+    list: (params?: unknown) => [...QUERY_KEYS.fuel.all, 'list', { params }] as const,
+  },
 } as const;
