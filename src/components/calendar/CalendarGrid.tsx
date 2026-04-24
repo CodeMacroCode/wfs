@@ -13,12 +13,14 @@ import {
 } from 'date-fns';
 import { CalendarDayCell } from './CalendarDayCell';
 import { CalendarDay } from '@/types/calendar';
+import { Reminder } from '@/types/reminder';
 
 interface CalendarGridProps {
   currentDate: Date;
   selectedDate: Date | null;
   onDateClick: (date: Date) => void;
   calendarData?: CalendarDay[];
+  reminders?: Reminder[];
 }
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -28,6 +30,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
   selectedDate,
   onDateClick,
   calendarData = [],
+  reminders = [],
 }) => {
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(monthStart);
@@ -43,6 +46,14 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
   const getDataForDate = (date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
     return calendarData.find(d => d.date.startsWith(dateStr));
+  };
+
+  const getRemindersForDate = (date: Date) => {
+    const dateStr = format(date, 'yyyy-MM-dd');
+    return reminders.filter(r => {
+      const targetDate = r.nextOccurrence || r.startDate;
+      return targetDate?.startsWith(dateStr);
+    });
   };
 
   return (
@@ -67,6 +78,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
               isSelected={selectedDate ? isSameDay(date, selectedDate) : false}
               isToday={isSameDay(date, new Date())}
               data={getDataForDate(date)}
+              reminders={getRemindersForDate(date)}
               onClick={onDateClick}
             />
           ))}

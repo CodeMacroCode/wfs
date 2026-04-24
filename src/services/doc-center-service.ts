@@ -38,6 +38,14 @@ export const docCenterService = {
         formData.append('files', data.files);
       }
 
+      // Append metadata fields individually if they exist
+      if (data.metadata) {
+        Object.entries(data.metadata).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            formData.append(key, String(value));
+          }
+        });
+      }
       const response = await apiClient.post<FormData, unknown>('/doccenter', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',

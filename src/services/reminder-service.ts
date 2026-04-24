@@ -21,11 +21,26 @@ export const reminderService = {
   /**
    * Get all reminders
    */
-  getAll: async (): Promise<{ data: Reminder[] }> => {
+  getAll: async (params?: Record<string, unknown>): Promise<{ data: Reminder[] }> => {
     try {
-      return await apiClient.get<void, { data: Reminder[] }>('/reminder');
+      return await apiClient.get<void, { data: Reminder[] }>('/reminder', { params });
     } catch (error: unknown) {
       toast.error('Failed to fetch reminders');
+      throw error;
+    }
+  },
+
+  /**
+   * Delete a reminder
+   */
+  delete: async (id: string): Promise<void> => {
+    try {
+      await apiClient.delete<void, void>(`/reminder/${id}`);
+      toast.success('Reminder deleted successfully');
+    } catch (error: unknown) {
+      const err = error as { data?: { message?: string }; message?: string };
+      const msg = err?.data?.message || err?.message || 'Failed to delete reminder';
+      toast.error(msg);
       throw error;
     }
   }

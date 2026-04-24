@@ -42,13 +42,14 @@ import { toast } from "sonner"
 
 const formSchema = z.object({
   title: z.string().min(2, "Title must be at least 2 characters"),
+  description: z.string().optional(),
   documentType: z.string().min(1, "Document type is required"),
   customDocumentType: z.string().optional(),
   files: z.array(z.instanceof(File)).min(1, "At least one file is required"),
   // Reminder fields
   enableReminder: z.boolean(),
-  reminderDate: z.date().optional(),
-  reminderFrequency: z.enum(["Daily", "Weekly", "Monthly", "Yearly", "Once"]),
+  expiryDate: z.date().optional(),
+  renewalType: z.enum(["daily", "weekly", "monthly", "yearly", "once"]),
 }).refine((data) => {
   if (data.documentType === "Other" && (!data.customDocumentType || data.customDocumentType.trim() === "")) {
     return false;
@@ -58,13 +59,13 @@ const formSchema = z.object({
   message: "Please specify the document type",
   path: ["customDocumentType"],
 }).refine((data) => {
-  if (data.enableReminder && !data.reminderDate) {
+  if (data.enableReminder && !data.expiryDate) {
     return false;
   }
   return true;
 }, {
-  message: "Please select a reminder date",
-  path: ["reminderDate"],
+  message: "Please select an expiry date",
+  path: ["expiryDate"],
 });
 
 interface UploadDocDialogProps {
@@ -81,11 +82,12 @@ export function UploadDocDialog({ trigger }: UploadDocDialogProps) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
+      description: "",
       documentType: "",
       customDocumentType: "",
       files: [],
       enableReminder: false,
-      reminderFrequency: "Once",
+      renewalType: "once",
     },
   })
 
@@ -95,24 +97,35 @@ export function UploadDocDialog({ trigger }: UploadDocDialogProps) {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
+      const docKey = crypto.randomUUID()
+
       // 1. Upload Document
-      const docData = await uploadMutation.mutateAsync({
+      await uploadMutation.mutateAsync({
         title: values.title,
         documentType: values.documentType === "Other" ? values.customDocumentType! : values.documentType,
         files: values.files,
+        metadata: {
+          docKey,
+          description: values.description,
+          expiryDate: values.expiryDate?.toISOString(),
+          renewalType: values.renewalType,
+        }
       })
 
       // 2. Create Reminder if enabled
-      if (values.enableReminder && values.reminderDate) {
-        const uploadedDoc = docData as { data?: { _id: string } };
+      if (values.enableReminder && values.expiryDate) {
+        const triggerDate = new Date(values.expiryDate)
+        triggerDate.setHours(12, 0, 0, 0) // Normalize to noon to avoid timezone shifts
+
         await reminderMutation.mutateAsync({
           title: `Renewal: ${values.title}`,
-          description: `Reminder for document renewal: ${values.title}`,
-          nextOccurrence: values.reminderDate.toISOString(),
-          frequency: values.reminderFrequency,
+          description: `Reminder for document renewal: ${values.title} | DOC_KEY:${docKey}`,
+          startDate: triggerDate.toISOString(),
+          time: "09:00",
+          frequency: values.renewalType,
           enabled: true,
           metadata: {
-            documentId: uploadedDoc.data?._id,
+            docKey,
             documentTitle: values.title
           }
         })
@@ -168,12 +181,29 @@ export function UploadDocDialog({ trigger }: UploadDocDialogProps) {
                   <FormItem>
                     <FormLabel className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Title</FormLabel>
                     <FormControl>
-                      <Input placeholder="Invoice #123" {...field} className="rounded-xl border-slate-200 focus:border-[#2eb88a] focus:ring-[#2eb88a]/20 h-11 font-bold" />
+                      <Input placeholder="Invoice #123" {...field} value={field.value || ""} className="rounded-xl border-slate-200 focus:border-[#2eb88a] focus:ring-[#2eb88a]/20 h-11 font-bold" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Description</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter document details..." {...field} value={field.value || ""} className="rounded-xl border-slate-200 focus:border-[#2eb88a] focus:ring-[#2eb88a]/20 h-11 font-bold" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="documentType"
@@ -301,70 +331,76 @@ export function UploadDocDialog({ trigger }: UploadDocDialogProps) {
               />
 
               {enableReminder && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-1 duration-200">
-                  <FormField
-                    control={form.control}
-                    name="reminderDate"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Renewal Date</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
+                <div className="space-y-4 animate-in fade-in slide-in-from-top-1 duration-200">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="expiryDate"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Expiry Date</FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant={"outline"}
+                                  className={cn(
+                                    "w-full pl-3 text-left font-bold rounded-xl border-slate-200 h-11",
+                                    !field.value && "text-muted-foreground"
+                                  )}
+                                >
+                                  {field.value ? (
+                                    format(field.value, "PPP")
+                                  ) : (
+                                    <span>Pick a date</span>
+                                  )}
+                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0 rounded-2xl shadow-2xl border-slate-100" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                captionLayout="dropdown"
+                                startMonth={new Date()}
+                                endMonth={new Date(new Date().getFullYear() + 10, 11)}
+                                disabled={(date) => date < new Date()}
+                                initialFocus
+                                className="rounded-2xl"
+                              />
+                            </PopoverContent>
+                          </Popover>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="renewalType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Renewal Type</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
-                              <Button
-                                variant={"outline"}
-                                className={cn(
-                                  "w-full pl-3 text-left font-bold rounded-xl border-slate-200 h-11",
-                                  !field.value && "text-muted-foreground"
-                                )}
-                              >
-                                {field.value ? (
-                                  format(field.value, "PPP")
-                                ) : (
-                                  <span>Pick a date</span>
-                                )}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                              </Button>
+                              <SelectTrigger className="rounded-xl border-slate-200 focus:border-[#2eb88a] focus:ring-[#2eb88a]/20 h-11 font-bold">
+                                <SelectValue placeholder="Select type" />
+                              </SelectTrigger>
                             </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0 rounded-2xl shadow-2xl border-slate-100" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={field.value}
-                              onSelect={field.onChange}
-                              disabled={(date) => date < new Date()}
-                              initialFocus
-                              className="rounded-2xl"
-                            />
-                          </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="reminderFrequency"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Frequency</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger className="rounded-xl border-slate-200 focus:border-[#2eb88a] focus:ring-[#2eb88a]/20 h-11 font-bold">
-                              <SelectValue placeholder="Select frequency" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent className="rounded-xl border-slate-100 shadow-xl">
-                            <SelectItem value="Once">Once</SelectItem>
-                            <SelectItem value="Weekly">Weekly</SelectItem>
-                            <SelectItem value="Monthly">Monthly</SelectItem>
-                            <SelectItem value="Yearly">Yearly</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                            <SelectContent className="rounded-xl border-slate-100 shadow-xl">
+                              <SelectItem value="once">Once</SelectItem>
+                              <SelectItem value="daily">Daily</SelectItem>
+                              <SelectItem value="weekly">Weekly</SelectItem>
+                              <SelectItem value="monthly">Monthly</SelectItem>
+                              <SelectItem value="yearly">Yearly</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </div>
               )}
             </div>

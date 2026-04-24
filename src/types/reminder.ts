@@ -1,12 +1,16 @@
-export type ReminderFrequency = "Daily" | "Weekly" | "Monthly" | "Yearly" | "Once";
+export type ReminderFrequency = "daily" | "weekly" | "monthly" | "yearly" | "once" | "custom";
 
 export interface Reminder {
   _id: string;
   title: string;
   description?: string;
-  nextOccurrence: string;
-  frequency: ReminderFrequency;
   enabled: boolean;
+  frequency: ReminderFrequency;
+  interval?: number;
+  startDate: string;
+  time: string;
+  nextOccurrence?: string;
+  lastEmailSentDate?: string;
   createdBy: string;
   metadata?: Record<string, unknown>;
   createdAt: string;
@@ -16,8 +20,10 @@ export interface Reminder {
 export interface CreateReminderDto {
   title: string;
   description?: string;
-  nextOccurrence: string;
-  frequency: ReminderFrequency;
   enabled: boolean;
+  frequency: ReminderFrequency;
+  interval?: number;
+  startDate: string;
+  time: string;
   metadata?: Record<string, unknown>;
 }

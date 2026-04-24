@@ -3,9 +3,8 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { CalendarDay } from '@/types/calendar';
-import { getRemindersForDate } from '@/utils/reminders';
-import { ReceiptText, Clock } from 'lucide-react';
-
+import { Reminder } from '@/types/reminder';
+import { Bell } from 'lucide-react';
 
 interface CalendarDayCellProps {
   day: number;
@@ -15,6 +14,7 @@ interface CalendarDayCellProps {
   isSelected: boolean;
   isToday: boolean;
   data?: CalendarDay;
+  reminders?: Reminder[];
   onClick: (date: Date) => void;
 }
 
@@ -26,12 +26,13 @@ export const CalendarDayCell: React.FC<CalendarDayCellProps> = ({
   isSelected,
   isToday,
   data,
+  reminders,
   onClick,
 }) => {
   const date = new Date(year, month, day);
   const isSunday = date.getDay() === 0;
   const isHoliday = data?.dayType === 'holiday';
-  const reminders = getRemindersForDate(date);
+
 
   return (
     <div
@@ -78,32 +79,35 @@ export const CalendarDayCell: React.FC<CalendarDayCellProps> = ({
           </div>
         )}
 
-        {/* Time Exceptions Indicator */}
-        {data?.dayType === 'working' && (data?.checkIn || data?.checkOut) && (
-          <div className="p-2 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-100/50 text-[10px] leading-tight font-bold shadow-sm flex items-center gap-1.5">
-            <Clock className="h-2.5 w-2.5" />
-            <span>{data.checkIn || '--:--'} — {data.checkOut || '--:--'}</span>
+        {reminders && reminders.length > 0 && (
+          <div className="space-y-1">
+            {reminders.slice(0, 2).map((reminder) => (
+              <div 
+                key={reminder._id}
+                className={cn(
+                  "p-2 rounded-lg border-0 text-[10px] sm:text-[11px] leading-tight font-semibold shadow-sm relative group/event bg-teal-50 text-teal-700 border-l-2 border-teal-500",
+                )}
+              >
+                <div className="flex items-center gap-1 text-[8px] font-bold uppercase tracking-tight opacity-60 mb-0.5">
+                  <Bell className="h-2 w-2" />
+                  {reminder.frequency === 'once' ? 'One-time' : reminder.frequency}
+                </div>
+                <div className="line-clamp-1 pr-4">{reminder.title}</div>
+                
+                <div className="mt-1 text-[9px] font-medium opacity-60">{reminder.time}</div>
+                
+                <div className={cn(
+                   "absolute bottom-2 right-2 w-1.5 h-1.5 rounded-full bg-teal-500"
+                )} />
+              </div>
+            ))}
+            {reminders.length > 2 && (
+              <div className="text-[9px] font-black uppercase tracking-widest text-teal-600 px-2 py-1.5 bg-teal-50/80 rounded-lg border border-teal-100 text-center animate-pulse">
+                +{reminders.length - 2} More Reminders
+              </div>
+            )}
           </div>
-        )}
-        
-        {/* System Reminders (e.g. Bill Payments) */}
-        {reminders.map((reminder) => (
-          <div key={reminder.id} className={cn(
-            "p-2 rounded-lg border-0 text-[10px] sm:text-[11px] leading-tight font-semibold shadow-sm relative group/reminder",
-            "bg-indigo-50 text-indigo-700"
-          )}>
-            <div className="text-[8px] font-bold uppercase tracking-tight opacity-60 mb-0.5 flex items-center gap-1">
-              <ReceiptText className="h-2 w-2" />
-              Reminder
-            </div>
-            <div className="line-clamp-2 pr-4">{reminder.title}</div>
-            
-            {/* Indicator Dot at bottom right */}
-            <div className="absolute bottom-2 right-2 w-2 h-2 rounded-full bg-indigo-500" />
-          </div>
-        ))}
-        
-        {/* Placeholder for future events/agendas */}
+        )}{/* Placeholder for future events/agendas */}
         {!isHoliday && isSunday && isCurrentMonth && (
           <div className="p-2 rounded-lg bg-slate-100/50 border border-slate-200 text-slate-500 text-[11px] leading-tight font-medium opacity-60 italic">
             Weekend Break

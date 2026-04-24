@@ -4,12 +4,9 @@ import {
   Plus,
   Upload,
   ArrowRight,
-  Zap,
-  Droplets,
-  Wifi,
-  FileText,
   AlertCircle,
   ClipboardCheck,
+  Bell,
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { AttendanceUploadDialog } from "@/components/dashboard/attendance-upload-dialog"
@@ -17,7 +14,7 @@ import { MarkLeaveDialog } from "@/components/dashboard/mark-leave-dialog"
 import { MarkManualAttendanceDialog } from "@/components/dashboard/mark-attendance-dialog"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { format, eachDayOfInterval, startOfWeek, endOfWeek, subDays } from "date-fns"
+import { format, eachDayOfInterval, startOfWeek, endOfWeek, subDays, differenceInDays, startOfDay, startOfMonth, endOfMonth, subMonths } from "date-fns"
 import { useQueries } from "@tanstack/react-query"
 import { attendanceService } from "@/services/attendance-service"
 import { QUERY_KEYS } from "@/constants/query-keys"
@@ -50,54 +47,8 @@ import { AttendanceTable } from "@/app/dashboard/attendance/attendance-table"
 import { EditEmployeeDialog, RegisterEmployeeDialog } from "@/components/employee/employee-dialogs"
 import { DeleteEmployeeDialog } from "@/components/employee/delete-employee-dialog"
 import { useEmployeeStatsQuery } from "@/hooks/queries/use-employees-query"
+import { useRemindersQuery } from "@/hooks/queries/use-reminders"
 import { useState, useMemo } from "react"
-
-const billAlerts = [
-  {
-    id: 1,
-    title: "Electricity Bill",
-    description: "Monthly consumption: 450 kWh. Pending for Sep 2035.",
-    amount: "₹4,250",
-    status: "Pending",
-    time: "DUE IN 3 DAYS",
-    icon: <Zap className="h-4 w-4 text-amber-500" />,
-    iconBg: "bg-amber-50",
-    color: "text-amber-600"
-  },
-  {
-    id: 2,
-    title: "Water Utility",
-    description: "Quarterly maintenance and usage charge.",
-    amount: "₹850",
-    status: "Overdue",
-    time: "2 DAYS OVERDUE",
-    icon: <Droplets className="h-4 w-4 text-rose-500" />,
-    iconBg: "bg-rose-50",
-    color: "text-rose-600"
-  },
-  {
-    id: 3,
-    title: "Internet Services",
-    description: "Fiber Optic - 100Mbps Unlimited Plan.",
-    amount: "₹1,199",
-    status: "Upcoming",
-    time: "DUE IN 12 DAYS",
-    icon: <Wifi className="h-4 w-4 text-blue-500" />,
-    iconBg: "bg-blue-50",
-    color: "text-blue-600"
-  },
-  {
-    id: 4,
-    title: "Property Tax",
-    description: "Annual municipal property tax for Block A.",
-    amount: "₹12,400",
-    status: "Pending",
-    time: "DUE IN 15 DAYS",
-    icon: <FileText className="h-4 w-4 text-emerald-500" />,
-    iconBg: "bg-emerald-50",
-    color: "text-emerald-600"
-  }
-]
 
 // Mock data removed in favor of real API data
 
@@ -114,6 +65,7 @@ export default function DashboardPage() {
   // New Stats and Company State
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>("overall")
   const { data: statsData, isLoading: isStatsLoading } = useEmployeeStatsQuery()
+  const { data: remindersData } = useRemindersQuery({ limit: 4 })
 
   const getRangeFromPreset = (preset: string) => {
     const now = new Date()
@@ -121,13 +73,24 @@ export default function DashboardPage() {
       case "this_week":
         return {
           from: startOfWeek(now, { weekStartsOn: 1 }),
-          to: now // Monday to current day
+          to: now
         }
       case "last_week":
         const lastWeek = subDays(now, 7)
         return {
           from: startOfWeek(lastWeek, { weekStartsOn: 1 }),
           to: endOfWeek(lastWeek, { weekStartsOn: 1 })
+        }
+      case "this_month":
+        return {
+          from: startOfMonth(now),
+          to: now
+        }
+      case "last_month":
+        const lastMonth = subMonths(now, 1)
+        return {
+          from: startOfMonth(lastMonth),
+          to: endOfMonth(lastMonth)
         }
       default:
         return {
@@ -492,6 +455,8 @@ export default function DashboardPage() {
                 <SelectContent className="rounded-xl border-slate-100 shadow-xl">
                   <SelectItem value="this_week" className="text-xs font-semibold">This Week</SelectItem>
                   <SelectItem value="last_week" className="text-xs font-semibold">Last Week</SelectItem>
+                  <SelectItem value="this_month" className="text-xs font-semibold">This Month</SelectItem>
+                  <SelectItem value="last_month" className="text-xs font-semibold">Last Month</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -650,7 +615,7 @@ export default function DashboardPage() {
           />
         </Card>
 
-        {/* Bill Payment Alerts */}
+        {/* Event and Alerts */}
         <Card className="border-none ring-1 ring-gray-100 shadow-none rounded-[28px] flex flex-col p-8 bg-white overflow-hidden">
           <div className="flex flex-col gap-1 mb-10">
             <div className="flex items-center justify-between">
@@ -660,25 +625,57 @@ export default function DashboardPage() {
           </div>
 
           <div className="flex-1 space-y-10 relative before:absolute before:left-[21px] before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-50">
-            {billAlerts.map((bill) => (
-              <div key={bill.id} className="relative pl-14 flex flex-col gap-1.5 group cursor-pointer">
-                <div className={`absolute left-0 top-0 h-11 w-11 rounded-full ${bill.iconBg} border-[5px] border-white flex items-center justify-center z-10 shadow-sm transition-transform group-hover:scale-110 duration-300`}>
-                  {bill.icon}
-                </div>
-                <div className="flex items-start justify-between">
-                  <h4 className="text-[14px] font-bold text-slate-900 group-hover:text-teal-600 transition-colors">{bill.title}</h4>
-                  <span className="text-[9px] font-black text-slate-300 whitespace-nowrap ml-2 mt-1 tracking-tighter uppercase">{bill.time}</span>
-                </div>
-                <p className="text-xs text-slate-500 font-semibold leading-relaxed pr-2">{bill.description}</p>
-                <div className="flex items-center justify-between mt-1">
-                  <span className={`text-[13px] font-black ${bill.color}`}>{bill.amount}</span>
-                  <div className="flex items-center gap-1.5 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-100">
-                    <div className={`h-1 w-1 rounded-full ${bill.status === 'Overdue' ? 'bg-rose-500' : 'bg-amber-500'}`} />
-                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">{bill.status}</span>
+            {remindersData?.data?.slice(0, 4).map((reminder) => {
+              const targetDate = new Date(reminder.nextOccurrence || reminder.startDate);
+              const today = startOfDay(new Date());
+              const diff = differenceInDays(startOfDay(targetDate), today);
+              
+              let timeText = "";
+              let status = "Upcoming";
+              let statusColor = "bg-amber-500";
+              
+              if (diff === 0) {
+                timeText = "DUE TODAY";
+                status = "Pending";
+                statusColor = "bg-amber-500";
+              } else if (diff > 0) {
+                timeText = `DUE IN ${diff} DAYS`;
+                status = "Upcoming";
+                statusColor = "bg-emerald-500";
+              } else {
+                timeText = `${Math.abs(diff)} DAYS OVERDUE`;
+                status = "Overdue";
+                statusColor = "bg-rose-500";
+              }
+
+              return (
+                <div key={reminder._id} className="relative pl-14 flex flex-col gap-1.5 group cursor-pointer">
+                  <div className={`absolute left-0 top-0 h-11 w-11 rounded-full bg-teal-50 border-[5px] border-white flex items-center justify-center z-10 shadow-sm transition-transform group-hover:scale-110 duration-300`}>
+                    <Bell className="h-4 w-4 text-teal-500" />
+                  </div>
+                  <div className="flex items-start justify-between">
+                    <h4 className="text-[14px] font-bold text-slate-900 group-hover:text-teal-600 transition-colors line-clamp-1">{reminder.title}</h4>
+                    <span className="text-[9px] font-black text-slate-300 whitespace-nowrap ml-2 mt-1 tracking-tighter uppercase">{timeText}</span>
+                  </div>
+                  <p className="text-xs text-slate-500 font-semibold leading-relaxed pr-2 line-clamp-2">
+                    {reminder.description?.split(' | ')[0] || "No additional details available."}
+                  </p>
+                  <div className="flex items-center justify-between mt-1">
+                    <span className={`text-[13px] font-black text-teal-600`}>{reminder.time}</span>
+                    <div className="flex items-center gap-1.5 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-100">
+                      <div className={`h-1 w-1 rounded-full ${statusColor}`} />
+                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">{status}</span>
+                    </div>
                   </div>
                 </div>
+              );
+            })}
+            {(!remindersData?.data || remindersData.data.length === 0) && (
+              <div className="flex flex-col items-center justify-center py-10 text-center">
+                <Bell className="h-10 w-10 text-slate-200 mb-4" />
+                <p className="text-sm font-bold text-slate-400">No active alerts or events found.</p>
               </div>
-            ))}
+            )}
           </div>
 
           <Button 

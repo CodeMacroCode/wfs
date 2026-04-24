@@ -6,6 +6,7 @@ import { CalendarHeader } from '@/components/calendar/CalendarHeader';
 import { CalendarGrid } from '@/components/calendar/CalendarGrid';
 import { DetailsSidebar } from '@/components/calendar/DetailsSidebar';
 import { useCalendarMonth, useUpdateCalendarDay } from '@/hooks/queries/use-calendar-queries';
+import { useRemindersQuery } from '@/hooks/queries/use-reminders';
 import { addMonths, subMonths, format, parseISO, isValid } from 'date-fns';
 
 function CalendarPageContent() {
@@ -13,7 +14,7 @@ function CalendarPageContent() {
   const searchParams = useSearchParams();
   const pathname = usePathname();
 
-  console.log("searchParams", searchParams);
+
 
   // Initialize state from URL or default to today
   const [currentDate, setCurrentDate] = useState(() => {
@@ -71,6 +72,9 @@ function CalendarPageContent() {
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth() + 1;
   const { data, isLoading } = useCalendarMonth(year, month);
+
+  // Fetch reminders
+  const { data: remindersData } = useRemindersQuery({ limit: 1000000 });
   
   // Mutation for updating day
   const updateMutation = useUpdateCalendarDay();
@@ -89,8 +93,6 @@ function CalendarPageContent() {
     isNationalHoliday: boolean;
     isCompanyHoliday: boolean;
     description: string;
-    checkIn?: string;
-    checkOut?: string;
   }) => {
     if (!selectedDate) return;
 
@@ -100,60 +102,27 @@ function CalendarPageContent() {
     });
   };
 
-  // Find data for currently selected date, with dummy overrides injected
+  // Find data for currently selected date
   const selectedDayData = useMemo(() => {
     if (!selectedDate) return undefined;
     const dateStr = format(selectedDate, 'yyyy-MM-dd');
-    const day = selectedDate.getDate();
-
-    const apiData = data?.days?.find(d => d.date.startsWith(dateStr));
-
-    // Dummy schedule overrides (same as grid)
-    const dummySchedules: Record<number, { checkIn: string; checkOut: string; description: string }> = {
-      12: { checkIn: '08:00', checkOut: '15:00', description: 'Early Morning Shift' },
-      14: { checkIn: '14:00', checkOut: '22:00', description: 'Late Evening Shift' },
-      20: { checkIn: '11:00', checkOut: '18:00', description: 'Delayed Start' },
-      25: { checkIn: '09:00', checkOut: '13:00', description: 'Half Day (Morning)' },
-    };
-
-    const override = dummySchedules[day];
-
-    if (apiData) {
-      // Inject dummy data into the existing API record if it has no custom times
-      if (override && !apiData.checkIn && !apiData.checkOut) {
-        return { ...apiData, ...override };
-      }
-      return apiData;
-    }
-
-    return undefined;
+    return data?.days?.find(d => d.date.startsWith(dateStr));
   }, [selectedDate, data]);
 
-  // Merge API data with dummy schedule exceptions for the grid
+  // Find reminders for currently selected date
+  const selectedReminders = useMemo(() => {
+    if (!selectedDate) return [];
+    const dateStr = format(selectedDate, 'yyyy-MM-dd');
+    return remindersData?.data?.filter(r => {
+      const targetDate = r.nextOccurrence || r.startDate;
+      return targetDate?.startsWith(dateStr);
+    }) || [];
+  }, [selectedDate, remindersData]);
+
+  // Use API data for the grid
   const mergedCalendarData = useMemo(() => {
-    const apiDays = data?.days || [];
-    const datePrefix = format(currentDate, 'yyyy-MM');
-
-    // Dummy schedule exceptions keyed by day number
-    const dummySchedules: Record<string, { checkIn: string; checkOut: string; description: string }> = {
-      [`${datePrefix}-12`]: { checkIn: '08:00', checkOut: '15:00', description: 'Early Morning Shift' },
-      [`${datePrefix}-14`]: { checkIn: '14:00', checkOut: '22:00', description: 'Late Evening Shift' },
-      [`${datePrefix}-20`]: { checkIn: '11:00', checkOut: '18:00', description: 'Delayed Start' },
-      [`${datePrefix}-25`]: { checkIn: '09:00', checkOut: '13:00', description: 'Half Day (Morning)' },
-    };
-
-    // Inject dummy checkIn/checkOut into matching API records
-    const merged = apiDays.map(day => {
-      const dateKey = day.date.substring(0, 10); // "2026-04-12"
-      const override = dummySchedules[dateKey];
-      if (override && !day.checkIn && !day.checkOut) {
-        return { ...day, ...override };
-      }
-      return day;
-    });
-
-    return merged;
-  }, [data, currentDate]);
+    return data?.days || [];
+  }, [data]);
 
   if (!isMounted) {
     return (
@@ -192,6 +161,7 @@ function CalendarPageContent() {
               selectedDate={selectedDate}
               onDateClick={handleDayClick}
               calendarData={mergedCalendarData}
+              reminders={remindersData?.data || []}
             />
           </div>
 
@@ -203,6 +173,7 @@ function CalendarPageContent() {
                 selectedDate={selectedDate}
                 onClose={() => setSidebarOpen(false)}
                 data={selectedDayData}
+                reminders={selectedReminders}
                 onUpdate={handleUpdateDay}
                 isLoading={updateMutation.isPending}
               />

@@ -11,6 +11,7 @@ export interface DocumentItem {
   metadata?: {
     vendor?: string;
     amount?: number;
+    description?: string;
     [key: string]: unknown;
   };
   createdAt: string;
@@ -43,6 +44,7 @@ export interface CreateDocDto {
   title: string;
   documentType: string;
   files: File[];
+  metadata?: Record<string, unknown>;
 }
 
 export interface DeleteFilesDto {

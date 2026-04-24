@@ -65,12 +65,33 @@ export function ViewDocDialog({ document: doc, open, onOpenChange, onDeleteFile 
             <div className="space-y-3">
               <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Metadata</h4>
               <div className="grid grid-cols-2 gap-4">
-                {Object.entries(doc.metadata).map(([key, value]) => (
-                  <div key={key} className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                    <span className="text-[10px] font-black text-slate-400 uppercase block mb-1">{key}</span>
-                    <span className="text-sm font-bold text-slate-700">{String(value)}</span>
-                  </div>
-                ))}
+                {Object.entries(doc.metadata)
+                  .filter(([key]) => !["docKey", "renewalType"].includes(key))
+                  .map(([key, value]) => {
+                    let displayValue = String(value);
+                    if ((key === "expiryDate" || key === "startDate") && value) {
+                      try {
+                        displayValue = format(new Date(value as string), "PPP");
+                      } catch {
+                        displayValue = String(value);
+                      }
+                    }
+
+                    const labelMap: Record<string, string> = {
+                      expiryDate: "Expiry Date",
+                      description: "Description",
+                      startDate: "Start Date",
+                    };
+
+                    const label = labelMap[key] || key.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase());
+
+                    return (
+                      <div key={key} className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                        <span className="text-[10px] font-black text-slate-400 uppercase block mb-1">{label}</span>
+                        <span className="text-sm font-bold text-slate-700">{displayValue}</span>
+                      </div>
+                    );
+                })}
               </div>
             </div>
           )}

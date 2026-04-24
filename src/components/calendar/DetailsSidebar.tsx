@@ -6,8 +6,7 @@ import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { CalendarDay } from '@/types/calendar';
-import { getRemindersForDate } from '@/utils/reminders';
-import { ReceiptText, Bell, Clock } from 'lucide-react';
+
 import { 
   Select, 
   SelectContent, 
@@ -18,18 +17,19 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Reminder } from '@/types/reminder';
+import { Bell, Clock } from 'lucide-react';
 
 interface DetailsSidebarProps {
   selectedDate: Date | null;
   onClose: () => void;
   data?: CalendarDay;
+  reminders?: Reminder[];
   onUpdate: (data: {
     dayType: 'working' | 'holiday';
     isNationalHoliday: boolean;
     isCompanyHoliday: boolean;
     description: string;
-    checkIn?: string;
-    checkOut?: string;
   }) => void;
   isLoading?: boolean;
 }
@@ -38,6 +38,7 @@ export const DetailsSidebar: React.FC<DetailsSidebarProps> = ({
   selectedDate,
   onClose,
   data,
+  reminders = [],
   onUpdate,
   isLoading
 }) => {
@@ -47,8 +48,6 @@ export const DetailsSidebar: React.FC<DetailsSidebarProps> = ({
     isNationalHoliday: false,
     isCompanyHoliday: false,
     description: '',
-    checkIn: '',
-    checkOut: '',
   });
 
   const [prevData, setPrevData] = useState(data);
@@ -63,8 +62,6 @@ export const DetailsSidebar: React.FC<DetailsSidebarProps> = ({
         isNationalHoliday: data.isNationalHoliday,
         isCompanyHoliday: data.isCompanyHoliday,
         description: data.description || '',
-        checkIn: data.checkIn || '',
-        checkOut: data.checkOut || '',
       });
     } else {
       setEditData({
@@ -72,8 +69,6 @@ export const DetailsSidebar: React.FC<DetailsSidebarProps> = ({
         isNationalHoliday: false,
         isCompanyHoliday: false,
         description: '',
-        checkIn: '',
-        checkOut: '',
       });
     }
   }
@@ -119,45 +114,49 @@ export const DetailsSidebar: React.FC<DetailsSidebarProps> = ({
               <h3 className="text-[22px] font-extrabold text-slate-800 mb-8 leading-[1.2]">
                 {data?.description || (data?.dayType === 'holiday' ? 'Republic Day' : 'Standard Working Day')}
               </h3>
-
-              {/* Time Exceptions Display */}
-              {data?.dayType === 'working' && (data?.checkIn || data?.checkOut) && (
-                <div className="mb-6 p-4 rounded-2xl bg-white border border-slate-100 shadow-sm flex items-center gap-4">
-                  <div className="h-10 w-10 rounded-full bg-teal-50 flex items-center justify-center text-teal-600">
-                    <Clock className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-0.5">Scheduled Hours</h4>
-                    <p className="text-sm font-bold text-slate-700">
-                      {data.checkIn || '--:--'} — {data.checkOut || '--:--'}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Reminders Section */}
-              {getRemindersForDate(selectedDate).length > 0 && (
-                <div className="space-y-4 pt-4 border-t border-indigo-200/30">
-                  <div className="flex items-center gap-2 text-indigo-700 font-bold text-xs uppercase tracking-wider">
-                    <Bell className="h-3 w-3" />
-                    Pending Reminders
-                  </div>
-                  <div className="space-y-3">
-                    {getRemindersForDate(selectedDate).map((reminder) => (
-                      <div key={reminder.id} className="p-4 rounded-2xl bg-white border border-indigo-100 shadow-sm flex items-start gap-3">
-                        <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600">
-                          <ReceiptText className="h-5 w-5" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="text-sm font-bold text-slate-800 mb-1">{reminder.title}</h4>
-                          <p className="text-xs text-slate-500 font-medium leading-relaxed">{reminder.description}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
+
+            {reminders.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                    <Bell className="h-3 w-3" />
+                    Scheduled Reminders ({reminders.length})
+                  </h4>
+                </div>
+                <div className="space-y-3">
+                  {reminders.map((reminder) => (
+                    <div 
+                      key={reminder._id}
+                      className="p-4 rounded-2xl bg-slate-900 text-white shadow-lg border-0 relative overflow-hidden group"
+                    >
+                      {/* Accent glow */}
+                      <div className="absolute top-0 right-0 w-24 h-24 bg-teal-500/10 blur-2xl -mr-12 -mt-12 transition-all group-hover:bg-teal-500/20" />
+                      
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-400 text-[9px] font-black uppercase tracking-widest">
+                          {reminder.frequency}
+                        </span>
+                        <span className="flex items-center gap-1 text-[9px] font-bold text-slate-400 uppercase">
+                          <Clock className="h-2.5 w-2.5" />
+                          {reminder.time}
+                        </span>
+                      </div>
+                      
+                      <p className="text-sm font-bold leading-tight line-clamp-2">
+                        {reminder.title}
+                      </p>
+
+                      {reminder.description && (
+                        <p className="mt-2 text-[10px] text-slate-400 font-medium line-clamp-1 italic">
+                          {reminder.description.split(' | ')[0]}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="space-y-6 animate-in fade-in zoom-in-95 duration-200">
@@ -188,28 +187,7 @@ export const DetailsSidebar: React.FC<DetailsSidebarProps> = ({
               />
             </div>
 
-            {editData.dayType === 'working' && (
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">Check-In</Label>
-                  <Input 
-                    type="time"
-                    value={editData.checkIn}
-                    onChange={(e) => setEditData({...editData, checkIn: e.target.value})}
-                    className="h-12 rounded-xl bg-slate-50 border-slate-200"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">Check-Out</Label>
-                  <Input 
-                    type="time"
-                    value={editData.checkOut}
-                    onChange={(e) => setEditData({...editData, checkOut: e.target.value})}
-                    className="h-12 rounded-xl bg-slate-50 border-slate-200"
-                  />
-                </div>
-              </div>
-            )}
+
 
             {editData.dayType === 'holiday' && (
               <div className="grid grid-cols-2 gap-4 pt-2">
