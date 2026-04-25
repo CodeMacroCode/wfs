@@ -7,17 +7,18 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { AssetForm } from "./asset-form"
-import { Asset, CreateAssetDto } from "@/types/asset"
+import { AssetForm, AssetFormValues } from "./asset-form"
+import { Asset } from "@/types/asset"
+import { ReminderFrequency } from "@/types/reminder"
 
 interface AddAssetDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onAdd: (data: CreateAssetDto) => void
+  onAdd: (data: AssetFormValues) => void
 }
 
 export function AddAssetDialog({ open, onOpenChange, onAdd }: AddAssetDialogProps) {
-  const onSubmit = (data: CreateAssetDto) => {
+  const onSubmit = (data: AssetFormValues) => {
     onAdd(data)
     onOpenChange(false)
   }
@@ -38,13 +39,14 @@ interface EditAssetDialogProps {
   asset: Asset | null
   open: boolean
   onOpenChange: (open: boolean) => void
-  onUpdate: (id: string, data: Partial<Asset>) => void
+  onUpdate: (id: string, data: AssetFormValues) => void
+  initialReminder?: { frequency: ReminderFrequency; time: string; enabled: boolean; startDate?: string }
 }
 
-export function EditAssetDialog({ asset, open, onOpenChange, onUpdate }: EditAssetDialogProps) {
+export function EditAssetDialog({ asset, open, onOpenChange, onUpdate, initialReminder }: EditAssetDialogProps) {
   if (!asset) return null
 
-  const onSubmit = (data: Partial<Asset>) => {
+  const onSubmit = (data: AssetFormValues) => {
     onUpdate((asset._id || asset.id) as string, data)
     onOpenChange(false)
   }
@@ -57,6 +59,7 @@ export function EditAssetDialog({ asset, open, onOpenChange, onUpdate }: EditAss
         </DialogHeader>
         <AssetForm
           initialValues={asset}
+          initialReminder={initialReminder}
           onSubmit={onSubmit}
           isEdit={true}
         />

@@ -269,11 +269,13 @@ export function EmployeeForm({
       }
     });
 
-    // Emergency Contact fields mapping
-    if (values.emergencyContact) {
-      formData.append('emergencyContact[name]', values.emergencyContact.name || '');
-      formData.append('emergencyContact[relation]', values.emergencyContact.relation || '');
-      formData.append('emergencyContact[phone]', values.emergencyContact.phone || '');
+    // Emergency Contact fields mapping - using dot notation for backend compatibility
+    // If dot notation fails, the backend might expect stringified JSON: 
+    // formData.append('emergencyContact', JSON.stringify(values.emergencyContact));
+    if (values.emergencyContact && (values.emergencyContact.name || values.emergencyContact.relation || values.emergencyContact.phone)) {
+      formData.append('emergencyContact.name', values.emergencyContact.name || '');
+      formData.append('emergencyContact.relation', values.emergencyContact.relation || '');
+      formData.append('emergencyContact.phone', values.emergencyContact.phone || '');
     }
 
     // Send employeeObjId (_id of the selected employee-id record)

@@ -3,10 +3,11 @@
 import * as React from "react"
 import { Filter, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Asset, AssetType, CreateAssetDto } from "@/types/asset"
+import { Asset, AssetType, CreateAssetDto, UpdateAssetDto } from "@/types/asset"
 import { AssetTable, getAssetColumns } from "@/components/asset-tracking/asset-table"
 import { DataTableExport } from "@/components/ui/data-table-export"
 import { AddAssetDialog, EditAssetDialog } from "@/components/asset-tracking/asset-dialogs"
+import { AssetFormValues } from "@/components/asset-tracking/asset-form"
 import { assetService } from "@/services/asset-service"
 import {
     Select,
@@ -17,6 +18,7 @@ import {
 } from "@/components/ui/select"
 
 import { useAssetsQuery, useCreateAssetMutation, useUpdateAssetMutation, useDeleteAssetMutation } from "@/hooks/queries/use-assets-query"
+import { useRemindersQuery, useCreateReminderMutation, useDeleteReminderMutation } from "@/hooks/queries/use-reminders"
 import { useDebounce } from "@/hooks/use-debounce"
 
 // Remove unused TODAY constant
@@ -35,22 +37,76 @@ export default function AssetTrackingPage() {
     const createMutation = useCreateAssetMutation()
     const updateMutation = useUpdateAssetMutation()
     const deleteMutation = useDeleteAssetMutation()
+    
+    const { data: remindersResponse } = useRemindersQuery()
+    const reminders = remindersResponse?.data || []
+    const createReminderMutation = useCreateReminderMutation()
+    const deleteReminderMutation = useDeleteReminderMutation()
 
     const [isIssueOpen, setIsIssueOpen] = React.useState(false)
     const [editingAsset, setEditingAsset] = React.useState<Asset | null>(null)
 
-    const handleAdd = async (data: CreateAssetDto) => {
+    const handleAdd = async (data: AssetFormValues) => {
         try {
-            await createMutation.mutateAsync(data)
+            const { setReminder, reminderFrequency, reminderTime, reminderStartDate, ...assetData } = data
+            const createdAsset = await createMutation.mutateAsync(assetData as CreateAssetDto)
+            
+            if (setReminder && createdAsset) {
+                await createReminderMutation.mutateAsync({
+                    title: `Maintenance: ${createdAsset.name}`,
+                    description: `Automated maintenance reminder for ${createdAsset.name} (${createdAsset.serialNumber})`,
+                    enabled: true,
+                    frequency: reminderFrequency,
+                    startDate: reminderStartDate || createdAsset.maintenanceDueDate || new Date().toISOString(),
+                    time: reminderTime,
+                    metadata: { assetId: createdAsset._id || createdAsset.id }
+                })
+            }
+            
             setIsIssueOpen(false)
         } catch {
             // Error is handled by service toast
         }
     }
 
-    const handleUpdate = async (id: string, data: Partial<Asset>) => {
+    const handleUpdate = async (id: string, data: AssetFormValues) => {
         try {
-            await updateMutation.mutateAsync({ id, data })
+            const { setReminder, reminderFrequency, reminderTime, reminderStartDate, ...assetData } = data
+            const updatedAsset = await updateMutation.mutateAsync({ id, data: assetData as UpdateAssetDto })
+            
+            // Find existing reminder for this asset
+            const existingReminder = reminders.find(r => r.metadata?.assetId === id)
+            
+            if (setReminder) {
+                // If frequency/time/date changed or no existing reminder, we update/create
+                if (!existingReminder) {
+                    await createReminderMutation.mutateAsync({
+                        title: `Maintenance: ${updatedAsset.name}`,
+                        description: `Automated maintenance reminder for ${updatedAsset.name} (${updatedAsset.serialNumber})`,
+                        enabled: true,
+                        frequency: reminderFrequency,
+                        startDate: reminderStartDate || updatedAsset.maintenanceDueDate || new Date().toISOString(),
+                        time: reminderTime,
+                        metadata: { assetId: updatedAsset._id || updatedAsset.id }
+                    })
+                } else if (existingReminder.frequency !== reminderFrequency || existingReminder.time !== reminderTime || (reminderStartDate && existingReminder.startDate.split('T')[0] !== reminderStartDate)) {
+                    // Delete and recreate (simplest way to update recurring schedule in this system)
+                    await deleteReminderMutation.mutateAsync(existingReminder._id)
+                    await createReminderMutation.mutateAsync({
+                        title: `Maintenance: ${updatedAsset.name}`,
+                        description: `Automated maintenance reminder for ${updatedAsset.name} (${updatedAsset.serialNumber})`,
+                        enabled: true,
+                        frequency: reminderFrequency,
+                        startDate: reminderStartDate || updatedAsset.maintenanceDueDate || new Date().toISOString(),
+                        time: reminderTime,
+                        metadata: { assetId: updatedAsset._id || updatedAsset.id }
+                    })
+                }
+            } else if (existingReminder) {
+                // Delete existing reminder if user unchecked it
+                await deleteReminderMutation.mutateAsync(existingReminder._id)
+            }
+
             setEditingAsset(null)
         } catch {
             // Error is handled by service toast
@@ -61,6 +117,11 @@ export default function AssetTrackingPage() {
         if (confirm("Are you sure you want to delete this asset record?")) {
             try {
                 await deleteMutation.mutateAsync(id)
+                // Clean up associated reminder
+                const existingReminder = reminders.find(r => r.metadata?.assetId === id)
+                if (existingReminder) {
+                    await deleteReminderMutation.mutateAsync(existingReminder._id)
+                }
             } catch {
                 // Error is handled by service toast
             }
@@ -190,6 +251,12 @@ export default function AssetTrackingPage() {
                 open={!!editingAsset}
                 onOpenChange={(open) => !open && setEditingAsset(null)}
                 onUpdate={handleUpdate}
+                initialReminder={reminders.find(r => r.metadata?.assetId === (editingAsset?._id || editingAsset?.id)) ? {
+                    frequency: reminders.find(r => r.metadata?.assetId === (editingAsset?._id || editingAsset?.id))?.frequency || "monthly",
+                    time: reminders.find(r => r.metadata?.assetId === (editingAsset?._id || editingAsset?.id))?.time || "09:00",
+                    startDate: reminders.find(r => r.metadata?.assetId === (editingAsset?._id || editingAsset?.id))?.startDate,
+                    enabled: true
+                } : undefined}
             />
         </div>
     )

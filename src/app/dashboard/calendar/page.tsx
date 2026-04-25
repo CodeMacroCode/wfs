@@ -106,7 +106,7 @@ function CalendarPageContent() {
   const selectedDayData = useMemo(() => {
     if (!selectedDate) return undefined;
     const dateStr = format(selectedDate, 'yyyy-MM-dd');
-    return data?.days?.find(d => d.date.startsWith(dateStr));
+    return data?.days?.find(d => d.date?.startsWith(dateStr));
   }, [selectedDate, data]);
 
   // Find reminders for currently selected date

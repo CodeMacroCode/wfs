@@ -1,9 +1,10 @@
 "use client"
 
 import * as React from "react"
-import { useForm, useWatch } from "react-hook-form"
+import { useForm, useWatch, DefaultValues } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
+import { ReminderFrequency } from "@/types/reminder"
 import { Button } from "@/components/ui/button"
 import {
   Form,
@@ -39,6 +40,10 @@ const formSchema = z.object({
   status: z.enum(["In Stock", "Issued", "Returned", "Under Maintenance", "Damaged"] as const),
   maintenanceDueDate: z.string().min(1, "Maintenance date is required"),
   extraNote: z.string().optional(),
+  setReminder: z.boolean(),
+  reminderFrequency: z.enum(["once", "daily", "weekly", "monthly", "yearly", "custom"]),
+  reminderStartDate: z.string().optional(),
+  reminderTime: z.string(),
 }).refine((data) => {
   if (data.type === "Other" && (!data.otherType || data.otherType.trim() === "")) {
     return false;
@@ -49,15 +54,33 @@ const formSchema = z.object({
   path: ["otherType"]
 });
 
+export interface AssetFormValues {
+  name: string;
+  type: string;
+  otherType?: string;
+  serialNumber: string;
+  issuedTo?: string;
+  issuedDate?: string;
+  status: "In Stock" | "Issued" | "Returned" | "Under Maintenance" | "Damaged";
+  maintenanceDueDate: string;
+  extraNote?: string;
+  setReminder: boolean;
+  reminderFrequency: ReminderFrequency;
+  reminderStartDate?: string;
+  reminderTime: string;
+}
+
 interface AssetFormProps {
   initialValues?: Partial<CreateAssetDto>
-  onSubmit: (data: z.infer<typeof formSchema>) => void
+  initialReminder?: { frequency: ReminderFrequency; time: string; enabled: boolean; startDate?: string }
+  onSubmit: (data: AssetFormValues) => void
   isLoading?: boolean
   isEdit?: boolean
 }
 
 export function AssetForm({ 
   initialValues, 
+  initialReminder,
   onSubmit, 
   isLoading,
   isEdit = false 
@@ -80,17 +103,26 @@ export function AssetForm({
       status: initialValues?.status || "In Stock",
       maintenanceDueDate: initialValues?.maintenanceDueDate ? initialValues.maintenanceDueDate.split('T')[0] : new Date(now + 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       extraNote: initialValues?.extraNote || "",
-    };
-  }, [initialValues, now])
+      setReminder: !!initialReminder?.enabled,
+      reminderFrequency: (initialReminder?.frequency as ReminderFrequency) || "monthly",
+      reminderStartDate: initialReminder?.startDate ? initialReminder.startDate.split('T')[0] : (initialValues?.maintenanceDueDate ? initialValues.maintenanceDueDate.split('T')[0] : new Date().toISOString().split('T')[0]),
+      reminderTime: initialReminder?.time || "09:00",
+    } as AssetFormValues;
+  }, [initialValues, now, initialReminder])
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<AssetFormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues,
+    defaultValues: defaultValues as DefaultValues<AssetFormValues>,
   })
 
   const selectedType = useWatch({
     control: form.control,
     name: "type",
+  })
+
+  const setReminder = useWatch({
+    control: form.control,
+    name: "setReminder",
   })
 
   // Re-sync form if initialValues change (important for edit mode)
@@ -100,7 +132,7 @@ export function AssetForm({
     }
   }, [initialValues, defaultValues, form])
 
-  const handleSubmit = (data: z.infer<typeof formSchema>) => {
+  const handleSubmit = (data: AssetFormValues) => {
     // Determine the actual type to send to backend
     const actualType = data.type === "Other" ? data.otherType : data.type;
     
@@ -260,6 +292,89 @@ export function AssetForm({
             </FormItem>
           )}
         />
+
+        <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
+          <FormField
+            control={form.control}
+            name="setReminder"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center justify-between rounded-lg p-1">
+                <div className="space-y-0.5">
+                  <FormLabel className="text-base font-semibold text-slate-800">Set Maintenance Reminder</FormLabel>
+                  <p className="text-[12px] text-slate-500">Enable automatic alerts for this asset&apos;s maintenance.</p>
+                </div>
+                <FormControl>
+                  <Input 
+                    type="checkbox" 
+                    className="h-5 w-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-600 w-fit"
+                    checked={field.value}
+                    onChange={field.onChange}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+
+          {setReminder && (
+            <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300 pt-2 border-t border-slate-200">
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="reminderStartDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Reminder Start Date</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} className="bg-white" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="reminderFrequency"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Frequency</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="bg-white">
+                            <SelectValue placeholder="Select frequency" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="once">Once</SelectItem>
+                          <SelectItem value="daily">Daily</SelectItem>
+                          <SelectItem value="weekly">Weekly</SelectItem>
+                          <SelectItem value="monthly">Monthly</SelectItem>
+                          <SelectItem value="yearly">Yearly</SelectItem>
+                          <SelectItem value="custom">Custom</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="reminderTime"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Alert Time</FormLabel>
+                      <FormControl>
+                        <Input type="time" {...field} className="bg-white" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+          )}
+        </div>
 
         <FormField
           control={form.control}

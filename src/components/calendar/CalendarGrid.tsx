@@ -45,7 +45,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
   // Helper to find data for a specific date
   const getDataForDate = (date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
-    return calendarData.find(d => d.date.startsWith(dateStr));
+    return calendarData.find(d => d.date?.startsWith(dateStr));
   };
 
   const getRemindersForDate = (date: Date) => {

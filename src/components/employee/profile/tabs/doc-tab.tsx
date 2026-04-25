@@ -95,9 +95,17 @@ export function DocumentsTab({ employee }: DocumentsTabProps) {
                           <p className="text-[10px] text-slate-400 font-medium">Click to view document</p>
                         </div>
                      </div>
-                     <Button variant="ghost" size="sm" asChild>
-                        <a href={doc.file.startsWith("http") ? doc.file : `${apiBase}${doc.file}`} target="_blank" rel="noreferrer" className="text-[#2eb88a] font-bold">View</a>
-                     </Button>
+                      <Button variant="ghost" size="sm" asChild disabled={!doc.file}>
+                        <a 
+                          href={doc.file ? (doc.file.startsWith("http") ? doc.file : `${apiBase}${doc.file}`) : "#"} 
+                          target="_blank" 
+                          rel="noreferrer" 
+                          className="text-[#2eb88a] font-bold"
+                          onClick={(e) => !doc.file && e.preventDefault()}
+                        >
+                          View
+                        </a>
+                      </Button>
                    </div>
                  ))
                ) : (

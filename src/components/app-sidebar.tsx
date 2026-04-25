@@ -45,6 +45,7 @@ const items = [
   { title: "Reminders", url: "/dashboard/reminders", icon: Bell },
   { title: "Company Master", url: "/dashboard/company-master", icon: Users },
   {title: "Fuel Expenses", url: "/dashboard/fuel-expenses", icon: Fuel},
+  {title: "Bills", url: "/dashboard/Bill", icon: Banknote},
 ]
 
 function Logo({ collapsed }: { collapsed?: boolean }) {

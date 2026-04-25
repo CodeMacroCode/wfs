@@ -1,5 +1,5 @@
 import apiClient from '@/lib/api-client';
-import { CreateAssetDto, UpdateAssetDto, AssetsResponse, AssetQueryParams } from '@/types/asset';
+import { Asset, CreateAssetDto, UpdateAssetDto, AssetsResponse, AssetQueryParams } from '@/types/asset';
 import { toast } from 'sonner';
 
 /**
@@ -9,10 +9,11 @@ export const assetService = {
   /**
    * Create a new asset
    */
-  create: async (data: CreateAssetDto): Promise<void> => {
+  create: async (data: CreateAssetDto): Promise<Asset> => {
     try {
-      await apiClient.post<CreateAssetDto, void>('/assets', data);
+      const response = await apiClient.post<{ data: Asset }, { data: Asset }>('/assets', data);
       toast.success('Asset created successfully');
+      return response.data;
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to create asset';
       toast.error(errorMessage);
@@ -36,10 +37,11 @@ export const assetService = {
   /**
    * Update an existing asset
    */
-  update: async (id: string, data: UpdateAssetDto): Promise<void> => {
+  update: async (id: string, data: UpdateAssetDto): Promise<Asset> => {
     try {
-      await apiClient.patch<UpdateAssetDto, void>(`/assets/${id}`, data);
+      const response = await apiClient.patch<{ data: Asset }, { data: Asset }>(`/assets/${id}`, data);
       toast.success('Asset updated successfully');
+      return response.data;
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to update asset';
       toast.error(errorMessage);
