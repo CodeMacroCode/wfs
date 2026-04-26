@@ -4,7 +4,6 @@ import * as React from "react"
 import { format } from "date-fns"
 import {
   Zap,
-  Calendar,
   Maximize2,
   Trash2,
   ChevronDown,

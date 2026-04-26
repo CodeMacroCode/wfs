@@ -6,20 +6,16 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { 
   CloudUpload, 
-  Loader2, 
   X, 
-  FileText, 
   Plus, 
   Droplets, 
   Building2, 
   Calendar as CalendarIcon, 
   CreditCard,
   History,
-  Info,
   Zap,
   Gauge,
   Calculator,
-  IndianRupee,
   Percent
 } from "lucide-react"
 import {
@@ -56,8 +52,8 @@ const waterBillSchema = z.object({
   dueDate: z.string().optional(),
   billFrom: z.string().optional(),
   billTo: z.string().optional(),
-  isFromAverage: z.boolean().default(false),
-  isToAverage: z.boolean().default(false),
+  isFromAverage: z.boolean().optional(),
+  isToAverage: z.boolean().optional(),
   connectionSize: z.string().optional(),
   billPeriod: z.string().optional(),
   oldReading: z.string().optional(),
@@ -68,7 +64,7 @@ const waterBillSchema = z.object({
   currentWaterCharges: z.string().optional().refine(v => !v || parseFloat(v) >= 0, "Cannot be negative"),
   maintenanceCharges: z.string().optional().refine(v => !v || parseFloat(v) >= 0, "Cannot be negative"),
   sewerageCess: z.string().optional().refine(v => !v || parseFloat(v) >= 0, "Cannot be negative"),
-  sewerageCessPercentage: z.string().default("30").refine(v => !v || parseFloat(v) >= 0, "Cannot be negative"),
+  sewerageCessPercentage: z.string().optional().refine(v => !v || parseFloat(v) >= 0, "Cannot be negative"),
   meterRentals: z.string().optional().refine(v => !v || parseFloat(v) >= 0, "Cannot be negative"),
   garbageCharges: z.string().optional().refine(v => !v || parseFloat(v) >= 0, "Cannot be negative"),
   sundryCharges: z.string().optional().refine(v => !v || parseFloat(v) >= 0, "Cannot be negative"),
@@ -233,9 +229,9 @@ function DatePickerField({
 }
 
 // Helper to safely parse strings to numbers (Clamped to 0)
-const safeParse = (val: any) => {
+const safeParse = (val: string | number | undefined | null) => {
   if (val === undefined || val === null || val === "") return 0;
-  const parsed = parseFloat(val)
+  const parsed = parseFloat(String(val))
   return Math.max(0, isNaN(parsed) ? 0 : parsed)
 }
 

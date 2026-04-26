@@ -1,31 +1,23 @@
 "use client"
 
 import * as React from "react"
-import { useForm } from "react-hook-form"
+import { useForm, Control } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { 
   CloudUpload, 
   Loader2, 
-  X, 
-  FileText, 
   Plus, 
   Zap, 
   Building2, 
   Calendar as CalendarIcon, 
   CreditCard,
-  History,
-  Info,
   Gauge,
-  Calculator,
-  IndianRupee,
-  Activity,
-  Lightbulb
+  Calculator
 } from "lucide-react"
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -131,7 +123,7 @@ function ChargeField({
 }: {
   name: keyof ElectricityBillFormValues
   label: string
-  control: any
+  control: Control<ElectricityBillFormValues>
   highlight?: "blue" | "green" | "amber" | "yellow"
   disabled?: boolean
   prefix?: string
@@ -186,7 +178,7 @@ function DatePickerField({
 }: {
   name: keyof ElectricityBillFormValues
   label: string
-  control: any
+  control: Control<ElectricityBillFormValues>
   placeholder?: string
   className?: string
   disabled?: boolean
@@ -238,9 +230,9 @@ function DatePickerField({
   )
 }
 
-const safeParse = (val: any) => {
+const safeParse = (val: string | number | undefined | null) => {
   if (val === undefined || val === null || val === "") return 0;
-  const parsed = parseFloat(val)
+  const parsed = parseFloat(String(val))
   return Math.max(0, isNaN(parsed) ? 0 : parsed)
 }
 
@@ -322,10 +314,8 @@ export function ElectricityBillFormDialog({
   const watchedSundry = form.watch("sundryCharges")
   const watchedArrears = form.watch("arrears")
   const watchedRevArr = form.watch("reversalOfArrear")
-  const watchedAdj = form.watch("adjPrevBill")
   const watchedAcdInt = form.watch("acdInt")
   const watchedAcd = form.watch("acd")
-  const watchedPaid = form.watch("paidAmount")
   const watchedTotal = form.watch("totalAmount")
 
   // Auto-calculate Unit kWh

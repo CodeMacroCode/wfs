@@ -17,8 +17,6 @@ import {
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
 } from "@/components/ui/dialog"
 import { WaterBillRecord } from "@/types/water-bill"
 import { cn } from "@/lib/utils"
@@ -118,10 +116,10 @@ function StatCard({ label, value, prefix, highlight }: {
 export function WaterBillViewDialog({ bill, open, onClose }: WaterBillViewDialogProps) {
   const meta = bill.metadata
   const isPaid = safeParse(meta?.paidAmount) >= safeParse(meta?.totalAmount)
-  const isAnyAvg = meta?.isFromAverage === true || meta?.isFromAverage === "true" || meta?.isToAverage === true || meta?.isToAverage === "true"
+  const isAnyAvg = String(meta?.isFromAverage) === "true" || String(meta?.isToAverage) === "true"
 
-  function safeParse(val: any) {
-    const num = parseFloat(val)
+  function safeParse(val: string | number | undefined | null) {
+    const num = parseFloat(String(val ?? ""))
     return isNaN(num) ? 0 : num
   }
 
@@ -209,13 +207,13 @@ export function WaterBillViewDialog({ bill, open, onClose }: WaterBillViewDialog
                 <InfoBlock label="Due Date" value={formatDate(meta?.dueDate)} highlight="red" />
                 <InfoBlock 
                   label="Service From" 
-                  value={(meta?.isFromAverage === true || meta?.isFromAverage === "true") ? "Billed on Average" : formatDate(meta?.billFrom)} 
-                  highlight={(meta?.isFromAverage === true || meta?.isFromAverage === "true") ? "amber" : undefined}
+                  value={(String(meta?.isFromAverage) === "true") ? "Billed on Average" : formatDate(meta?.billFrom)} 
+                  highlight={(String(meta?.isFromAverage) === "true") ? "amber" : undefined}
                 />
                 <InfoBlock 
                   label="Service To" 
-                  value={(meta?.isToAverage === true || meta?.isToAverage === "true") ? "Billed on Average" : formatDate(meta?.billTo)} 
-                  highlight={(meta?.isToAverage === true || meta?.isToAverage === "true") ? "amber" : undefined}
+                  value={(String(meta?.isToAverage) === "true") ? "Billed on Average" : formatDate(meta?.billTo)} 
+                  highlight={(String(meta?.isToAverage) === "true") ? "amber" : undefined}
                 />
               </div>
             </div>
@@ -286,7 +284,7 @@ export function WaterBillViewDialog({ bill, open, onClose }: WaterBillViewDialog
              {meta?.remarks && (
                <div className="p-6 rounded-3xl bg-amber-50/30 border border-amber-100/50 flex flex-col gap-2">
                   <p className="text-[10px] font-black uppercase tracking-widest text-amber-600">Notes & Remarks</p>
-                  <p className="text-xs font-medium text-slate-600 italic leading-relaxed">"{meta.remarks}"</p>
+                  <p className="text-xs font-medium text-slate-600 italic leading-relaxed">&quot;{meta.remarks}&quot;</p>
                </div>
              )}
           </div>

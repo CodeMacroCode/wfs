@@ -13,12 +13,10 @@ import { useDocCenterQuery } from "@/hooks/queries/use-doc-center"
 import { useDeleteDocMutation } from "@/hooks/queries/use-doc-center"
 import { useDebounce } from "@/hooks/use-debounce"
 import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { WaterBillFormDialog } from "@/components/dashboard/bill/water-bill-form-dialog"
 import { WaterBillTable } from "@/components/dashboard/bill/water-bill-table"
 import { WaterBillRecord, WaterBillMetadata } from "@/types/water-bill"
-import { ElectricityBillRecord } from "@/types/electricity-bill"
+import { ElectricityBillRecord, ElectricityBillMetadata } from "@/types/electricity-bill"
 import { ElectricityBillFormDialog } from "@/components/dashboard/bill/electricity-bill-form-dialog"
 import { ElectricityBillTable } from "@/components/dashboard/bill/electricity-bill-table"
 import { DocumentItem } from "@/types/doc-center"
@@ -58,12 +56,6 @@ function AccountTab({ name, count, active, onClick }: AccountTabProps) {
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-function formatCurrency(val?: string | number) {
-  const num = parseFloat(String(val ?? ""))
-  if (isNaN(num)) return "₹0"
-  return `₹${num.toLocaleString("en-IN", { maximumFractionDigits: 0 })}`
-}
-
 function asWaterBill(doc: DocumentItem): WaterBillRecord {
   return {
     ...doc,
@@ -76,7 +68,7 @@ function asElectricityBill(doc: DocumentItem): ElectricityBillRecord {
   return {
     ...doc,
     documentType: "Electricity",
-    metadata: (doc.metadata || {}) as any,
+    metadata: (doc.metadata || {}) as ElectricityBillMetadata,
   }
 }
 
@@ -127,7 +119,7 @@ export default function BillPage() {
   const filteredBills = React.useMemo(() => {
     let list = currentBills
     if (accountFilter !== "all") {
-      list = list.filter((b) => b.metadata?.accountName === accountFilter)
+      list = list.filter((b) => b.metadata?.accountName === accountFilter) as typeof currentBills
     }
     return list
   }, [currentBills, accountFilter])

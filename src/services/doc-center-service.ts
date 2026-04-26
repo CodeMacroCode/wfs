@@ -1,5 +1,5 @@
 import apiClient from '@/lib/api-client';
-import { DocCenterResponse, DocCenterQueryParams, CreateDocDto, DeleteFilesDto, UpdateDocFilesDto } from '@/types/doc-center';
+import { DocCenterResponse, DocCenterQueryParams, CreateDocDto, DeleteFilesDto, UpdateDocFilesDto, DocumentItem } from '@/types/doc-center';
 import { toast } from 'sonner';
 
 /**

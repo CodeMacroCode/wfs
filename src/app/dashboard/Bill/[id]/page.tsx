@@ -8,12 +8,9 @@ import {
   Calendar, 
   FileText, 
   CreditCard, 
-  ExternalLink,
   History,
   Info,
-  ArrowRight,
   User,
-  Clock,
   ArrowLeft,
   Download,
   Share2,
@@ -51,8 +48,8 @@ const formatCurrency = (amount?: string | number) => {
   }).format(num)
 }
 
-function safeParse(val: any) {
-  const num = parseFloat(val)
+function safeParse(val: string | number | undefined | null) {
+  const num = parseFloat(String(val ?? ""))
   return isNaN(num) ? 0 : num
 }
 
@@ -153,7 +150,7 @@ export default function BillDetailPage() {
         </div>
         <div>
           <h2 className="text-xl font-black text-slate-800">Bill Not Found</h2>
-          <p className="text-sm text-slate-500 mt-1">The record you are looking for doesn't exist or has been removed.</p>
+          <p className="text-sm text-slate-500 mt-1">The record you are looking for doesn&apos;t exist or has been removed.</p>
         </div>
         <Button onClick={() => router.back()} variant="outline" className="rounded-xl font-bold">
           <ArrowLeft className="mr-2 h-4 w-4" /> Go Back
@@ -169,7 +166,7 @@ export default function BillDetailPage() {
 
   const meta = bill.metadata
   const isPaid = safeParse(meta?.paidAmount) >= safeParse(meta?.totalAmount)
-  const isAnyAvg = meta?.isFromAverage === true || meta?.isFromAverage === "true" || meta?.isToAverage === true || meta?.isToAverage === "true"
+  const isAnyAvg = String(meta?.isFromAverage) === "true" || String(meta?.isToAverage) === "true"
 
   const handleDelete = async () => {
     if (confirm("Are you sure you want to delete this bill record?")) {
@@ -337,13 +334,13 @@ export default function BillDetailPage() {
                   <InfoBlock label="Payment Due" value={formatDate(meta?.dueDate)} highlight="red" />
                   <InfoBlock 
                     label="Service Start" 
-                    value={(meta?.isFromAverage === true || meta?.isFromAverage === "true") ? "Billed on Average" : formatDate(meta?.billFrom)} 
-                    highlight={(meta?.isFromAverage === true || meta?.isFromAverage === "true") ? "amber" : undefined}
+                    value={(String(meta?.isFromAverage) === "true") ? "Billed on Average" : formatDate(meta?.billFrom)} 
+                    highlight={(String(meta?.isFromAverage) === "true") ? "amber" : undefined}
                   />
                   <InfoBlock 
                     label="Service End" 
-                    value={(meta?.isToAverage === true || meta?.isToAverage === "true") ? "Billed on Average" : formatDate(meta?.billTo)} 
-                    highlight={(meta?.isToAverage === true || meta?.isToAverage === "true") ? "amber" : undefined}
+                    value={(String(meta?.isToAverage) === "true") ? "Billed on Average" : formatDate(meta?.billTo)} 
+                    highlight={(String(meta?.isToAverage) === "true") ? "amber" : undefined}
                   />
                 </div>
               </div>
@@ -400,7 +397,7 @@ export default function BillDetailPage() {
                       <FileText className="h-4 w-4 text-indigo-500" />
                       <p className="text-[10px] font-black uppercase tracking-widest text-indigo-600">Administrative Remarks</p>
                    </div>
-                   <p className="text-sm font-medium text-slate-600 italic leading-relaxed">"{meta.remarks}"</p>
+                   <p className="text-sm font-medium text-slate-600 italic leading-relaxed">&quot;{meta.remarks}&quot;</p>
                 </div>
               )}
             </div>

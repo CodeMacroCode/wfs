@@ -4,14 +4,11 @@ import * as React from "react"
 import { format } from "date-fns"
 import {
   Droplets,
-  Calendar,
   Maximize2,
   Trash2,
   ChevronDown,
   ChevronUp,
   FileText,
-  ExternalLink,
-  Info,
   PlusCircle
 } from "lucide-react"
 import Link from "next/link"
@@ -26,12 +23,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -103,13 +95,13 @@ function PaymentBadge({ paid, total }: { paid?: string; total?: string }) {
 }
 
 // ── Detail Cell used in expanded row ─────────────────────────────────────────
-function DetailCell({ label, value }: { label: string; value: string }) {
+function DetailCell({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
   return (
     <div className="flex flex-col gap-0.5 min-w-[100px]">
       <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">
         {label}
       </span>
-      <span className="text-xs font-bold text-slate-700">{value || "—"}</span>
+      <span className={cn("text-xs font-bold", highlight ? "text-blue-600" : "text-slate-700")}>{value || "—"}</span>
     </div>
   )
 }
@@ -202,8 +194,8 @@ export function WaterBillTable({
             {data.map((bill) => {
               const meta = bill.metadata
               const isExpanded = expandedRow === bill._id
-              const isFromAvg = meta.isFromAverage === true || meta.isFromAverage === "true"
-              const isToAvg = meta.isToAverage === true || meta.isToAverage === "true"
+              const isFromAvg = String(meta.isFromAverage) === "true"
+              const isToAvg = String(meta.isToAverage) === "true"
               const isAnyAvg = isFromAvg || isToAvg
 
               return (
