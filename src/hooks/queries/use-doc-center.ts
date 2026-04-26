@@ -14,6 +14,17 @@ export function useDocCenterQuery(params?: DocCenterQueryParams) {
 }
 
 /**
+ * Hook to fetch a single document by ID
+ */
+export function useSingleDocQuery(id: string) {
+  return useQuery({
+    queryKey: ['doc-center', 'detail', id],
+    queryFn: () => docCenterService.getById(id),
+    enabled: !!id,
+  });
+}
+
+/**
  * Hook to upload a new document
  */
 export function useUploadDocMutation() {

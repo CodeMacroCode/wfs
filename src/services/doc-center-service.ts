@@ -20,6 +20,19 @@ export const docCenterService = {
   },
 
   /**
+   * Get a single document by ID
+   */
+  getById: async (id: string): Promise<DocumentItem> => {
+    try {
+      const response = await apiClient.get<void, DocumentItem>(`/doccenter/${id}`);
+      return response;
+    } catch (error: unknown) {
+      toast.error('Failed to fetch document details');
+      throw error;
+    }
+  },
+
+  /**
    * Create a new document (Upload)
    * Uses FormData for multipart/form-data support
    */
@@ -120,7 +133,11 @@ export const docCenterService = {
       if (data.documentType) formData.append('documentType', data.documentType);
       
       if (data.metadata) {
-        formData.append('metadata', JSON.stringify(data.metadata));
+        Object.entries(data.metadata).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            formData.append(key, String(value));
+          }
+        });
       }
 
       if (data.files && data.files.length > 0) {
