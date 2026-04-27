@@ -110,10 +110,16 @@ export const employeeService = {
   /**
    * Create new employee ID(s)
    */
-  createEmployeeId: async (data: { prefix: string; remark: string }): Promise<void> => {
+  createEmployeeId: async (data: { prefix: string; remark: string; count?: number }): Promise<void> => {
     try {
-      await apiClient.post<{ prefix: string; remark: string }, void>('/employee-id', data);
-      toast.success('Employee ID(s) generated successfully');
+      const total = data.count || 1;
+      const payload = { prefix: data.prefix, remark: data.remark };
+
+      for (let i = 0; i < total; i++) {
+        await apiClient.post<{ prefix: string; remark: string }, void>('/employee-id', payload);
+      }
+
+      toast.success(`${total} Employee ID(s) generated successfully`);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to generate employee IDs';
       toast.error(errorMessage);

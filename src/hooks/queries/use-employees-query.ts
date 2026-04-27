@@ -152,7 +152,7 @@ export function useCreateEmployeeIdMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: { prefix: string; remark: string }) => employeeService.createEmployeeId(data),
+    mutationFn: (data: { prefix: string; remark: string; count?: number }) => employeeService.createEmployeeId(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.users.all, 'employee-id-dropdown'] });
       queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.users.all, 'employee-id'] });

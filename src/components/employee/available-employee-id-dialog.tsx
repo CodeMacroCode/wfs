@@ -184,6 +184,7 @@ function GenerateIdForm({ onSuccess }: { onSuccess: () => void }) {
   const companies = companyData?.data || []
   const [selectedCompanyId, setSelectedCompanyId] = React.useState<string>("")
   const [remark, setRemark] = React.useState<string>("")
+  const [count, setCount] = React.useState<string>("1")
   
   const { mutate: generate, isPending } = useCreateEmployeeIdMutation()
 
@@ -191,8 +192,10 @@ function GenerateIdForm({ onSuccess }: { onSuccess: () => void }) {
     const selectedCompany = companies.find(c => c._id === selectedCompanyId)
     if (!selectedCompany) return
 
+    const finalCount = parseInt(count) || 1
+
     generate(
-      { prefix: selectedCompany.prefix || "", remark },
+      { prefix: selectedCompany.prefix || "", remark, count: finalCount },
       { onSuccess: () => onSuccess() }
     )
   }
@@ -215,14 +218,28 @@ function GenerateIdForm({ onSuccess }: { onSuccess: () => void }) {
         </Select>
       </div>
 
-      <div className="space-y-2">
-        <Label className="text-[10px] font-black uppercase text-slate-400 ml-1">Remark (Optional)</Label>
-        <Input 
-          placeholder="e.g. Batch for Sales Team" 
-          value={remark}
-          onChange={(e) => setRemark(e.target.value)}
-          className="h-12 rounded-xl border-slate-200 focus:ring-emerald-500/10 font-semibold"
-        />
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label className="text-[10px] font-black uppercase text-slate-400 ml-1">Remark (Optional)</Label>
+          <Input 
+            placeholder="e.g. Batch for Sales" 
+            value={remark}
+            onChange={(e) => setRemark(e.target.value)}
+            className="h-12 rounded-xl border-slate-200 focus:ring-emerald-500/10 font-semibold"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label className="text-[10px] font-black uppercase text-slate-400 ml-1">No. of IDs (Optional)</Label>
+          <Input 
+            type="number"
+            min={1}
+            max={100}
+            placeholder="1"
+            value={count}
+            onChange={(e) => setCount(e.target.value)}
+            className="h-12 rounded-xl border-slate-200 focus:ring-emerald-500/10 font-semibold"
+          />
+        </div>
       </div>
 
       <Button 

@@ -51,8 +51,8 @@ export default function EmployeeMaster() {
 
   const companies = companiesData?.pages.flatMap((page) => page.data) || []
 
-  // Use a static version of columns for export (without actions)
-  const exportColumns = React.useMemo(() => getEmployeeColumns(), [])
+  // Use a static version of columns for export (without actions, including all fields)
+  const exportColumns = React.useMemo(() => getEmployeeColumns(undefined, undefined, undefined, undefined, true), [])
 
   return (
     <div className="flex-1 space-y-4 p-8 pt-6">
