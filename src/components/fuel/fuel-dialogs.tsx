@@ -97,6 +97,7 @@ export function AddFuelDialog({ open, onOpenChange, onAdd, initialValues }: AddF
   const totalDiesel = useWatch({ control: form.control, name: "totalDiesel" })
   const ratePerLitre = useWatch({ control: form.control, name: "ratePerLitre" })
   const openingBalance = useWatch({ control: form.control, name: "openingBalance" })
+  const files = useWatch({ control: form.control, name: "files" })
 
   // Fetch latest global fuel record for opening balance (initial default)
   const { data: globalLatest } = useDocCenterQuery({
@@ -497,9 +498,9 @@ export function AddFuelDialog({ open, onOpenChange, onAdd, initialValues }: AddF
                     </div>
                   </div>
 
-                  {form.watch("files") && form.watch("files")!.length > 0 && (
+                  {files && files.length > 0 && (
                     <div className="grid grid-cols-2 gap-3 mt-4">
-                      {form.watch("files")!.map((file, i) => (
+                      {files.map((file, i) => (
                         <div key={i} className="flex items-center gap-3 p-2 bg-slate-50 rounded-lg border border-slate-200 group">
                           <FileImage className="w-4 h-4 text-blue-500" />
                           <div className="flex-1 min-w-0">

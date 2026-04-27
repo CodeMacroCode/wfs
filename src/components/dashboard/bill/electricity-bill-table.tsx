@@ -292,7 +292,7 @@ export function ElectricityBillTable({
                              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">Documents</p>
                              <div className="flex flex-wrap gap-2">
                                {bill.files.map((file, i) => (
-                                 <a key={i} href={`${process.env.NEXT_PUBLIC_API_URL}${file}`} target="_blank" className="flex items-center gap-2 px-3 py-1.5 bg-white border border-yellow-100 rounded-lg text-xs font-bold text-yellow-600 hover:bg-yellow-50">
+                                 <a key={i} href={`${(process.env.NEXT_PUBLIC_BASE_URL || "").replace(/\/api$/, "")}${file}`} target="_blank" className="flex items-center gap-2 px-3 py-1.5 bg-white border border-yellow-100 rounded-lg text-xs font-bold text-yellow-600 hover:bg-yellow-50">
                                    <FileText className="h-3.5 w-3.5" />
                                    View Doc {i+1}
                                  </a>

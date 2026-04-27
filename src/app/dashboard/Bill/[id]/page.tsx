@@ -416,7 +416,8 @@ export default function BillDetailPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {bill.files.map((file, idx) => {
                   const fileName = file.split("/").pop() || `Bill_Document_${idx + 1}`
-                  const fileUrl = `${process.env.NEXT_PUBLIC_API_URL || ""}${file}`
+                  const apiBase = (process.env.NEXT_PUBLIC_BASE_URL || "").replace(/\/api$/, "");
+                  const fileUrl = `${apiBase}${file}`
                   return (
                     <a
                       key={idx}

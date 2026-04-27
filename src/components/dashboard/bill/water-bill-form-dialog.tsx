@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { 
@@ -286,26 +286,26 @@ export function WaterBillFormDialog({
   })
 
   // Destructure watched values for reactivity
-  const watchedOldReading = form.watch("oldReading")
-  const watchedNewReading = form.watch("newReading")
-  const watchedUnit = form.watch("unit")
-  const watchedConnSize = form.watch("connectionSize")
-  const watchedWaterCharges = form.watch("currentWaterCharges")
-  const watchedSeweragePercentage = form.watch("sewerageCessPercentage")
-  const watchedMaintenance = form.watch("maintenanceCharges")
-  const watchedSewerageCess = form.watch("sewerageCess")
-  const watchedMeterRental = form.watch("meterRentals")
-  const watchedGarbage = form.watch("garbageCharges")
-  const watchedSundry = form.watch("sundryCharges")
-  const watchedArrears = form.watch("arrears")
-  const watchedTotal = form.watch("totalAmount")
-  const watchedPaid = form.watch("paidAmount")
-  const watchedMcTax = form.watch("mcTax")
-  const watchedLatePayment = form.watch("latePaymentSurcharge")
-  const watchedAdjPrevBill = form.watch("adjPrevBill")
-  const watchedIsFromAvg = form.watch("isFromAverage")
-  const watchedIsToAvg = form.watch("isToAverage")
-  const watchedFiles = form.watch("files")
+  const watchedOldReading = useWatch({ control: form.control, name: "oldReading" })
+  const watchedNewReading = useWatch({ control: form.control, name: "newReading" })
+  const watchedUnit = useWatch({ control: form.control, name: "unit" })
+  const watchedConnSize = useWatch({ control: form.control, name: "connectionSize" })
+  const watchedWaterCharges = useWatch({ control: form.control, name: "currentWaterCharges" })
+  const watchedSeweragePercentage = useWatch({ control: form.control, name: "sewerageCessPercentage" })
+  const watchedMaintenance = useWatch({ control: form.control, name: "maintenanceCharges" })
+  const watchedSewerageCess = useWatch({ control: form.control, name: "sewerageCess" })
+  const watchedMeterRental = useWatch({ control: form.control, name: "meterRentals" })
+  const watchedGarbage = useWatch({ control: form.control, name: "garbageCharges" })
+  const watchedSundry = useWatch({ control: form.control, name: "sundryCharges" })
+  const watchedArrears = useWatch({ control: form.control, name: "arrears" })
+  const watchedTotal = useWatch({ control: form.control, name: "totalAmount" })
+  const watchedPaid = useWatch({ control: form.control, name: "paidAmount" })
+  const watchedMcTax = useWatch({ control: form.control, name: "mcTax" })
+  const watchedLatePayment = useWatch({ control: form.control, name: "latePaymentSurcharge" })
+  const watchedAdjPrevBill = useWatch({ control: form.control, name: "adjPrevBill" })
+  const watchedIsFromAvg = useWatch({ control: form.control, name: "isFromAverage" })
+  const watchedIsToAvg = useWatch({ control: form.control, name: "isToAverage" })
+  const watchedFiles = useWatch({ control: form.control, name: "files" })
 
   const selectedFiles = watchedFiles ?? []
 

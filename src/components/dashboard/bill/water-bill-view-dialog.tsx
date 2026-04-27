@@ -299,7 +299,8 @@ export function WaterBillViewDialog({ bill, open, onClose }: WaterBillViewDialog
               <div className="flex flex-wrap gap-3">
                 {bill.files.map((file, idx) => {
                   const fileName = file.split("/").pop() || `Bill_${idx + 1}`
-                  const fileUrl = `${process.env.NEXT_PUBLIC_API_URL || ""}${file}`
+                  const apiBase = (process.env.NEXT_PUBLIC_BASE_URL || "").replace(/\/api$/, "");
+                  const fileUrl = `${apiBase}${file}`
                   return (
                     <a
                       key={idx}

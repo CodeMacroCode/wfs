@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useForm, Control } from "react-hook-form"
+import { useForm, Control, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { 
@@ -294,29 +294,29 @@ export function ElectricityBillFormDialog({
     },
   })
 
-  const watchedOldKwh = form.watch("oldReadingKwh")
-  const watchedNewKwh = form.watch("newReadingKwh")
-  const watchedOldKvah = form.watch("oldReadingKvah")
-  const watchedNewKvah = form.watch("newReadingKvah")
-  const watchedUnitKwh = form.watch("unitKwh")
-  const watchedUnitKvah = form.watch("unitKvah")
-  const watchedUnitPriceBasic = form.watch("unitPriceBasic")
-  const watchedConsum = form.watch("consumptionCharges")
-  const watchedFppca = form.watch("fppca")
-  const watchedEdRate = form.watch("edRate")
-  const watchedEd = form.watch("ed")
-  const watchedFixed = form.watch("fixedCharges")
-  const watchedMcTaxRate = form.watch("mcTaxRate")
-  const watchedMcTax = form.watch("mcTax")
-  const watchedPfInc = form.watch("pfIncentive")
-  const watchedRegSurch = form.watch("regSurcharge")
-  const watchedRebate = form.watch("paymentRebate")
-  const watchedSundry = form.watch("sundryCharges")
-  const watchedArrears = form.watch("arrears")
-  const watchedRevArr = form.watch("reversalOfArrear")
-  const watchedAcdInt = form.watch("acdInt")
-  const watchedAcd = form.watch("acd")
-  const watchedTotal = form.watch("totalAmount")
+  const watchedOldKwh = useWatch({ control: form.control, name: "oldReadingKwh" })
+  const watchedNewKwh = useWatch({ control: form.control, name: "newReadingKwh" })
+  const watchedOldKvah = useWatch({ control: form.control, name: "oldReadingKvah" })
+  const watchedNewKvah = useWatch({ control: form.control, name: "newReadingKvah" })
+  const watchedUnitKwh = useWatch({ control: form.control, name: "unitKwh" })
+  const watchedUnitKvah = useWatch({ control: form.control, name: "unitKvah" })
+  const watchedUnitPriceBasic = useWatch({ control: form.control, name: "unitPriceBasic" })
+  const watchedConsum = useWatch({ control: form.control, name: "consumptionCharges" })
+  const watchedFppca = useWatch({ control: form.control, name: "fppca" })
+  const watchedEdRate = useWatch({ control: form.control, name: "edRate" })
+  const watchedEd = useWatch({ control: form.control, name: "ed" })
+  const watchedFixed = useWatch({ control: form.control, name: "fixedCharges" })
+  const watchedMcTaxRate = useWatch({ control: form.control, name: "mcTaxRate" })
+  const watchedMcTax = useWatch({ control: form.control, name: "mcTax" })
+  const watchedPfInc = useWatch({ control: form.control, name: "pfIncentive" })
+  const watchedRegSurch = useWatch({ control: form.control, name: "regSurcharge" })
+  const watchedRebate = useWatch({ control: form.control, name: "paymentRebate" })
+  const watchedSundry = useWatch({ control: form.control, name: "sundryCharges" })
+  const watchedArrears = useWatch({ control: form.control, name: "arrears" })
+  const watchedRevArr = useWatch({ control: form.control, name: "reversalOfArrear" })
+  const watchedAcdInt = useWatch({ control: form.control, name: "acdInt" })
+  const watchedAcd = useWatch({ control: form.control, name: "acd" })
+  const watchedTotal = useWatch({ control: form.control, name: "totalAmount" })
 
   // Auto-calculate Unit kWh
   React.useEffect(() => {
