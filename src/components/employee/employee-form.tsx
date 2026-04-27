@@ -43,34 +43,34 @@ import { useEmployeeIdDropdownQuery } from "@/hooks/queries/use-employees-query"
 import { AvailableEmployeeIdDialog } from "./available-employee-id-dialog";
 
 const emergencyContactSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  relation: z.string().min(1, "Relation is required"),
-  phone: z.string().length(10, "Phone must be 10 digits").regex(/^\d+$/, "Phone must contain only digits"),
+  name: z.string().optional(),
+  relation: z.string().optional(),
+  phone: z.string().optional(),
 });
 
 const familyMemberSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  relation: z.string().min(1, "Relation is required"),
-  age: z.coerce.number().min(0, "Age must be positive"),
+  name: z.string().optional(),
+  relation: z.string().optional(),
+  age: z.coerce.number().optional(),
   _id: z.string().optional(),
 });
 
 const academicQualificationSchema = z.object({
-  degree: z.string().min(1, "Degree is required"),
-  institute: z.string().min(1, "Institute is required"),
-  year: z.string().min(1, "Year is required"),
+  degree: z.string().optional(),
+  institute: z.string().optional(),
+  year: z.string().optional(),
   _id: z.string().optional(),
 });
 
 const workExperienceSchema = z.object({
-  company: z.string().min(1, "Company is required"),
-  role: z.string().min(1, "Role is required"),
-  years: z.string().min(1, "Years is required"),
+  company: z.string().optional(),
+  role: z.string().optional(),
+  years: z.string().optional(),
   _id: z.string().optional(),
 });
 
 const documentSchema = z.object({
-  title: z.string().min(1, "Title is required"),
+  title: z.string().optional(),
   url: z.string().optional(),
   file: z.any().optional(),
   _id: z.string().optional(),
@@ -79,7 +79,7 @@ const documentSchema = z.object({
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   profileImage: z.any().optional(),
-  email: z.string().email("Invalid email address"),
+  email: z.string().email("Invalid email address").optional().or(z.literal("")),
   role: z.enum(["user", "hr", "admin"]),
   uniqueId: z.string().optional(),      // punch machine employeeId string (e.g. "Tech-001")
   employeeObjId: z.string().optional(), // _id of the selected employee-id record
@@ -89,27 +89,27 @@ const formSchema = z.object({
   otherName: z.string().optional(),
   category: z.string().optional(),
   gender: z.enum(["male", "female", "other"]),
-  fatherName: z.string().min(1, "Father's name is required"),
-  motherName: z.string().min(1, "Mother's name is required"),
-  maritalStatus: z.enum(["single", "married", "divorced", "widowed"]),
+  fatherName: z.string().optional(),
+  motherName: z.string().optional(),
+  maritalStatus: z.enum(["single", "married", "divorced", "widowed"]).optional(),
   familyDetails: z.array(familyMemberSchema).optional(),
-  dob: z.string().min(1, "D.O.B is required"),
-  bloodGroup: z.string().min(1, "Blood Group is required"),
+  dob: z.string().optional(),
+  bloodGroup: z.string().optional(),
   emergencyContact: emergencyContactSchema.optional(),
   reference: z.string().optional(),
   academicQualification: z.array(academicQualificationSchema).optional(),
   previousWorkExperience: z.array(workExperienceSchema).optional(),
-  designation: z.string().min(1, "Designation is required"),
+  designation: z.string().optional(),
   department: z.string().optional(),
   workingHours: z.string().optional(),
-  aadharNo: z.string().min(1, "Aadhar No is required"),
+  aadharNo: z.string().optional(),
   pfNo: z.string().optional(),
   esiNo: z.string().optional(),
-  doj: z.string().min(1, "D.O.J is required"),
+  doj: z.string().optional(),
   doe: z.string().optional().nullable(),
-  permanentAddress: z.string().min(1, "Permanent address is required"),
-  currentAddress: z.string().min(1, "Current address is required"),
-  mobileNo: z.string().length(10, "Mobile No must be exactly 10 digits").regex(/^\d+$/, "Mobile No must contain only digits"),
+  permanentAddress: z.string().optional(),
+  currentAddress: z.string().optional(),
+  mobileNo: z.string().optional().or(z.literal("")),
   notes: z.string().optional(),
   documents: z.array(documentSchema).optional(),
   password: z.string().optional(),
@@ -285,23 +285,23 @@ export function EmployeeForm({
 
     // Family details — individual indexed fields
     values.familyDetails?.forEach((member, i) => {
-      formData.append(`familyDetails[${i}][name]`, member.name);
-      formData.append(`familyDetails[${i}][relation]`, member.relation);
-      formData.append(`familyDetails[${i}][age]`, member.age.toString());
+      formData.append(`familyDetails[${i}][name]`, member.name || '');
+      formData.append(`familyDetails[${i}][relation]`, member.relation || '');
+      formData.append(`familyDetails[${i}][age]`, (member.age ?? 0).toString());
     });
 
     // Academic qualification — individual indexed fields
     values.academicQualification?.forEach((qual, i) => {
-      formData.append(`academicQualification[${i}][degree]`, qual.degree);
-      formData.append(`academicQualification[${i}][institute]`, qual.institute);
-      formData.append(`academicQualification[${i}][year]`, qual.year);
+      formData.append(`academicQualification[${i}][degree]`, qual.degree || '');
+      formData.append(`academicQualification[${i}][institute]`, qual.institute || '');
+      formData.append(`academicQualification[${i}][year]`, qual.year || '');
     });
 
     // Previous work experience — individual indexed fields
     values.previousWorkExperience?.forEach((exp, i) => {
-      formData.append(`previousWorkExperience[${i}][company]`, exp.company);
-      formData.append(`previousWorkExperience[${i}][role]`, exp.role);
-      formData.append(`previousWorkExperience[${i}][years]`, exp.years);
+      formData.append(`previousWorkExperience[${i}][company]`, exp.company || '');
+      formData.append(`previousWorkExperience[${i}][role]`, exp.role || '');
+      formData.append(`previousWorkExperience[${i}][years]`, exp.years || '');
     });
 
     // Profile image
@@ -314,7 +314,7 @@ export function EmployeeForm({
       values.documents.forEach((doc) => {
         if (doc.file instanceof File) {
           formData.append('otherDocuments', doc.file);
-          formData.append('otherDocumentsTitle', doc.title);
+          formData.append('otherDocumentsTitle', doc.title || '');
         }
       });
     }
@@ -585,14 +585,14 @@ export function EmployeeForm({
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Full Name</FormLabel><FormControl><Input placeholder="John Doe" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Full Name *</FormLabel><FormControl><Input placeholder="John Doe" {...field} /></FormControl><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="otherName" render={({ field }) => (<FormItem><FormLabel>Other Name</FormLabel><FormControl><Input placeholder="Alias" {...field} /></FormControl><FormMessage /></FormItem>)} />
                 <FormField
                   control={form.control}
                   name="gender"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Gender</FormLabel>
+                      <FormLabel>Gender *</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger></FormControl>
                         <SelectContent>
