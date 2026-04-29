@@ -41,6 +41,10 @@ import { cn } from "@/lib/utils"
 interface WaterBillTableProps {
   data: WaterBillRecord[]
   isLoading: boolean
+  totalItems: number
+  pageCount: number
+  pagination: { pageIndex: number; pageSize: number }
+  onPaginationChange: (pagination: { pageIndex: number; pageSize: number }) => void
   onDelete: (id: string) => void
   isDeleting: boolean
 }
@@ -94,22 +98,17 @@ function PaymentBadge({ paid, total }: { paid?: string; total?: string }) {
   )
 }
 
-// ── Detail Cell used in expanded row ─────────────────────────────────────────
-function DetailCell({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
-  return (
-    <div className="flex flex-col gap-0.5 min-w-[100px]">
-      <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">
-        {label}
-      </span>
-      <span className={cn("text-xs font-bold", highlight ? "text-blue-600" : "text-slate-700")}>{value || "—"}</span>
-    </div>
-  )
-}
+
+import { DataTablePagination } from "@/components/ui/data-table-pagination"
 
 // ── Main Table ────────────────────────────────────────────────────────────────
 export function WaterBillTable({
   data,
   isLoading,
+  totalItems,
+  pageCount,
+  pagination,
+  onPaginationChange,
   onDelete,
   isDeleting,
 }: WaterBillTableProps) {
@@ -153,7 +152,8 @@ export function WaterBillTable({
   return (
     <>
       <div className="rounded-2xl border border-slate-100 shadow-sm bg-white overflow-hidden">
-        <Table>
+        <div className="overflow-x-auto">
+          <Table>
           <TableHeader>
             <TableRow className="bg-slate-50 hover:bg-slate-50 border-slate-100">
               <TableHead className="w-10 border-r border-slate-100" />
@@ -172,14 +172,53 @@ export function WaterBillTable({
               <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-center border-r border-slate-100">
                 Conn. Size
               </TableHead>
-               <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-center border-r border-slate-100" colSpan={2}>
-                Reading (Old / New)
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-center border-r border-slate-100">
+                Old Reading
+              </TableHead>
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-center border-r border-slate-100">
+                New Reading
               </TableHead>
               <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-center border-r border-slate-100">
                 Unit
               </TableHead>
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-center border-r border-slate-100">
+                Price/Unit
+              </TableHead>
               <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right border-r border-slate-100">
-                Total Amount
+                Charges
+              </TableHead>
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right border-r border-slate-100">
+                Maint.
+              </TableHead>
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right border-r border-slate-100">
+                Sewerage
+              </TableHead>
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right border-r border-slate-100">
+                Meter Rent
+              </TableHead>
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right border-r border-slate-100">
+                Garbage
+              </TableHead>
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right border-r border-slate-100">
+                MC Tax
+              </TableHead>
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right border-r border-slate-100">
+                LPS
+              </TableHead>
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right border-r border-slate-100">
+                Arrears
+              </TableHead>
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right border-r border-slate-100">
+                Total
+              </TableHead>
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right border-r border-slate-100">
+                Paid
+              </TableHead>
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 border-r border-slate-100">
+                Paid On
+              </TableHead>
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 border-r border-slate-100">
+                Remarks
               </TableHead>
               <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-center border-r border-slate-100">
                 Status
@@ -261,6 +300,7 @@ export function WaterBillTable({
                     <TableCell className="py-4 font-bold text-slate-400 text-[13px] text-center border-r border-slate-100">
                       {meta?.oldReading || "—"}
                     </TableCell>
+                    
                     <TableCell className="py-4 font-black text-slate-800 text-[13px] text-center border-r border-slate-100">
                       {meta?.newReading || "—"}
                     </TableCell>
@@ -274,8 +314,56 @@ export function WaterBillTable({
                       </span>
                     </TableCell>
 
+                    <TableCell className="py-4 font-bold text-slate-600 text-[13px] text-right border-r border-slate-100">
+                      {meta?.costPerUnit || "—"}
+                    </TableCell>
+
+                    <TableCell className="py-4 font-bold text-slate-600 text-[13px] text-right border-r border-slate-100">
+                      {formatCurrency(meta?.currentWaterCharges)}
+                    </TableCell>
+
+                    <TableCell className="py-4 font-bold text-slate-600 text-[13px] text-right border-r border-slate-100">
+                      {formatCurrency(meta?.maintenanceCharges)}
+                    </TableCell>
+
+                    <TableCell className="py-4 font-bold text-slate-600 text-[13px] text-right border-r border-slate-100">
+                      {formatCurrency(meta?.sewerageCess)}
+                    </TableCell>
+
+                    <TableCell className="py-4 font-bold text-slate-600 text-[13px] text-right border-r border-slate-100">
+                      {formatCurrency(meta?.meterRentals)}
+                    </TableCell>
+
+                    <TableCell className="py-4 font-bold text-slate-600 text-[13px] text-right border-r border-slate-100">
+                      {formatCurrency(meta?.garbageCharges)}
+                    </TableCell>
+
+                    <TableCell className="py-4 font-bold text-slate-600 text-[13px] text-right border-r border-slate-100">
+                      {formatCurrency(meta?.mcTax)}
+                    </TableCell>
+
+                    <TableCell className="py-4 font-bold text-slate-600 text-[13px] text-right border-r border-slate-100">
+                      {formatCurrency(meta?.latePaymentSurcharge)}
+                    </TableCell>
+
+                    <TableCell className="py-4 font-bold text-slate-600 text-[13px] text-right border-r border-slate-100 text-rose-600">
+                      {formatCurrency(meta?.arrears)}
+                    </TableCell>
+
                     <TableCell className="py-4 font-black text-[14px] text-slate-900 text-right border-r border-slate-100">
                       {formatCurrency(meta?.totalAmount)}
+                    </TableCell>
+
+                    <TableCell className="py-4 font-bold text-emerald-600 text-[13px] text-right border-r border-slate-100">
+                      {formatCurrency(meta?.paidAmount)}
+                    </TableCell>
+
+                    <TableCell className="py-4 font-bold text-slate-600 text-[13px] border-r border-slate-100">
+                      {formatDate(meta?.paidOn)}
+                    </TableCell>
+
+                    <TableCell className="py-4 text-slate-500 text-[12px] border-r border-slate-100 max-w-[150px] truncate">
+                      {meta?.remarks || "—"}
                     </TableCell>
 
                     <TableCell className="py-4 text-center border-r border-slate-100" onClick={(e) => e.stopPropagation()}>
@@ -322,24 +410,8 @@ export function WaterBillTable({
 
                   {isExpanded && (
                     <TableRow className="bg-blue-50/20 border-blue-100">
-                      <TableCell colSpan={12} className="py-6 px-10">
-                        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-6">
-                           <DetailCell label="CURRENT WATER CHARGES" value={formatCurrency(meta?.currentWaterCharges)} />
-                           <DetailCell label="Cost Per Unit" value={`₹${meta?.costPerUnit || "0.00"}`} highlight />
-                           <DetailCell label="Maintenance charges" value={formatCurrency(meta?.maintenanceCharges)} />
-                           <DetailCell label="Sewerage" value={formatCurrency(meta?.sewerageCess)} />
-                           <DetailCell label="Meter Rental" value={formatCurrency(meta?.meterRentals)} />
-                           <DetailCell label="GARBAGE CHARGES" value={formatCurrency(meta?.garbageCharges)} />
-                           <DetailCell label="Arrears" value={formatCurrency(meta?.arrears)} />
-                           <DetailCell label="MC Tax" value={formatCurrency(meta?.mcTax)} />
-                           <DetailCell label="LATE PAYMENT SURCHARGE" value={formatCurrency(meta?.latePaymentSurcharge)} />
-                        </div>
-                        
-                        <div className="mt-6 pt-6 border-t border-slate-100 flex flex-wrap gap-8">
-                           <DetailCell label="Paid Amount" value={formatCurrency(meta?.paidAmount)} />
-                           <DetailCell label="Paid On" value={formatDate(meta?.paidOn)} />
-                           <DetailCell label="Remarks" value={meta?.remarks || "—"} />
-                           
+                      <TableCell colSpan={24} className="py-6 px-10">
+                        <div className="flex flex-wrap gap-8 items-start">
                            {bill.files && bill.files.length > 0 && (
                              <div className="flex-1">
                                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">Documents</p>
@@ -356,6 +428,11 @@ export function WaterBillTable({
                                </div>
                              </div>
                            )}
+                           
+                           <div className="flex flex-col gap-1">
+                             <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Full Remarks</p>
+                             <p className="text-sm text-slate-700 max-w-md">{meta?.remarks || "No remarks provided"}</p>
+                           </div>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -364,9 +441,26 @@ export function WaterBillTable({
               )
             })}
           </TableBody>
-        </Table>
+          </Table>
+        </div>
       </div>
 
+      <div className="mt-4">
+        <DataTablePagination 
+          table={{
+            getState: () => ({ pagination }),
+            setPageIndex: (index: number) => onPaginationChange({ ...pagination, pageIndex: index }),
+            setPageSize: (size: number) => onPaginationChange({ ...pagination, pageSize: size }),
+            getPageCount: () => pageCount,
+            getCanPreviousPage: () => pagination.pageIndex > 0,
+            getCanNextPage: () => pagination.pageIndex < pageCount - 1,
+            previousPage: () => onPaginationChange({ ...pagination, pageIndex: pagination.pageIndex - 1 }),
+            nextPage: () => onPaginationChange({ ...pagination, pageIndex: pagination.pageIndex + 1 }),
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          } as any}
+          totalItems={totalItems}
+        />
+      </div>
     </>
   )
 }

@@ -40,6 +40,10 @@ import { cn } from "@/lib/utils"
 interface ElectricityBillTableProps {
   data: ElectricityBillRecord[]
   isLoading: boolean
+  totalItems: number
+  pageCount: number
+  pagination: { pageIndex: number; pageSize: number }
+  onPaginationChange: (pagination: { pageIndex: number; pageSize: number }) => void
   onDelete: (id: string) => void
   isDeleting?: boolean
 }
@@ -88,18 +92,16 @@ function PaymentBadge({ paid, total }: { paid?: string | number; total?: string 
   )
 }
 
-function DetailCell({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
-  return (
-    <div className="space-y-1">
-      <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">{label}</p>
-      <p className={cn("text-xs font-bold", highlight ? "text-blue-600" : "text-slate-700")}>{value}</p>
-    </div>
-  )
-}
+
+import { DataTablePagination } from "@/components/ui/data-table-pagination"
 
 export function ElectricityBillTable({
   data,
   isLoading,
+  totalItems,
+  pageCount,
+  pagination,
+  onPaginationChange,
   onDelete,
   isDeleting,
 }: ElectricityBillTableProps) {
@@ -117,12 +119,16 @@ export function ElectricityBillTable({
 
   return (
     <div className="rounded-2xl border border-slate-100 shadow-sm bg-white overflow-hidden">
-      <Table>
+      <div className="overflow-x-auto">
+        <Table>
         <TableHeader>
           <TableRow className="bg-slate-50 hover:bg-slate-50 border-slate-100">
             <TableHead className="w-10 border-r border-slate-100" />
             <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 py-4 border-r border-slate-100">
               Account
+            </TableHead>
+            <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 border-r border-slate-100">
+              Account No
             </TableHead>
             <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 border-r border-slate-100">
               Bill Date
@@ -137,7 +143,43 @@ export function ElectricityBillTable({
               kVAh
             </TableHead>
             <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right border-r border-slate-100">
-              Total Amount
+              Price/Unit
+            </TableHead>
+            <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right border-r border-slate-100">
+              Consum.
+            </TableHead>
+            <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right border-r border-slate-100">
+              Fix Chg
+            </TableHead>
+            <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right border-r border-slate-100">
+              FPPCA
+            </TableHead>
+            <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right border-r border-slate-100">
+              ED
+            </TableHead>
+            <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right border-r border-slate-100">
+              Power Factor
+            </TableHead>
+            <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right border-r border-slate-100">
+              MC Tax
+            </TableHead>
+            <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right border-r border-slate-100">
+              Arrears
+            </TableHead>
+            <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right border-r border-slate-100">
+              Paid Rate
+            </TableHead>
+            <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right border-r border-slate-100">
+              Total
+            </TableHead>
+            <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-right border-r border-slate-100">
+              Paid
+            </TableHead>
+            <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 border-r border-slate-100">
+              Paid On
+            </TableHead>
+            <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 border-r border-slate-100">
+              Remarks
             </TableHead>
             <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-center border-r border-slate-100">
               Status
@@ -176,15 +218,14 @@ export function ElectricityBillTable({
                       <div className="h-8 w-8 rounded-lg bg-yellow-50 flex items-center justify-center shrink-0">
                         <Zap className="h-3.5 w-3.5 text-yellow-500" />
                       </div>
-                      <div>
-                        <p className="font-black text-[13px] text-slate-800 leading-tight">
-                          {meta?.accountName || "—"}
-                        </p>
-                        <p className="text-[9px] font-bold text-slate-400 tracking-tight">
-                          ID: {meta?.accountNumber || "—"}
-                        </p>
-                      </div>
+                      <p className="font-black text-[13px] text-slate-800 leading-tight">
+                        {meta?.accountName || "—"}
+                      </p>
                     </div>
+                  </TableCell>
+
+                  <TableCell className="py-4 font-bold text-slate-600 text-[13px] border-r border-slate-100">
+                    {meta?.accountNumber || "—"}
                   </TableCell>
 
                   <TableCell className="py-4 font-bold text-slate-600 text-[13px] border-r border-slate-100">
@@ -207,8 +248,56 @@ export function ElectricityBillTable({
                     </span>
                   </TableCell>
 
+                  <TableCell className="py-4 font-bold text-slate-600 text-[13px] text-right border-r border-slate-100">
+                    {formatCurrency(meta?.unitPriceBasic)}
+                  </TableCell>
+
+                  <TableCell className="py-4 font-bold text-slate-600 text-[13px] text-right border-r border-slate-100">
+                    {formatCurrency(meta?.consumptionCharges)}
+                  </TableCell>
+
+                  <TableCell className="py-4 font-bold text-slate-600 text-[13px] text-right border-r border-slate-100">
+                    {formatCurrency(meta?.fixedCharges)}
+                  </TableCell>
+
+                  <TableCell className="py-4 font-bold text-slate-600 text-[13px] text-right border-r border-slate-100">
+                    {formatCurrency(meta?.fppca)}
+                  </TableCell>
+
+                  <TableCell className="py-4 font-bold text-slate-600 text-[13px] text-right border-r border-slate-100">
+                    {formatCurrency(meta?.ed)}
+                  </TableCell>
+
+                  <TableCell className="py-4 font-bold text-slate-600 text-[13px] text-right border-r border-slate-100">
+                    {meta?.powerFactor || "—"}
+                  </TableCell>
+
+                  <TableCell className="py-4 font-bold text-slate-600 text-[13px] text-right border-r border-slate-100">
+                    {formatCurrency(meta?.mcTax)}
+                  </TableCell>
+
+                  <TableCell className="py-4 font-bold text-slate-600 text-[13px] text-right border-r border-slate-100 text-rose-600">
+                    {formatCurrency(meta?.arrears)}
+                  </TableCell>
+
+                  <TableCell className="py-4 font-bold text-slate-600 text-[13px] text-right border-r border-slate-100">
+                    {formatCurrency(meta?.paidUnitRate)}
+                  </TableCell>
+
                   <TableCell className="py-4 font-black text-[14px] text-slate-900 text-right border-r border-slate-100">
                     {formatCurrency(meta?.totalAmount)}
+                  </TableCell>
+
+                  <TableCell className="py-4 font-bold text-emerald-600 text-[13px] text-right border-r border-slate-100">
+                    {formatCurrency(meta?.paidAmount)}
+                  </TableCell>
+
+                  <TableCell className="py-4 font-bold text-slate-600 text-[13px] border-r border-slate-100">
+                    {formatDate(meta?.paidOn)}
+                  </TableCell>
+
+                  <TableCell className="py-4 text-slate-500 text-[12px] border-r border-slate-100 max-w-[150px] truncate">
+                    {meta?.remarks || "—"}
                   </TableCell>
 
                   <TableCell className="py-4 text-center border-r border-slate-100" onClick={(e) => e.stopPropagation()}>
@@ -255,38 +344,8 @@ export function ElectricityBillTable({
 
                 {isExpanded && (
                   <TableRow className="bg-slate-50/50">
-                    <TableCell colSpan={10} className="px-12 py-8">
-                      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
-                         <DetailCell label="kWh Unit" value={meta?.unitKwh || "—"} highlight />
-                         <DetailCell label="kVAh Unit" value={meta?.unitKvah || "—"} highlight />
-                         <DetailCell label="kWh-kVAh" value={meta?.kwhKvahDiff || "—"} />
-                         <DetailCell label="kWh/kVAh (%)" value={meta?.kwhKvahRatio ? `${meta.kwhKvahRatio}%` : "—"} highlight />
-                         <DetailCell label="Basic Unit Price" value={formatCurrency(meta?.unitPriceBasic)} />
-                         <DetailCell label="Consum. Charges" value={formatCurrency(meta?.consumptionCharges)} highlight />
-                         <DetailCell label="FPPCA" value={formatCurrency(meta?.fppca)} />
-                         <DetailCell label="ED Rate" value={meta?.edRate || "—"} />
-                         <DetailCell label="ED" value={formatCurrency(meta?.ed)} />
-                         <DetailCell label="Fix Charges" value={formatCurrency(meta?.fixedCharges)} />
-                         <DetailCell label="Power Factor" value={meta?.powerFactor || "—"} />
-                         <DetailCell label="MC Tax Rate" value={meta?.mcTaxRate || "—"} />
-                         <DetailCell label="MC Tax" value={formatCurrency(meta?.mcTax)} />
-                         <DetailCell label="P.F. Incentive" value={formatCurrency(meta?.pfIncentive)} />
-                         <DetailCell label="Regl. Surc" value={formatCurrency(meta?.regSurcharge)} />
-                         <DetailCell label="Payment Rebate" value={formatCurrency(meta?.paymentRebate)} />
-                         <DetailCell label="Sundry Charges" value={formatCurrency(meta?.sundryCharges)} />
-                         <DetailCell label="Arrear - Reg" value={formatCurrency(meta?.arrears)} />
-                         <DetailCell label="Rev. of Arrear" value={formatCurrency(meta?.reversalOfArrear)} />
-                         <DetailCell label="ACD Int" value={formatCurrency(meta?.acdInt)} />
-                         <DetailCell label="ACD" value={formatCurrency(meta?.acd)} />
-                         <DetailCell label="Last ACD" value={formatCurrency(meta?.lastAcd)} />
-                         <DetailCell label="Actual Unit Price" value={formatCurrency(meta?.paidUnitRate)} highlight />
-                      </div>
-                      
-                      <div className="mt-6 pt-6 border-t border-slate-200 flex flex-wrap gap-8">
-                         <DetailCell label="Actual Paid" value={formatCurrency(meta?.paidAmount)} highlight />
-                         <DetailCell label="Paid On" value={formatDate(meta?.paidOn)} />
-                         <DetailCell label="Remarks" value={meta?.remarks || "—"} />
-                         
+                    <TableCell colSpan={24} className="px-12 py-8">
+                      <div className="flex flex-wrap gap-8 items-start">
                          {bill.files && bill.files.length > 0 && (
                            <div className="flex-1">
                              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">Documents</p>
@@ -300,6 +359,11 @@ export function ElectricityBillTable({
                              </div>
                            </div>
                          )}
+
+                         <div className="flex flex-col gap-1">
+                           <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Full Remarks</p>
+                           <p className="text-sm text-slate-700 max-w-md">{meta?.remarks || "No remarks provided"}</p>
+                         </div>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -308,7 +372,25 @@ export function ElectricityBillTable({
             )
           })}
         </TableBody>
-      </Table>
+        </Table>
+      </div>
+
+      <div className="p-4 border-t border-slate-100 bg-slate-50/30">
+        <DataTablePagination 
+          table={{
+            getState: () => ({ pagination }),
+            setPageIndex: (index: number) => onPaginationChange({ ...pagination, pageIndex: index }),
+            setPageSize: (size: number) => onPaginationChange({ ...pagination, pageSize: size }),
+            getPageCount: () => pageCount,
+            getCanPreviousPage: () => pagination.pageIndex > 0,
+            getCanNextPage: () => pagination.pageIndex < pageCount - 1,
+            previousPage: () => onPaginationChange({ ...pagination, pageIndex: pagination.pageIndex - 1 }),
+            nextPage: () => onPaginationChange({ ...pagination, pageIndex: pagination.pageIndex + 1 }),
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          } as any}
+          totalItems={totalItems}
+        />
+      </div>
     </div>
   )
 }

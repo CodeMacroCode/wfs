@@ -11,6 +11,7 @@ import {
 import { cn } from "@/lib/utils"
 import { useDocCenterQuery } from "@/hooks/queries/use-doc-center"
 import { useDeleteDocMutation } from "@/hooks/queries/use-doc-center"
+import { docCenterService } from "@/services/doc-center-service"
 import { useDebounce } from "@/hooks/use-debounce"
 import { Input } from "@/components/ui/input"
 import { WaterBillFormDialog } from "@/components/dashboard/bill/water-bill-form-dialog"
@@ -20,6 +21,9 @@ import { ElectricityBillRecord, ElectricityBillMetadata } from "@/types/electric
 import { ElectricityBillFormDialog } from "@/components/dashboard/bill/electricity-bill-form-dialog"
 import { ElectricityBillTable } from "@/components/dashboard/bill/electricity-bill-table"
 import { DocumentItem } from "@/types/doc-center"
+import { DataTableExport } from "@/components/ui/data-table-export"
+import { ColumnDef } from "@tanstack/react-table"
+import { format } from "date-fns"
 
 // ── Stat Card ─────────────────────────────────────────────────────────────────
 
@@ -77,19 +81,22 @@ export default function BillPage() {
   const [activeTab, setActiveTab] = React.useState<"Water" | "Electricity">("Water")
   const [search, setSearch] = React.useState("")
   const [accountFilter, setAccountFilter] = React.useState<string>("all")
+  const [pagination, setPagination] = React.useState({ pageIndex: 0, pageSize: 10 })
   const debouncedSearch = useDebounce(search, 400)
 
   // Fetch Water Bills
   const waterQuery = useDocCenterQuery({
     documentType: "Water",
-    limit: 200,
+    page: pagination.pageIndex + 1,
+    limit: pagination.pageSize,
     search: activeTab === "Water" ? debouncedSearch : undefined,
   })
 
   // Fetch Electricity Bills
   const electricityQuery = useDocCenterQuery({
     documentType: "Electricity",
-    limit: 200,
+    page: pagination.pageIndex + 1,
+    limit: pagination.pageSize,
     search: activeTab === "Electricity" ? debouncedSearch : undefined,
   })
 
@@ -123,6 +130,66 @@ export default function BillPage() {
     }
     return list
   }, [currentBills, accountFilter])
+
+  const waterExportColumns: ColumnDef<WaterBillRecord>[] = [
+    { accessorKey: "metadata.accountName", header: "Account Name", meta: { exportValue: (row: WaterBillRecord) => row.metadata?.accountName || "N/A" } },
+    { accessorKey: "metadata.billDate", header: "Bill Date", meta: { exportValue: (row: WaterBillRecord) => row.metadata?.billDate ? format(new Date(row.metadata.billDate), "dd MMM yyyy") : "N/A" } },
+    { accessorKey: "metadata.dueDate", header: "Due Date", meta: { exportValue: (row: WaterBillRecord) => row.metadata?.dueDate ? format(new Date(row.metadata.dueDate), "dd MMM yyyy") : "N/A" } },
+    { accessorKey: "metadata.billFrom", header: "Bill From", meta: { exportValue: (row: WaterBillRecord) => row.metadata?.billFrom ? format(new Date(row.metadata.billFrom), "dd MMM yyyy") : "N/A" } },
+    { accessorKey: "metadata.billTo", header: "Bill To", meta: { exportValue: (row: WaterBillRecord) => row.metadata?.billTo ? format(new Date(row.metadata.billTo), "dd MMM yyyy") : "N/A" } },
+    { accessorKey: "metadata.connectionSize", header: "Conn Size", meta: { exportValue: (row: WaterBillRecord) => row.metadata?.connectionSize || "N/A" } },
+    { accessorKey: "metadata.oldReading", header: "Old Reading", meta: { exportValue: (row: WaterBillRecord) => row.metadata?.oldReading || "N/A" } },
+    { accessorKey: "metadata.newReading", header: "New Reading", meta: { exportValue: (row: WaterBillRecord) => row.metadata?.newReading || "N/A" } },
+    { accessorKey: "metadata.unit", header: "Unit", meta: { exportValue: (row: WaterBillRecord) => row.metadata?.unit || "N/A" } },
+    { accessorKey: "metadata.costPerUnit", header: "Cost/Unit", meta: { exportValue: (row: WaterBillRecord) => row.metadata?.costPerUnit || "N/A" } },
+    { accessorKey: "metadata.currentWaterCharges", header: "Charges", meta: { exportValue: (row: WaterBillRecord) => row.metadata?.currentWaterCharges || "N/A" } },
+    { accessorKey: "metadata.maintenanceCharges", header: "Maint.", meta: { exportValue: (row: WaterBillRecord) => row.metadata?.maintenanceCharges || "N/A" } },
+    { accessorKey: "metadata.sewerageCess", header: "Sewerage", meta: { exportValue: (row: WaterBillRecord) => row.metadata?.sewerageCess || "N/A" } },
+    { accessorKey: "metadata.meterRentals", header: "Meter Rent", meta: { exportValue: (row: WaterBillRecord) => row.metadata?.meterRentals || "N/A" } },
+    { accessorKey: "metadata.garbageCharges", header: "Garbage", meta: { exportValue: (row: WaterBillRecord) => row.metadata?.garbageCharges || "N/A" } },
+    { accessorKey: "metadata.arrears", header: "Arrears", meta: { exportValue: (row: WaterBillRecord) => row.metadata?.arrears || "N/A" } },
+    { accessorKey: "metadata.mcTax", header: "MC Tax", meta: { exportValue: (row: WaterBillRecord) => row.metadata?.mcTax || "N/A" } },
+    { accessorKey: "metadata.latePaymentSurcharge", header: "LPS", meta: { exportValue: (row: WaterBillRecord) => row.metadata?.latePaymentSurcharge || "N/A" } },
+    { accessorKey: "metadata.totalAmount", header: "Total", meta: { exportValue: (row: WaterBillRecord) => row.metadata?.totalAmount || "N/A" } },
+    { accessorKey: "metadata.paidAmount", header: "Paid", meta: { exportValue: (row: WaterBillRecord) => row.metadata?.paidAmount || "N/A" } },
+    { accessorKey: "metadata.paidOn", header: "Paid On", meta: { exportValue: (row: WaterBillRecord) => row.metadata?.paidOn ? format(new Date(row.metadata.paidOn), "dd MMM yyyy") : "N/A" } },
+    { accessorKey: "metadata.remarks", header: "Remarks", meta: { exportValue: (row: WaterBillRecord) => row.metadata?.remarks || "N/A" } },
+  ]
+
+  const electricityExportColumns: ColumnDef<ElectricityBillRecord>[] = [
+    { accessorKey: "metadata.accountName", header: "Account Name", meta: { exportValue: (row: ElectricityBillRecord) => row.metadata?.accountName || "N/A" } },
+    { accessorKey: "metadata.accountNumber", header: "Account No", meta: { exportValue: (row: ElectricityBillRecord) => row.metadata?.accountNumber || "N/A" } },
+    { accessorKey: "metadata.billDate", header: "Bill Date", meta: { exportValue: (row: ElectricityBillRecord) => row.metadata?.billDate ? format(new Date(row.metadata.billDate), "dd MMM yyyy") : "N/A" } },
+    { accessorKey: "metadata.billFrom", header: "Bill From", meta: { exportValue: (row: ElectricityBillRecord) => row.metadata?.billFrom ? format(new Date(row.metadata.billFrom), "dd MMM yyyy") : "N/A" } },
+    { accessorKey: "metadata.billTo", header: "Bill To", meta: { exportValue: (row: ElectricityBillRecord) => row.metadata?.billTo ? format(new Date(row.metadata.billTo), "dd MMM yyyy") : "N/A" } },
+    { accessorKey: "metadata.unitKwh", header: "kWh", meta: { exportValue: (row: ElectricityBillRecord) => row.metadata?.unitKwh || "N/A" } },
+    { accessorKey: "metadata.unitKvah", header: "kVAh", meta: { exportValue: (row: ElectricityBillRecord) => row.metadata?.unitKvah || "N/A" } },
+    { accessorKey: "metadata.unitPriceBasic", header: "Price Basic", meta: { exportValue: (row: ElectricityBillRecord) => row.metadata?.unitPriceBasic || "N/A" } },
+    { accessorKey: "metadata.consumptionCharges", header: "Consum. Chg", meta: { exportValue: (row: ElectricityBillRecord) => row.metadata?.consumptionCharges || "N/A" } },
+    { accessorKey: "metadata.fppca", header: "FPPCA", meta: { exportValue: (row: ElectricityBillRecord) => row.metadata?.fppca || "N/A" } },
+    { accessorKey: "metadata.ed", header: "ED", meta: { exportValue: (row: ElectricityBillRecord) => row.metadata?.ed || "N/A" } },
+    { accessorKey: "metadata.fixedCharges", header: "Fix Charges", meta: { exportValue: (row: ElectricityBillRecord) => row.metadata?.fixedCharges || "N/A" } },
+    { accessorKey: "metadata.powerFactor", header: "Power Factor", meta: { exportValue: (row: ElectricityBillRecord) => row.metadata?.powerFactor || "N/A" } },
+    { accessorKey: "metadata.mcTax", header: "MC Tax", meta: { exportValue: (row: ElectricityBillRecord) => row.metadata?.mcTax || "N/A" } },
+    { accessorKey: "metadata.arrears", header: "Arrears", meta: { exportValue: (row: ElectricityBillRecord) => row.metadata?.arrears || "N/A" } },
+    { accessorKey: "metadata.totalAmount", header: "Total", meta: { exportValue: (row: ElectricityBillRecord) => row.metadata?.totalAmount || "N/A" } },
+    { accessorKey: "metadata.paidAmount", header: "Paid", meta: { exportValue: (row: ElectricityBillRecord) => row.metadata?.paidAmount || "N/A" } },
+    { accessorKey: "metadata.paidOn", header: "Paid On", meta: { exportValue: (row: ElectricityBillRecord) => row.metadata?.paidOn ? format(new Date(row.metadata.paidOn), "dd MMM yyyy") : "N/A" } },
+    { accessorKey: "metadata.remarks", header: "Remarks", meta: { exportValue: (row: ElectricityBillRecord) => row.metadata?.remarks || "N/A" } },
+  ]
+
+  const fetchAllBills = async () => {
+    const res = await docCenterService.getAll({
+      documentType: activeTab,
+      limit: 5000,
+      search: debouncedSearch || undefined,
+    });
+    return { 
+      data: activeTab === "Water" 
+        ? res.data.map(asWaterBill) 
+        : res.data.map(asElectricityBill) 
+    };
+  };
 
 
 
@@ -176,6 +243,12 @@ export default function BillPage() {
         </div>
 
         <div className="flex items-center gap-3">
+          <DataTableExport
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            columns={(activeTab === "Water" ? waterExportColumns : electricityExportColumns) as any}
+            fetchData={fetchAllBills as any}
+            filename={`${activeTab}_Bills_Report`}
+          />
           {activeTab === "Water" ? (
             <WaterBillFormDialog />
           ) : (
@@ -235,6 +308,10 @@ export default function BillPage() {
             <WaterBillTable
               data={filteredBills as WaterBillRecord[]}
               isLoading={isLoading}
+              totalItems={waterQuery.data?.pagination?.total || 0}
+              pageCount={waterQuery.data?.pagination?.totalPages || 1}
+              pagination={pagination}
+              onPaginationChange={setPagination}
               onDelete={(id) => deleteMutation.mutate(id)}
               isDeleting={deleteMutation.isPending}
             />
@@ -242,6 +319,10 @@ export default function BillPage() {
             <ElectricityBillTable
               data={filteredBills as ElectricityBillRecord[]}
               isLoading={isLoading}
+              totalItems={electricityQuery.data?.pagination?.total || 0}
+              pageCount={electricityQuery.data?.pagination?.totalPages || 1}
+              pagination={pagination}
+              onPaginationChange={setPagination}
               onDelete={(id) => deleteMutation.mutate(id)}
               isDeleting={deleteMutation.isPending}
             />
