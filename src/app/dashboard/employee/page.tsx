@@ -1,0 +1,271 @@
+"use client"
+
+import * as React from "react"
+import { RefreshCw, XCircle } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { useDataTable } from "@/hooks/use-data-table"
+import { useEmployeesQuery } from "@/hooks/queries/use-employees-query"
+import { Employee, EmployeeQueryParams } from "@/types/employee"
+import { RegisterEmployeeDialog, EditEmployeeDialog } from "@/components/employee/employee-dialogs"
+import { AvailableEmployeeIdDialog } from "@/components/employee/available-employee-id-dialog"
+import { ExcelUpload } from "@/components/ExcelUpload"
+import { DeleteEmployeeDialog } from "@/components/employee/delete-employee-dialog"
+import { DataTableExport } from "@/components/ui/data-table-export"
+import { employeeService } from "@/services/employee-service"
+import { EmployeeTable, getEmployeeColumns } from "./employee-table"
+import { InfiniteScrollSelect } from "@/components/ui/infinite-scroll-select"
+import { useCompanyDropdownInfiniteQuery } from "@/hooks/queries/use-company"
+import { useDepartmentsQuery, useDesignationsQuery } from "@/hooks/queries/use-org"
+import { DepartmentManagementDialog } from "@/components/org/department-management-dialog"
+import { DesignationManagementDialog } from "@/components/org/designation-management-dialog"
+import { useDebounce } from "@/hooks/use-debounce"
+
+export default function EmployeeMaster() {
+  const [editingEmployee, setEditingEmployee] = React.useState<Employee | null>(null)
+  const [deletingEmployeeId, setDeletingEmployeeId] = React.useState<string | null>(null)
+  const [companyId, setCompanyId] = React.useState<string | undefined>(undefined)
+  const [departmentId, setDepartmentId] = React.useState<string | undefined>(undefined)
+  const [designationId, setDesignationId] = React.useState<string | undefined>(undefined)
+  const [isDeptDialogOpen, setIsDeptDialogOpen] = React.useState(false)
+  const [isDesgDialogOpen, setIsDesgDialogOpen] = React.useState(false)
+  const [companySearch, setCompanySearch] = React.useState("")
+  const debouncedCompanySearch = useDebounce(companySearch, 500)
+
+  const {
+    pagination,
+    onPaginationChange,
+    onSortingChange,
+    search,
+    onSearchChange,
+    apiParams,
+  } = useDataTable({
+    storageKey: "employee-master",
+    initialPageSize: 10,
+  })
+
+  const { data, isLoading, refetch, isFetching } = useEmployeesQuery({ 
+    ...apiParams, 
+    limit: 10,
+    companyId,
+    departmentId,
+    designationId
+  } as EmployeeQueryParams)
+
+  const { 
+    data: companiesData, 
+    fetchNextPage, 
+    hasNextPage, 
+    isFetchingNextPage, 
+    isLoading: companiesLoading 
+  } = useCompanyDropdownInfiniteQuery({ search: debouncedCompanySearch })
+
+  const { data: deptsData, isLoading: deptsLoading } = useDepartmentsQuery()
+  const { data: desgsData, isLoading: desgsLoading } = useDesignationsQuery()
+
+  const companies = companiesData?.pages.flatMap((page) => page.data) || []
+  const departments = deptsData?.data?.filter(d => d.isActive !== false) || []
+  const designations = desgsData?.data?.filter(d => d.isActive !== false) || []
+
+  // Use a static version of columns for export (without actions, including all fields)
+  const exportColumns = React.useMemo(() => getEmployeeColumns(undefined, undefined, undefined, undefined, true), [])
+
+  return (
+    <div className="flex-1 space-y-4 p-8 pt-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900">Employee Master</h2>
+          <p className="text-sm text-slate-500">
+            Manage your organization&apos;s employees and their access levels.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => refetch()}
+            disabled={isLoading || isFetching}
+            className="border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors h-10 w-10 p-0 cursor-pointer"
+            title="Refresh Data"
+          >
+            <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
+          </Button>
+          <DataTableExport
+            columns={exportColumns}
+            filename="employee_report"
+            fetchData={() => employeeService.getAll({ ...apiParams, limit: "all" } as EmployeeQueryParams)}
+            defaultSelectedColumns={['name', 'uniqueId', 'designation']}
+          />
+          <AvailableEmployeeIdDialog />
+          <ExcelUpload 
+            uploadUrl="/user/bulk-upload"
+            onSuccess={() => refetch()}
+            templateHeaders={[
+              "name", "role", "uniqueId", "mobileNo", "gender", "dob", "doj", 
+              "permanentAddress", "currentAddress", "workingHours", "aadharNo", 
+              "pfNo", "esiNo", "companyId", "designationId", "departmentId", 
+              "alias", "contactPerson", "phoneNumber", "referredBy", "notes"
+            ]}
+            templateSampleData={[{
+              name: "John Doe",
+              role: "user",
+              uniqueId: "1001",
+              mobileNo: "9876543210",
+              gender: "male",
+              dob: "1995-05-10",
+              doj: "2023-01-01",
+              permanentAddress: "Nagpur",
+              currentAddress: "Nagpur",
+              workingHours: "8",
+              aadharNo: "123412341234",
+              pfNo: "",
+              esiNo: "",
+              companyId: "",
+              designationId: "",
+              departmentId: "",
+              alias: "JD",
+              contactPerson: "Manager",
+              phoneNumber: "9999999999",
+              referredBy: "HR",
+              notes: "Good employee"
+            }]}
+            templateFileName="employee_bulk_upload_template.xlsx"
+            title="Bulk Upload Employees"
+            description="Upload your employee data using an Excel or CSV file."
+          />
+          <RegisterEmployeeDialog />
+        </div>
+      </div>
+
+      <EmployeeTable
+        data={data?.data || []}
+        isLoading={isLoading}
+        totalItems={data?.pagination?.total || 0}
+        pageCount={data?.pagination?.totalPages || 0}
+        pagination={{ ...pagination, pageSize: 10 }}
+        onPaginationChange={onPaginationChange}
+        onSortingChange={onSortingChange}
+        search={search}
+        onSearchChange={onSearchChange}
+        onEdit={setEditingEmployee}
+        onDelete={setDeletingEmployeeId}
+        extraActions={
+          <div className="flex items-center gap-2">
+            {(companyId || departmentId || designationId) && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  setCompanyId(undefined)
+                  setDepartmentId(undefined)
+                  setDesignationId(undefined)
+                  onPaginationChange({ ...pagination, pageIndex: 0 })
+                }}
+                className="h-8 w-8 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-full transition-colors cursor-pointer"
+                title="Clear All Filters"
+              >
+                <XCircle className="h-3.5 w-3.5" />
+              </Button>
+            )}
+            
+            <div className="w-[180px]">
+              <InfiniteScrollSelect
+                placeholder="Filter by Company"
+                searchPlaceholder="Search companies..."
+                items={companies}
+                value={companyId}
+                onValueChange={(val) => {
+                  setCompanyId(val === companyId ? undefined : val)
+                  onPaginationChange({ ...pagination, pageIndex: 0 })
+                }}
+                onSearchChange={setCompanySearch}
+                loadMore={() => fetchNextPage()}
+                hasNextPage={!!hasNextPage}
+                isFetchingNextPage={isFetchingNextPage}
+                isLoading={companiesLoading}
+                getLabel={(item) => item.name}
+                getValue={(item) => item._id}
+                className="h-10 border-slate-200 rounded-xl bg-white shadow-sm font-semibold text-xs text-slate-700"
+              />
+            </div>
+
+            <div className="w-[180px]">
+              <InfiniteScrollSelect
+                placeholder="Filter by Dept"
+                searchPlaceholder="Search departments..."
+                items={departments}
+                value={departmentId}
+                onValueChange={(val) => {
+                  setDepartmentId(val === departmentId ? undefined : val)
+                  onPaginationChange({ ...pagination, pageIndex: 0 })
+                }}
+                isLoading={deptsLoading}
+                getLabel={(item) => item.name}
+                getValue={(item) => item._id}
+                hideSearch={true}
+                className="h-10 border-slate-200 rounded-xl bg-white shadow-sm font-semibold text-xs text-slate-700"
+                actionButton={
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start text-xs font-bold text-teal-600 hover:text-teal-700 hover:bg-teal-50 px-2 py-1.5 h-8"
+                    onClick={() => setIsDeptDialogOpen(true)}
+                  >
+                    + Manage Departments
+                  </Button>
+                }
+              />
+            </div>
+
+            <div className="w-[180px]">
+              <InfiniteScrollSelect
+                placeholder="Filter by Desg"
+                searchPlaceholder="Search designations..."
+                items={designations}
+                value={designationId}
+                onValueChange={(val) => {
+                  setDesignationId(val === designationId ? undefined : val)
+                  onPaginationChange({ ...pagination, pageIndex: 0 })
+                }}
+                isLoading={desgsLoading}
+                getLabel={(item) => item.name}
+                getValue={(item) => item._id}
+                hideSearch={true}
+                className="h-10 border-slate-200 rounded-xl bg-white shadow-sm font-semibold text-xs text-slate-700"
+                actionButton={
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start text-xs font-bold text-amber-600 hover:text-amber-700 hover:bg-amber-50 px-2 py-1.5 h-8"
+                    onClick={() => setIsDesgDialogOpen(true)}
+                  >
+                    + Manage Designations
+                  </Button>
+                }
+              />
+            </div>
+          </div>
+        }
+      />
+
+      <DepartmentManagementDialog 
+        open={isDeptDialogOpen} 
+        onOpenChange={setIsDeptDialogOpen} 
+      />
+
+      <DesignationManagementDialog 
+        open={isDesgDialogOpen} 
+        onOpenChange={setIsDesgDialogOpen} 
+      />
+
+      <EditEmployeeDialog
+        employee={editingEmployee}
+        open={!!editingEmployee}
+        onOpenChange={(open) => !open && setEditingEmployee(null)}
+      />
+
+      <DeleteEmployeeDialog
+        employeeId={deletingEmployeeId}
+        open={!!deletingEmployeeId}
+        onOpenChange={(open) => !open && setDeletingEmployeeId(null)}
+      />
+    </div>
+  )
+}
