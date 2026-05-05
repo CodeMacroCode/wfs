@@ -40,10 +40,7 @@ export function RoasterTable({ data, isLoading, pagination, onPaginationChange, 
       cell: ({ row }) => (
         <div className="flex flex-col">
           <span className="font-semibold text-slate-900">
-            {row.original.name}
-            {row.original.otherName && (
-              <span className="text-slate-400 font-normal ml-1">({row.original.otherName})</span>
-            )}
+            {row.original.otherName || row.original.name}
           </span>
           <span className="text-xs text-slate-500">
             {row.original.employeeObjId?.employeeId || `ID: ${row.original.uniqueId}`}

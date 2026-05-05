@@ -67,7 +67,7 @@ export const getEmployeeColumns = (
             header: "Employee",
             cell: ({ row }) => (
                 <div className="flex flex-col items-center text-center">
-                    <span className="font-semibold text-slate-800">{row.original.name}</span>
+                    <span className="font-semibold text-slate-800">{row.original.otherName || row.original.name}</span>
                 </div>
             ),
             meta: {

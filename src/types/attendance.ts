@@ -33,6 +33,7 @@ export interface Attendance {
   userId: {
     _id: string;
     name: string;
+    otherName?: string;
     email: string;
     employeeId?: string;
     designation?: string;
@@ -64,6 +65,7 @@ export interface UserAttendanceItem {
   user: {
     _id: string;
     name: string;
+    otherName?: string;
     email: string;
     employeeId?: string;
     designation?: string;

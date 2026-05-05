@@ -135,7 +135,7 @@ export function AttendanceTable({
             </div>
             <div className="flex flex-col">
               <span className="font-bold text-slate-900 line-clamp-1">
-                {user?.name || "Unknown"}
+                {user?.otherName || user?.name || "Unknown"}
               </span>
               <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-tighter">
                 {user?.employeeId}
