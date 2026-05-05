@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { RefreshCw, XCircle, Trash2 } from "lucide-react"
+import { useSearchParams, useRouter, usePathname } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { useDataTable } from "@/hooks/use-data-table"
@@ -20,17 +21,34 @@ import { useDepartmentsQuery, useDesignationsQuery } from "@/hooks/queries/use-o
 import { DepartmentManagementDialog } from "@/components/org/department-management-dialog"
 import { DesignationManagementDialog } from "@/components/org/designation-management-dialog"
 import { useDebounce } from "@/hooks/use-debounce"
+import { Suspense } from "react"
 
-export default function EmployeeMaster() {
+function EmployeeMasterContent() {
+  const searchParams = useSearchParams()
+  const initialCompanyId = searchParams.get("companyId") || undefined
+  const initialGender = searchParams.get("gender") || undefined
+
   const [editingEmployee, setEditingEmployee] = React.useState<Employee | null>(null)
   const [deletingEmployeeId, setDeletingEmployeeId] = React.useState<string | null>(null)
-  const [companyId, setCompanyId] = React.useState<string | undefined>(undefined)
+  const [companyId, setCompanyId] = React.useState<string | undefined>(initialCompanyId)
+  const [gender, setGender] = React.useState<string | undefined>(initialGender)
   const [departmentId, setDepartmentId] = React.useState<string | undefined>(undefined)
   const [designationId, setDesignationId] = React.useState<string | undefined>(undefined)
   const [isDeptDialogOpen, setIsDeptDialogOpen] = React.useState(false)
   const [isDesgDialogOpen, setIsDesgDialogOpen] = React.useState(false)
   const [companySearch, setCompanySearch] = React.useState("")
   const debouncedCompanySearch = useDebounce(companySearch, 500)
+  const router = useRouter()
+  const pathname = usePathname()
+
+  const handleClearFilters = () => {
+    setCompanyId(undefined)
+    setDepartmentId(undefined)
+    setDesignationId(undefined)
+    setGender(undefined)
+    onPaginationChange({ ...pagination, pageIndex: 0 })
+    router.push(pathname)
+  }
 
   const {
     pagination,
@@ -49,7 +67,8 @@ export default function EmployeeMaster() {
     limit: 10,
     companyId,
     departmentId,
-    designationId
+    designationId,
+    gender
   } as EmployeeQueryParams)
 
   const { 
@@ -157,20 +176,16 @@ export default function EmployeeMaster() {
         onDelete={setDeletingEmployeeId}
         extraActions={
           <div className="flex items-center gap-2">
-            {(companyId || departmentId || designationId) && (
+            {(companyId || departmentId || designationId || gender) && (
               <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => {
-                  setCompanyId(undefined)
-                  setDepartmentId(undefined)
-                  setDesignationId(undefined)
-                  onPaginationChange({ ...pagination, pageIndex: 0 })
-                }}
-                className="h-8 w-8 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-full transition-colors cursor-pointer"
+                variant="outline"
+                size="sm"
+                onClick={handleClearFilters}
+                className="h-10 px-4 border-rose-100 text-rose-600 bg-rose-50 hover:bg-rose-100 hover:border-rose-200 rounded-xl transition-all flex items-center gap-2 font-bold text-xs"
                 title="Clear All Filters"
               >
-                <XCircle className="h-3.5 w-3.5" />
+                <XCircle className="h-4 w-4" />
+                Clear Filters
               </Button>
             )}
             
@@ -274,5 +289,20 @@ export default function EmployeeMaster() {
         onOpenChange={(open) => !open && setDeletingEmployeeId(null)}
       />
     </div>
+  )
+}
+
+export default function EmployeeMaster() {
+  return (
+    <Suspense fallback={
+      <div className="flex h-[calc(100vh-64px)] items-center justify-center bg-slate-50/20">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-teal-500/20 border-t-teal-500 rounded-full animate-spin" />
+          <p className="text-sm font-medium text-slate-500 animate-pulse">Loading Employees...</p>
+        </div>
+      </div>
+    }>
+      <EmployeeMasterContent />
+    </Suspense>
   )
 }

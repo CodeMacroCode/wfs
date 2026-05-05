@@ -220,6 +220,20 @@ export default function DashboardPage() {
     })
   }
 
+  const handleGenderClick = (genderId?: string) => {
+    const params = new URLSearchParams()
+    if (genderId && (genderId === 'male' || genderId === 'female')) {
+      params.set('gender', genderId)
+    }
+    
+    const companyIds = selectedCompanyIds.filter(id => id !== 'overall')
+    if (companyIds.length > 0) {
+      params.set('companyId', companyIds[0])
+    }
+    
+    router.push(`/dashboard/employee?${params.toString()}`)
+  }
+
   // Derive Display Data for Gender Distribution
   const genderDistributionData = useMemo(() => {
     if (!currentStats) return []
@@ -616,7 +630,8 @@ export default function DashboardPage() {
             {genderDistributionData.map((item, index) => (
               <div 
                 key={`legend-${index}`} 
-                className="flex items-center justify-between group hover:bg-slate-50 p-2 -mx-2 rounded-xl transition-colors"
+                onClick={() => handleGenderClick(item.id)}
+                className="flex items-center justify-between group hover:bg-slate-50 p-2 -mx-2 rounded-xl transition-colors cursor-pointer"
               >
                 <div className="flex items-center gap-4">
                   <div className="h-7 w-12 flex items-center justify-center rounded-lg text-[11px] font-black text-white shadow-sm" style={{ backgroundColor: item.color }}>
@@ -624,13 +639,24 @@ export default function DashboardPage() {
                   </div>
                   <span className="text-sm font-bold text-slate-700">{item.name}</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-black text-slate-800">{item.count}</span>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Employees</span>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-black text-slate-800">{item.count}</span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Employees</span>
+                  </div>
+                  <ArrowRight className="h-3.5 w-3.5 text-slate-300 group-hover:text-slate-500 group-hover:translate-x-0.5 transition-all" />
                 </div>
               </div>
             ))}
           </div>
+
+          <Button 
+            onClick={() => handleGenderClick()}
+            className="w-full mt-6 bg-slate-50 border border-slate-100 text-slate-500 font-black text-[10px] h-10 shadow-none hover:bg-slate-100 hover:text-slate-700 rounded-xl group transition-all uppercase tracking-wider"
+          >
+            See More
+            <ArrowRight className="ml-1.5 h-3 w-3" />
+          </Button>
         </Card>
       </div>
 
