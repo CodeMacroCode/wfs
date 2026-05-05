@@ -28,7 +28,7 @@ const leaveFormSchema = z.object({
   employeeId: z.string().min(1, "Employee ID is required"),
   fromDate: z.string().min(1, "Start date is required"),
   toDate: z.string().min(1, "End date is required"),
-  leaveType: z.string().min(3, "Please provide a leave type (min 3 chars)"),
+  reason: z.string().min(5, "Please provide a reason (min 5 chars)"),
 })
 
 type LeaveFormValues = z.infer<typeof leaveFormSchema>
@@ -43,7 +43,7 @@ export default function ApplyForLeavePage() {
       employeeId: "",
       fromDate: new Date().toISOString().substring(0, 10),
       toDate: new Date().toISOString().substring(0, 10),
-      leaveType: "Sick",
+      reason: "",
     },
   })
 
@@ -56,7 +56,8 @@ export default function ApplyForLeavePage() {
         employeeId: values.employeeId,
         fromDate: values.fromDate,
         toDate: values.toDate,
-        leaveType: values.leaveType,
+        leaveType: "Sick",
+        reason: values.reason,
       }
 
       await apiClient.post("/leave", payload)
@@ -216,16 +217,16 @@ export default function ApplyForLeavePage() {
 
               <FormField
                 control={form.control}
-                name="leaveType"
+                name="reason"
                 render={({ field }) => (
                   <FormItem className="space-y-1.5">
                     <FormLabel className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2 mb-1">
                       <FileText className="h-3 w-3 text-[#2eb88a]" />
-                      Leave Type
+                      Reason
                     </FormLabel>
                     <FormControl>
                       <Input 
-                        placeholder="e.g. Sick Leave, Casual Leave..." 
+                        placeholder="Why are you taking leave?" 
                         {...field} 
                         className="rounded-xl border-slate-100 bg-slate-50/50 h-12 md:h-14 px-5 focus:border-[#2eb88a] focus:ring-[#2eb88a]/10 font-bold text-base transition-all" 
                       />
@@ -335,10 +336,11 @@ export default function ApplyForLeavePage() {
           </div>
 
           <div className="mb-12">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Leave Type</p>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Reason for Leave</p>
             <div className="p-6 bg-slate-50 rounded-2xl border-2 border-slate-100 min-h-[60px] flex items-center">
-              <p className="text-slate-800 font-bold italic text-xl uppercase tracking-tight">{submittedData?.leaveType}</p>
+              <p className="text-slate-800 font-bold italic text-xl uppercase tracking-tight">{submittedData?.reason}</p>
             </div>
+            <p className="text-[9px] font-bold text-slate-400 mt-2 italic">Leave Type: Sick</p>
           </div>
 
           <div className="grid grid-cols-2 gap-20 pt-10 mt-10 border-t-2 border-slate-100 border-dashed">
