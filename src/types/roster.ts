@@ -1,5 +1,6 @@
 
 
+import { FamilyMember, AcademicQualification, WorkExperience, EmployeeDocument } from './employee';
 
 export interface Roster {
   _id: string;
@@ -43,10 +44,10 @@ export interface AttendancePolicyUser {
   permanentAddress?: string;
   currentAddress?: string;
   mobileNo: string;
-  familyDetails: any[];
-  academicQualification: any[];
-  previousWorkExperience: any[];
-  otherDocuments: any[];
+  familyDetails: FamilyMember[];
+  academicQualification: AcademicQualification[];
+  previousWorkExperience: WorkExperience[];
+  otherDocuments: EmployeeDocument[];
   createdAt: string;
   updatedAt: string;
   __v: number;

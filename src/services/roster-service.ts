@@ -45,7 +45,7 @@ export const rosterService = {
    */
   getAssignedPolicies: async (page = 1, limit = 10): Promise<AttendancePolicyUserResponse> => {
     try {
-      const response = await apiClient.get<AttendancePolicyUserResponse>(
+      const response = await apiClient.get<void, AttendancePolicyUserResponse>(
         `/roster/assign-attendance-policy?page=${page}&limit=${limit}`
       );
       return response;
