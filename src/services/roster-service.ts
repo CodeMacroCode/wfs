@@ -1,5 +1,5 @@
 import apiClient from '@/lib/api-client';
-import { Roster, AssignRosterDto, RosterResponse, AssignAttendancePolicyDto } from '@/types/roster';
+import { Roster, AssignRosterDto, RosterResponse, AssignAttendancePolicyDto, AttendancePolicyUserResponse } from '@/types/roster';
 import { toast } from 'sonner';
 
 // Mock data for initial state
@@ -38,6 +38,22 @@ export const rosterService = {
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 500));
     return { rosters: [...mockRosters] };
+  },
+
+  /**
+   * Get assigned attendance policies
+   */
+  getAssignedPolicies: async (page = 1, limit = 10): Promise<AttendancePolicyUserResponse> => {
+    try {
+      const response = await apiClient.get<AttendancePolicyUserResponse>(
+        `/roster/assign-attendance-policy?page=${page}&limit=${limit}`
+      );
+      return response;
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch assigned policies';
+      toast.error(errorMessage);
+      throw error;
+    }
   },
 
   /**

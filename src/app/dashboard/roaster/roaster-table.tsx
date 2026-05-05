@@ -13,57 +13,71 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { DataTable } from "@/components/ui/data-table"
-import { Roster } from "@/types/roster"
+import { AttendancePolicyUser } from "@/types/roster"
 import { Badge } from "@/components/ui/badge"
 import { useDeleteRosterMutation } from "@/hooks/queries/use-roster"
+import { format } from "date-fns"
 
 interface RoasterTableProps {
-  data: Roster[]
+  data: AttendancePolicyUser[]
   isLoading?: boolean
 }
 
 export function RoasterTable({ data, isLoading }: RoasterTableProps) {
   const deleteMutation = useDeleteRosterMutation()
 
-  const columns: ColumnDef<Roster>[] = [
+  const columns: ColumnDef<AttendancePolicyUser>[] = [
     {
-      accessorKey: "employeeName",
+      accessorKey: "name",
       header: "Employee Name",
       cell: ({ row }) => (
         <div className="flex flex-col">
-          <span className="font-semibold text-slate-900">{row.original.employeeName}</span>
-          <span className="text-xs text-slate-500">ID: {row.original.employeeId}</span>
+          <span className="font-semibold text-slate-900">{row.original.name}</span>
+          <span className="text-xs text-slate-500">ID: {row.original.uniqueId}</span>
         </div>
       ),
     },
     {
-      accessorKey: "employeeId",
-      header: "Employee ID",
+      accessorKey: "uniqueId",
+      header: "Unique ID",
     },
     {
-      accessorKey: "companyName",
-      header: "Company Name",
+      accessorKey: "mobileNo",
+      header: "Mobile No",
       cell: ({ row }) => (
         <div className="text-slate-600 font-medium">
-          {row.original.companyName}
+          {row.original.mobileNo}
         </div>
       ),
     },
     {
-      accessorKey: "shiftName",
-      header: "Assigned Shift",
+      accessorKey: "role",
+      header: "Role",
       cell: ({ row }) => (
-        <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-100 rounded-lg">
-          {row.original.shiftName}
+        <Badge variant="outline" className="capitalize bg-blue-50 text-blue-700 border-blue-100 rounded-lg">
+          {row.original.role}
         </Badge>
       ),
     },
     {
-      id: "dateRange",
-      header: "Date Range",
+      accessorKey: "attendancePolicyId",
+      header: "Policy ID",
+      cell: ({ row }) => (
+        row.original.attendancePolicyId ? (
+          <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-100 rounded-lg">
+            {row.original.attendancePolicyId}
+          </Badge>
+        ) : (
+          <span className="text-slate-400 text-sm italic">Not Assigned</span>
+        )
+      ),
+    },
+    {
+      accessorKey: "createdAt",
+      header: "Created At",
       cell: ({ row }) => (
         <div className="text-slate-600 font-medium">
-          {row.original.startDate} to {row.original.endDate}
+          {format(new Date(row.original.createdAt), "dd MMM yyyy")}
         </div>
       ),
     },
@@ -101,7 +115,7 @@ export function RoasterTable({ data, isLoading }: RoasterTableProps) {
       columns={columns}
       data={data}
       isLoading={isLoading}
-      searchKey="employeeName"
+      searchKey="name"
       searchPlaceholder="Search by employee name..."
     />
   )

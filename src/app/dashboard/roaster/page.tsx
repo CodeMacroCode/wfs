@@ -4,10 +4,10 @@ import { RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { RoasterDialog } from "@/components/dashboard/roaster-dialog"
 import { RoasterTable } from "./roaster-table"
-import { useRostersQuery } from "@/hooks/queries/use-roster"
+import { useAssignAttendancePolicyQuery } from "@/hooks/queries/use-roster"
 
 export default function RoasterPage() {
-    const { data, isLoading, refetch, isFetching } = useRostersQuery()
+    const { data, isLoading, refetch, isFetching } = useAssignAttendancePolicyQuery()
 
     return (
         <div className="flex flex-col gap-6 p-2 md:p-8">
@@ -35,7 +35,7 @@ export default function RoasterPage() {
             </div>
 
             <RoasterTable 
-                data={data?.rosters || []} 
+                data={data?.data || []} 
                 isLoading={isLoading} 
             />
         </div>

@@ -14,6 +14,16 @@ export function useRostersQuery() {
 }
 
 /**
+ * Hook to fetch assigned attendance policies
+ */
+export function useAssignAttendancePolicyQuery(page = 1, limit = 10) {
+  return useQuery({
+    queryKey: [...QUERY_KEYS.rosters.all, 'assigned-policies', page, limit],
+    queryFn: () => rosterService.getAssignedPolicies(page, limit),
+  });
+}
+
+/**
  * Hook to assign a roster
  */
 export function useAssignRosterMutation() {
@@ -45,7 +55,12 @@ export function useDeleteRosterMutation() {
  * Hook to assign attendance policy to multiple users
  */
 export function useAssignAttendancePolicyMutation() {
+  const queryClient = useQueryClient();
+  
   return useMutation({
     mutationFn: (data: AssignAttendancePolicyDto) => rosterService.assignAttendancePolicy(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.rosters.all });
+    },
   });
 }
