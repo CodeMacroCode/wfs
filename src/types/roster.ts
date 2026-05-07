@@ -53,8 +53,8 @@ export interface AttendancePolicyUser {
   createdAt: string;
   updatedAt: string;
   __v: number;
-  attendancePolicyId?: string;
-  companyId?: string;
+  attendancePolicyId?: string | { name: string; _id: string };
+  companyId?: string | { name: string; _id: string };
   departmentId?: string;
   designationId?: string;
   employeeObjId?: {

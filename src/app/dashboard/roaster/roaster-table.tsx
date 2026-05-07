@@ -37,27 +37,29 @@ export function RoasterTable({ data, isLoading, pagination, onPaginationChange, 
     {
       accessorKey: "name",
       header: "Employee Name",
-      cell: ({ row }) => (
-        <div className="flex flex-col">
-          <span className="font-semibold text-slate-900">
-            {row.original.otherName || row.original.name}
-          </span>
-          <span className="text-xs text-slate-500">
-            {row.original.employeeObjId?.employeeId || `ID: ${row.original.uniqueId}`}
-          </span>
-        </div>
-      ),
+      cell: ({ row }) => {
+        const punchId = row.original.uniqueId;
+        const punchIdDisplay = typeof punchId === 'object' && punchId !== null 
+          ? (punchId as unknown as UniqueIdObject).name || (punchId as unknown as UniqueIdObject)._id 
+          : punchId;
+
+        return (
+          <div className="flex flex-col">
+            <span className="font-semibold text-slate-900">
+              {row.original.otherName || row.original.name}
+            </span>
+            <span className="text-xs text-slate-500">
+              Punch ID: {punchIdDisplay || "N/A"}
+            </span>
+          </div>
+        );
+      },
     },
     {
-      accessorKey: "uniqueId",
-      header: "Punch ID",
+      accessorKey: "employeeObjId.employeeId",
+      header: "Employee ID",
       cell: ({ row }) => {
-        const val = row.original.uniqueId;
-        if (typeof val === 'object' && val !== null) {
-          const obj = val as unknown as UniqueIdObject;
-          return obj.name || obj._id || "N/A";
-        }
-        return val || "N/A";
+        return row.original.employeeObjId?.employeeId || row.original.employeeId || "N/A";
       }
     },
     {
@@ -70,17 +72,26 @@ export function RoasterTable({ data, isLoading, pagination, onPaginationChange, 
       ),
     },
     {
-      accessorKey: "role",
-      header: "Role",
-      cell: ({ row }) => (
-        <Badge variant="outline" className="capitalize bg-blue-50 text-blue-700 border-blue-100 rounded-lg">
-          {row.original.role}
-        </Badge>
-      ),
+      accessorKey: "companyId",
+      header: "Company",
+      cell: ({ row }) => {
+        const company = row.original.companyId;
+        if (!company) return <span className="text-slate-400">—</span>;
+        
+        const name = typeof company === 'object' 
+          ? (company as unknown as PopulatedField).name 
+          : "N/A";
+        
+        return (
+          <div className="text-slate-600 font-medium">
+            {name}
+          </div>
+        );
+      },
     },
     {
       accessorKey: "attendancePolicyId",
-      header: "Policy ID",
+      header: "Policy",
       cell: ({ row }) => {
         const policy = row.original.attendancePolicyId;
         if (!policy) {
