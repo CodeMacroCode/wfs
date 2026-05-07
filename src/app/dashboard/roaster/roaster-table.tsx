@@ -93,6 +93,15 @@ export function RoasterTable({ data, isLoading, pagination, onPaginationChange, 
       },
     },
     {
+      accessorKey: "fatherName",
+      header: "Father Name",
+      cell: ({ row }) => (
+        <div className="text-slate-600 font-medium whitespace-nowrap">
+          {row.original.fatherName || "—"}
+        </div>
+      ),
+    },
+    {
       accessorKey: "attendancePolicyId",
       header: "Policy",
       cell: ({ row }) => {

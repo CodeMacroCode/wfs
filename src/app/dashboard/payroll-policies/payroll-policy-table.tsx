@@ -49,11 +49,11 @@ export function PayrollPolicyTable({ data, isLoading }: PayrollPolicyTableProps)
     },
     {
       accessorKey: "heads.basic",
-      header: "Basic",
+      header: "Basic Pay",
       cell: ({ row }) => (
         <div className="flex items-center gap-2 text-slate-600 font-bold whitespace-nowrap">
           <CircleDollarSign className="h-3.5 w-3.5 text-purple-500" />
-          <span>{row.original.heads.basic}%</span>
+          <span>₹{row.original.heads.basic}</span>
         </div>
       ),
     },

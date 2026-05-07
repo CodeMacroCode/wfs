@@ -68,6 +68,7 @@ export interface AttendancePolicyUser {
   attendancePolicyEndDate?: string;
   employeeId?: string;
   otherName?: string;
+  fatherName?: string;
 }
 
 export interface AttendancePolicyUserResponse {

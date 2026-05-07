@@ -32,7 +32,7 @@ const formSchema = z.object({
   name: z.string().min(2, "Policy name must be at least 2 characters"),
   sundayPolicyActive: z.boolean(),
   heads: z.object({
-    basic: percentageHeadSchema,
+    basic: numericHeadSchema,
     hra: percentageHeadSchema,
     conveyance: percentageHeadSchema,
     pfEmployee: percentageHeadSchema,
@@ -178,18 +178,18 @@ export function PayrollPolicyForm({
         />
 
         <div className="space-y-4">
-          <h3 className="text-sm font-medium border-b pb-2">Earnings (%)</h3>
+          <h3 className="text-sm font-medium border-b pb-2 text-slate-800">Earnings & Heads</h3>
           <div className="grid grid-cols-2 gap-4">
             <FormField
               control={form.control}
               name="heads.basic"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Basic (%)</FormLabel>
+                  <FormLabel>Basic Pay (₹)</FormLabel>
                   <FormControl>
                     <Input 
                       type="number" 
-                      step="0.01"
+                      placeholder="e.g. 15000"
                       value={field.value ?? ""}
                       onChange={(e) => field.onChange(e.target.value === "" ? undefined : e.target.valueAsNumber)} 
                     />
