@@ -37,9 +37,11 @@ export const attendanceService = {
   /**
    * Get dashboard attendance counts
    */
-  getDashboardCount: async (): Promise<AttendanceDashboardCount> => {
+  getDashboardCount: async (startDate?: string, endDate?: string): Promise<AttendanceDashboardCount> => {
     try {
-      return await apiClient.get<void, AttendanceDashboardCount>('/attendance/dashboard-count');
+      return await apiClient.get<void, AttendanceDashboardCount>('/attendance/dashboard-count', {
+        params: { startDate, endDate }
+      });
     } catch (error: unknown) {
       toast.error('Failed to fetch attendance dashboard stats');
       throw error;

@@ -47,10 +47,14 @@ export function useAttendanceWithSummaryQuery(
 /**
  * Hook to fetch attendance dashboard stats
  */
-export function useAttendanceDashboardCountQuery(options?: Partial<UseQueryOptions<AttendanceDashboardCount>>) {
+export function useAttendanceDashboardCountQuery(
+  startDate?: string, 
+  endDate?: string,
+  options?: Partial<UseQueryOptions<AttendanceDashboardCount>>
+) {
   return useQuery<AttendanceDashboardCount>({
-    queryKey: QUERY_KEYS.attendance.dashboardCount(),
-    queryFn: () => attendanceService.getDashboardCount(),
+    queryKey: [...QUERY_KEYS.attendance.dashboardCount(), { startDate, endDate }],
+    queryFn: () => attendanceService.getDashboardCount(startDate, endDate),
     ...options
   });
 }

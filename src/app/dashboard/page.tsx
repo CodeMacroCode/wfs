@@ -7,6 +7,7 @@ import {
   AlertCircle,
   ClipboardCheck,
   Bell,
+  CalendarIcon,
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { AttendanceUploadDialog } from "@/components/dashboard/attendance-upload-dialog"
@@ -53,6 +54,9 @@ import { useCompanyDropdownQuery } from "@/hooks/queries/use-company"
 import { useState, useMemo } from "react"
 import { MultiSelect } from "@/components/ui/multi-select"
 import { DatePickerWithRange } from "@/components/ui/date-range-picker"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Calendar } from "@/components/ui/calendar"
+import { cn } from "@/lib/utils"
 
 // Mock data removed in favor of real API data
 
@@ -86,6 +90,8 @@ export default function DashboardPage() {
   const { data: companiesData } = useCompanyDropdownQuery()
   const [activityCompanyId, setActivityCompanyId] = useState<string>("all")
   const [attendanceGraphCompanyId, setAttendanceGraphCompanyId] = useState<string>("all")
+
+  const [statsDate, setStatsDate] = useState<Date>(new Date())
 
   const getRangeFromPreset = (preset: string) => {
     const now = new Date()
@@ -150,9 +156,11 @@ export default function DashboardPage() {
     { staleTime: 60000 }
   )
 
-  const { data: dashboardCount, isLoading: isDashboardCountLoading } = useAttendanceDashboardCountQuery({
-    staleTime: 60000
-  })
+  const { data: dashboardCount, isLoading: isDashboardCountLoading } = useAttendanceDashboardCountQuery(
+    statsDate ? format(statsDate, "yyyy-MM-dd") : undefined,
+    statsDate ? format(statsDate, "yyyy-MM-dd") : undefined,
+    { staleTime: 60000 }
+  )
 
   const { data: attendanceGraphData, isLoading: isAttendanceGraphLoading } = useAttendanceWithSummaryQuery(
     today,
@@ -374,6 +382,39 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats Cards */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <div className="h-8 w-1 bg-emerald-500 rounded-full" />
+          <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wider">Attendance Summary</h2>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Filter Stats:</span>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-[180px] h-10 pl-3 text-left font-semibold text-xs rounded-xl border-slate-200 bg-white shadow-sm hover:bg-slate-50 transition-all",
+                  !statsDate && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4 text-emerald-500" />
+                {statsDate ? format(statsDate, "dd MMM yyyy") : <span>Pick a date</span>}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0 rounded-2xl border-slate-100 shadow-2xl" align="end">
+              <Calendar
+                mode="single"
+                selected={statsDate}
+                onSelect={(d) => d && setStatsDate(d)}
+                disabled={{ after: new Date() }}
+                initialFocus
+                className="rounded-2xl"
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+      </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5 relative">
         <AnimatePresence>
           {selectedStat && (
