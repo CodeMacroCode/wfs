@@ -43,6 +43,21 @@ export const reminderService = {
       toast.error(msg);
       throw error;
     }
+  },
+
+  /**
+   * Update a reminder
+   */
+  update: async (id: string, data: Partial<Reminder> & { action?: string }): Promise<{ data: Reminder; message: string }> => {
+    try {
+      const response = await apiClient.patch<{ data: Reminder; message: string }, { data: Reminder; message: string }>(`/reminder/${id}`, data);
+      return response;
+    } catch (error: unknown) {
+      const err = error as { data?: { message?: string }; message?: string };
+      const msg = err?.data?.message || err?.message || 'Failed to update reminder';
+      toast.error(msg);
+      throw error;
+    }
   }
 };
 

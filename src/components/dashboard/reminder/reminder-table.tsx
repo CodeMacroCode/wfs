@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { ColumnDef } from "@tanstack/react-table"
-import { MoreHorizontal, Trash, Bell, Clock, Calendar } from "lucide-react"
+import { MoreHorizontal, Trash, Bell, Clock, Calendar, CheckCircle, PauseCircle, PlayCircle } from "lucide-react"
 import { Reminder } from "@/types/reminder"
 import { DataTable } from "@/components/ui/data-table"
 import { Button } from "@/components/ui/button"
@@ -15,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
-import { useDeleteReminderMutation } from "@/hooks/queries/use-reminders"
+import { useDeleteReminderMutation, useUpdateReminderMutation } from "@/hooks/queries/use-reminders"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 
@@ -26,8 +26,38 @@ interface ReminderTableProps {
 
 export function ReminderTable({ data, isLoading }: ReminderTableProps) {
   const deleteMutation = useDeleteReminderMutation()
+  const updateMutation = useUpdateReminderMutation()
 
   const columns: ColumnDef<Reminder>[] = [
+    {
+      id: "done",
+      header: "Mark",
+      cell: ({ row }) => {
+        const reminder = row.original
+        
+        return (
+          <Button
+            size="icon"
+            variant="ghost"
+            className={cn(
+              "h-8 w-8 rounded-full transition-all",
+              reminder.enabled 
+                ? "text-slate-300 hover:text-emerald-600 hover:bg-emerald-50" 
+                : "text-emerald-500 bg-emerald-50/50"
+            )}
+            onClick={() => {
+              if (reminder.enabled) {
+                updateMutation.mutate({ id: reminder._id, data: { action: 'done' } })
+              }
+            }}
+            disabled={!reminder.enabled || updateMutation.isPending}
+            title={reminder.enabled ? "Mark as Done" : "Completed"}
+          >
+            <CheckCircle className={cn("h-5 w-5", !reminder.enabled && "fill-emerald-500 text-white")} />
+          </Button>
+        )
+      }
+    },
     {
       accessorKey: "title",
       header: "Title",
@@ -78,19 +108,24 @@ export function ReminderTable({ data, isLoading }: ReminderTableProps) {
     {
       accessorKey: "enabled",
       header: "Status",
-      cell: ({ row }) => (
-        <Badge 
-          className={cn(
-            "font-bold uppercase text-[10px] tracking-widest",
-            row.original.enabled 
-              ? "bg-emerald-50 text-emerald-600 border-emerald-100" 
-              : "bg-slate-50 text-slate-400 border-slate-100"
-          )}
-          variant="outline"
-        >
-          {row.original.enabled ? "Active" : "Paused"}
-        </Badge>
-      ),
+      cell: ({ row }) => {
+        const isCompleted = !row.original.enabled && row.original.frequency === "once"
+        return (
+          <Badge 
+            className={cn(
+              "font-bold uppercase text-[10px] tracking-widest",
+              row.original.enabled 
+                ? "bg-emerald-50 text-emerald-600 border-emerald-100" 
+                : isCompleted
+                  ? "bg-blue-50 text-blue-600 border-blue-100"
+                  : "bg-slate-50 text-slate-400 border-slate-100"
+            )}
+            variant="outline"
+          >
+            {row.original.enabled ? "Active" : isCompleted ? "Completed" : "Paused"}
+          </Badge>
+        )
+      },
     },
     {
       id: "actions",
@@ -107,6 +142,38 @@ export function ReminderTable({ data, isLoading }: ReminderTableProps) {
             <DropdownMenuContent align="end" className="rounded-2xl border-slate-100 shadow-2xl p-2">
               <DropdownMenuLabel className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2 py-1.5">Actions</DropdownMenuLabel>
               <DropdownMenuSeparator className="bg-slate-50" />
+              {reminder.enabled && (
+                <DropdownMenuItem
+                  className="px-3 py-2 cursor-pointer font-bold focus:bg-emerald-50 focus:text-emerald-600 rounded-xl"
+                  onClick={() => {
+                    updateMutation.mutate({ id: reminder._id, data: { action: 'done' } })
+                  }}
+                >
+                  <CheckCircle className="mr-2 h-4 w-4 text-emerald-500" />
+                  Mark as Done
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem
+                className="px-3 py-2 cursor-pointer font-bold focus:bg-slate-50 rounded-xl"
+                onClick={() => {
+                  updateMutation.mutate({ 
+                    id: reminder._id, 
+                    data: { enabled: !reminder.enabled } 
+                  })
+                }}
+              >
+                {reminder.enabled ? (
+                  <>
+                    <PauseCircle className="mr-2 h-4 w-4 text-amber-500" />
+                    Pause
+                  </>
+                ) : (
+                  <>
+                    <PlayCircle className="mr-2 h-4 w-4 text-emerald-500" />
+                    Resume
+                  </>
+                )}
+              </DropdownMenuItem>
               <DropdownMenuItem
                 className="px-3 py-2 text-rose-600 cursor-pointer font-bold focus:bg-rose-50 focus:text-rose-600 rounded-xl"
                 onClick={() => {
