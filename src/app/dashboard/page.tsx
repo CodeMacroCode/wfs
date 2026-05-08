@@ -89,7 +89,7 @@ export default function DashboardPage() {
   const { data: remindersData } = useRemindersQuery({ limit: 4 })
   const { data: companiesData } = useCompanyDropdownQuery()
   const [activityCompanyId, setActivityCompanyId] = useState<string>("all")
-  const [attendanceGraphCompanyId, setAttendanceGraphCompanyId] = useState<string>("all")
+  const [attendanceGraphCompanyIds, setAttendanceGraphCompanyIds] = useState<string[]>(["overall"])
 
   const [statsDate, setStatsDate] = useState<Date>(new Date())
 
@@ -169,7 +169,7 @@ export default function DashboardPage() {
     1,
     1,
     undefined,
-    attendanceGraphCompanyId === "all" ? undefined : attendanceGraphCompanyId,
+    attendanceGraphCompanyIds.includes("overall") ? undefined : attendanceGraphCompanyIds.join(","),
     undefined,
     { staleTime: 60000 }
   )
@@ -195,7 +195,18 @@ export default function DashboardPage() {
       }
     })
   })
-
+  const toggleAttendanceGraphCompany = (id: string) => {
+    setAttendanceGraphCompanyIds(prev => {
+      if (id === "overall") return ["overall"]
+      const newIds = prev.filter(i => i !== "overall")
+      if (newIds.includes(id)) {
+        const filtered = newIds.filter(i => i !== id)
+        return filtered.length === 0 ? ["overall"] : filtered
+      } else {
+        return [...newIds, id]
+      }
+    })
+  }
   const isGraphLoading = dailyStatsQueries.some(q => q.isLoading)
   const graphData = daysInRange.map((date, index) => {
     const summary = dailyStatsQueries[index].data?.summary
@@ -783,19 +794,19 @@ export default function DashboardPage() {
               <div className="space-y-1">
                 <h3 className="text-lg font-bold text-slate-900 font-heading">Attendance Distribution</h3>
               </div>
-              <Select value={attendanceGraphCompanyId} onValueChange={setAttendanceGraphCompanyId}>
-                <SelectTrigger className="w-[150px] h-9 rounded-xl border-slate-200 bg-white shadow-sm font-semibold text-[10px] text-slate-700 focus:ring-emerald-500/10">
-                  <SelectValue placeholder="Select Company" />
-                </SelectTrigger>
-                <SelectContent className="rounded-xl border-slate-100 shadow-xl">
-                  <SelectItem value="all" className="text-[10px] font-semibold">All Companies</SelectItem>
-                  {companiesData?.data?.map((company: { _id: string; name: string }) => (
-                    <SelectItem key={company._id} value={company._id} className="text-[10px] font-semibold">
-                      {company.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <MultiSelect
+                options={[
+                  { label: "All Companies", value: "overall" },
+                  ...(companiesData?.data?.map((company: { _id: string; name: string }) => ({
+                    label: company.name,
+                    value: company._id
+                  })) || [])
+                ]}
+                selectedValues={attendanceGraphCompanyIds}
+                onToggle={toggleAttendanceGraphCompany}
+                placeholder="Select Company"
+                className="w-[180px]"
+              />
             </div>
 
             <div className="flex-1 relative min-h-[150px]">
@@ -852,7 +863,7 @@ export default function DashboardPage() {
             </div>
 
             <Button 
-              onClick={() => router.push(`/dashboard/attendance?companyId=${attendanceGraphCompanyId}&date=${today}`)}
+              onClick={() => router.push(`/dashboard/attendance?companyId=${attendanceGraphCompanyIds.includes("overall") ? "all" : attendanceGraphCompanyIds.join(",")}&date=${today}`)}
               className="w-full mt-6 bg-slate-50 border border-slate-100 text-slate-500 font-black text-[10px] h-10 shadow-none hover:bg-slate-100 hover:text-slate-700 rounded-xl group transition-all uppercase tracking-wider"
             >
               Detailed View
