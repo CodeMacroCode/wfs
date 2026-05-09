@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { 
-  useEmployeeIdDropdownQuery, 
+  useEmployeeIdInfiniteQuery, 
   useCreateEmployeeIdMutation 
 } from "@/hooks/queries/use-employees-query"
 import { useCompanyDropdownQuery } from "@/hooks/queries/use-company"
@@ -22,7 +22,6 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { 
   Select, 
   SelectContent, 
@@ -115,12 +114,28 @@ function AvailableIdList() {
   const [selectedCompanyId, setSelectedCompanyId] = React.useState<string>("")
   
   const selectedCompany = companies.find(c => c._id === selectedCompanyId)
-  const { data, isLoading } = useEmployeeIdDropdownQuery({ 
+  const { 
+    data, 
+    isLoading, 
+    fetchNextPage, 
+    hasNextPage, 
+    isFetchingNextPage 
+  } = useEmployeeIdInfiniteQuery({ 
     companyId: selectedCompanyId,
     prefix: selectedCompany?.prefix
   })
   
-  const ids = data?.data || []
+  const ids = data?.pages.flatMap((page) => page.data) || []
+
+  const handleScroll = React.useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    const container = e.currentTarget
+    if (!container || !hasNextPage || isFetchingNextPage || isLoading) return
+    const { scrollTop, scrollHeight, clientHeight } = container
+    // Trigger load more when user scrolls near the bottom
+    if (scrollTop + clientHeight >= scrollHeight - 50) {
+      fetchNextPage()
+    }
+  }, [hasNextPage, isFetchingNextPage, isLoading, fetchNextPage])
 
   return (
     <div className="space-y-4">
@@ -154,9 +169,12 @@ function AvailableIdList() {
           <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">No available IDs found</p>
         </div>
       ) : (
-        <ScrollArea className="h-[300px] pr-4">
+        <div 
+          className="h-[400px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-200"
+          onScroll={handleScroll}
+        >
           <Table>
-            <TableHeader>
+            <TableHeader className="sticky top-0 bg-white z-10">
               <TableRow className="hover:bg-transparent border-slate-100">
                 <TableHead className="text-[10px] font-black uppercase text-slate-400">Employee ID</TableHead>
                 <TableHead className="text-[10px] font-black uppercase text-slate-400">Created At</TableHead>
@@ -173,7 +191,13 @@ function AvailableIdList() {
               ))}
             </TableBody>
           </Table>
-        </ScrollArea>
+          
+          {isFetchingNextPage && (
+            <div className="flex items-center justify-center py-4">
+              <Loader2 className="h-4 w-4 animate-spin text-emerald-500" />
+            </div>
+          )}
+        </div>
       )}
     </div>
   )
