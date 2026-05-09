@@ -56,24 +56,36 @@ export function AttendanceTable({
   const markAttendanceMutation = useMarkAttendanceMutation()
 
   /**
-   * Helper to format ISO time to HH:mm
+   * Helper to format ISO time to HH:mm exactly as in the string
    */
   const formatTime = (isoString: string | null | undefined) => {
     if (!isoString) return "--:--"
     try {
-      return format(new Date(isoString), "HH:mm")
+      // If it's an ISO string (e.g., 2024-05-10T10:30:00Z), extract HH:mm directly
+      if (isoString.includes('T')) {
+        return isoString.split('T')[1].substring(0, 5)
+      }
+      // If it's already a time string or similar, just take the first 5 chars
+      if (isoString.includes(':')) {
+        return isoString.substring(0, 5)
+      }
+      return isoString
     } catch {
       return "--:--"
     }
   }
 
   /**
-   * Helper to format ISO date to DD MMM YY
+   * Helper to format ISO date to DD MMM YY without timezone shift
    */
   const formatDateLabel = (isoString: string | undefined) => {
     if (!isoString) return "N/A"
     try {
-      return format(new Date(isoString), "dd MMM yy")
+      // Extract YYYY-MM-DD and parse as local date parts to avoid UTC shift
+      const datePart = isoString.split('T')[0]
+      const [year, month, day] = datePart.split('-').map(Number)
+      const date = new Date(year, month - 1, day)
+      return format(date, "dd MMM yy")
     } catch {
       return isoString
     }
