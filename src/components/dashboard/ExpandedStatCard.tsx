@@ -29,6 +29,7 @@ interface ExpandedStatCardProps {
     text: string
     titleText: string
   }
+  date?: Date
 }
 
 export function ExpandedStatCard({ 
@@ -36,6 +37,7 @@ export function ExpandedStatCard({
   title, 
   onClose,
   colorScheme,
+  date = new Date(),
 }: ExpandedStatCardProps) {
   const isEmployeeView = category === "all";
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>("all")
@@ -64,10 +66,10 @@ export function ExpandedStatCard({
 
   // Attendance Query (for specific statuses)
   // Enabled only when NOT in the full employee master view
-  const today = format(new Date(), "yyyy-MM-dd")
+  const dateStr = format(date, "yyyy-MM-dd")
   const { data: attendanceData, isLoading: isAttendanceLoading } = useAttendanceWithSummaryQuery(
-    today,
-    today,
+    dateStr,
+    dateStr,
     apiParams.page, 
     pagination.pageSize, 
     isEmployeeView ? undefined : categoryToStatus[category],
@@ -131,7 +133,7 @@ export function ExpandedStatCard({
               transition={{ delay: 0.1 }}
               className={`text-3xl font-extrabold ${colorScheme.text} tracking-tight`}
             >
-              Detailed Report
+              Detailed Report - {format(date, "dd MMM yyyy")}
             </motion.h2>
           </div>
           
@@ -190,6 +192,7 @@ export function ExpandedStatCard({
                totalItems={totalItems}
                pagination={{ ...pagination, pageSize: 10 }}
                onPaginationChange={onPaginationChange}
+               selectedDate={dateStr}
                hideSearch={true}
              />
            )}

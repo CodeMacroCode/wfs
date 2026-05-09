@@ -477,6 +477,7 @@ export default function DashboardPage() {
               title={statsConfig[selectedStat].title}
               onClose={() => setSelectedStat(null)}
               colorScheme={statsConfig[selectedStat].color}
+              date={statsDate}
             />
           )}
         </AnimatePresence>
