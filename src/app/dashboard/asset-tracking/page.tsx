@@ -49,7 +49,13 @@ export default function AssetTrackingPage() {
     const handleAdd = async (data: AssetFormValues) => {
         try {
             const { setReminder, reminderFrequency, reminderTime, reminderStartDate, ...assetData } = data
-            const createdAsset = await createMutation.mutateAsync(assetData as CreateAssetDto)
+            
+            // Convert empty strings to null for optional fields
+            const payload = Object.fromEntries(
+                Object.entries(assetData).map(([key, value]) => [key, value === "" ? null : value])
+            ) as unknown as CreateAssetDto
+
+            const createdAsset = await createMutation.mutateAsync(payload)
             
             if (setReminder && createdAsset) {
                 await createReminderMutation.mutateAsync({
@@ -72,7 +78,13 @@ export default function AssetTrackingPage() {
     const handleUpdate = async (id: string, data: AssetFormValues) => {
         try {
             const { setReminder, reminderFrequency, reminderTime, reminderStartDate, ...assetData } = data
-            const updatedAsset = await updateMutation.mutateAsync({ id, data: assetData as UpdateAssetDto })
+
+            // Convert empty strings to null for optional fields
+            const payload = Object.fromEntries(
+                Object.entries(assetData).map(([key, value]) => [key, value === "" ? null : value])
+            ) as unknown as UpdateAssetDto
+
+            const updatedAsset = await updateMutation.mutateAsync({ id, data: payload })
             
             // Find existing reminder for this asset
             const existingReminder = reminders.find(r => r.metadata?.assetId === id)

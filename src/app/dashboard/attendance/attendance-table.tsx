@@ -283,6 +283,18 @@ export function AttendanceTable({
           const punchIn = attendance?.punchIn;
           const punchOut = attendance?.punchOut;
 
+          // Special case for Absent: do not send punches
+          if (status === 'Absent') {
+            markAttendanceMutation.mutate({
+              userIds: [user._id],
+              date: recordDate,
+              status: 'Absent',
+              punchIn: null,
+              punchOut: null
+            });
+            return;
+          }
+
           // If punchIn is available but punchOut is not, ask for punch out details via manual dialog
           if (punchIn && !punchOut && onMarkManual) {
             onMarkManual({

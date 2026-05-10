@@ -113,7 +113,7 @@ export const attendanceService = {
    */
   markAttendance: async (data: MarkAttendanceDto): Promise<void> => {
     try {
-      await apiClient.put('/attendance/update', data);
+      await apiClient.put('/attendance/update/multiple', data);
       toast.success(`Attendance updated to ${data.status}`);
     } catch (error: unknown) {
       toast.error('Failed to update attendance');
