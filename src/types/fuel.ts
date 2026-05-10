@@ -1,31 +1,50 @@
-export interface FuelMetadata {
-  runningDate?: string;
-  petroCardBalance?: string; // This will be the Closing Balance
-  openingBalance?: string;
-  vehicleCode?: string;
-  vehicleNo?: string;
-  startKm?: string;
-  endKm?: string;
-  totalKm?: string;
-  totalDiesel?: string;
-  ratePerLitre?: string;
-  totalAmount?: string;
-  averageKm?: string;
-  remarks?: string;
-  [key: string]: unknown;
-}
-
 export interface FuelRecord {
   _id: string;
-  title: string;
-  documentType: "Fuel";
-  files: string[];
+  odometer: number;
+  fuelType: string;
+  ratePerLtr: number;
+  totalAmount: number;
+  fillingDate: string;
+  images: string[];
   createdBy: {
     _id: string;
     name: string;
     email: string;
   };
-  metadata: FuelMetadata;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface FuelExpensesResponse {
+  data: FuelRecord[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
+export interface FuelCardStats {
+  totalAdded: number;
+  totalExpended: number;
+  remaining: number;
+}
+
+export interface FuelQueryParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface CreateFuelDto {
+  vehicleId: string;
+  odometer: number;
+  fuelType: string;
+  ratePerLtr: number;
+  totalAmount: number;
+  fillingDate: string;
+  images?: File[];
 }
