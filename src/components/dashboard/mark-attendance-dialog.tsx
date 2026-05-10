@@ -5,7 +5,7 @@ import { CalendarIcon, Loader2, X, ClipboardCheck, Clock } from "lucide-react"
 import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { format, setHours, setMinutes, setSeconds } from "date-fns"
+import { format, setHours, setMinutes, setSeconds, addMinutes } from "date-fns"
 
 import {
   Dialog,
@@ -187,7 +187,7 @@ export function MarkManualAttendanceDialog({
           if (values.punchInPeriod === "AM" && h === 12) h = 0
           
           const punchInDate = setSeconds(setMinutes(setHours(new Date(date), h), parseInt(punchInMinute)), 0)
-          punchIn = punchInDate.toISOString()
+          punchIn = addMinutes(punchInDate, 330).toISOString()
         }
         if (punchOutHour && punchOutMinute && values.punchOutPeriod) {
           let h = parseInt(punchOutHour)
@@ -195,7 +195,7 @@ export function MarkManualAttendanceDialog({
           if (values.punchOutPeriod === "AM" && h === 12) h = 0
 
           const punchOutDate = setSeconds(setMinutes(setHours(new Date(date), h), parseInt(punchOutMinute)), 0)
-          punchOut = punchOutDate.toISOString()
+          punchOut = addMinutes(punchOutDate, 330).toISOString()
         }
       }
 

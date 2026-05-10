@@ -844,7 +844,7 @@ export default function DashboardPage() {
         {/* Side Column with Attendance and Alerts */}
         <div className="flex flex-col gap-4">
           {/* Attendance Distribution */}
-          <Card className="border-none ring-1 ring-gray-100 shadow-none rounded-[28px] p-6 flex flex-col flex-1">
+          <Card className="border-none ring-1 ring-gray-100 shadow-none rounded-[28px] p-6 flex flex-col">
             <div className="flex items-center justify-between mb-4">
               <div className="space-y-1">
                 <h3 className="text-lg font-bold text-slate-900 font-heading">Attendance Distribution</h3>
@@ -928,7 +928,7 @@ export default function DashboardPage() {
           </Card>
 
           {/* Event and Alerts */}
-          <Card className="border-none ring-1 ring-gray-100 shadow-none rounded-[28px] flex flex-col p-6 bg-white overflow-hidden flex-1">
+          <Card className="border-none ring-1 ring-gray-100 shadow-none rounded-[28px] flex flex-col p-6 bg-white overflow-hidden">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-bold text-slate-900 font-heading">Event and Alerts</h3>
               <AlertCircle className="h-4 w-4 text-rose-500" />
