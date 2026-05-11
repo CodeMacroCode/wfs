@@ -35,9 +35,33 @@ export interface AssetsResponse {
   pagination: Pagination;
 }
 
+export interface AssetTrackingHistory {
+  _id: string;
+  amount: number;
+  description: string;
+  images: string[];
+  assetId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateAssetTrackingDto {
+  amount: number;
+  description: string;
+  assetId: string;
+  images?: File[];
+}
+
+export interface AssetTrackingHistoryResponse {
+  data: AssetTrackingHistory[];
+  pagination: Pagination;
+}
+
 export interface AssetQueryParams {
   search?: string;
   type?: string;
   page?: number;
   limit?: number;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
 }

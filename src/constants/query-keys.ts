@@ -52,6 +52,7 @@ export const QUERY_KEYS = {
     all: ['assets'] as const,
     list: (params?: unknown) => [...QUERY_KEYS.assets.all, 'list', { params }] as const,
     detail: (id: string) => [...QUERY_KEYS.assets.all, 'detail', id] as const,
+    history: (id: string, params?: unknown) => [...QUERY_KEYS.assets.all, 'history', id, { params }] as const,
   },
   docCenter: {
     all: ['docCenter'] as const,
