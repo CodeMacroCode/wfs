@@ -47,6 +47,7 @@ const fuelFormSchema = z.object({
   fillingDate: z.string().min(1, "Date is required"),
   vehicleId: z.string().min(1, "Vehicle is required"),
   odometer: z.string().min(1, "Odometer reading is required").refine(val => !isNaN(parseFloat(val)), "Must be a number"),
+  prevOdometer: z.string().optional(),
   fuelType: z.string().min(1, "Fuel type is required"),
   ratePerLtr: z.string().min(1, "Rate per litre is required").refine(val => !isNaN(parseFloat(val)), "Must be a number"),
   totalAmount: z.string().min(1, "Total amount is required").refine(val => !isNaN(parseFloat(val)), "Must be a number"),
@@ -89,6 +90,7 @@ export function AddFuelDialog({ open, onOpenChange, onAdd, initialValues }: AddF
       fillingDate: new Date().toISOString().substring(0, 10),
       vehicleId: "",
       odometer: "",
+      prevOdometer: "",
       fuelType: "Diesel",
       ratePerLtr: "",
       totalAmount: "",
@@ -129,18 +131,22 @@ export function AddFuelDialog({ open, onOpenChange, onAdd, initialValues }: AddF
             })
             if (res.data.length > 0) {
               setPrevOdometer(res.data[0].odometer)
+              form.setValue("prevOdometer", res.data[0].odometer.toString())
             } else {
               setPrevOdometer(null)
+              form.setValue("prevOdometer", "")
             }
           } catch (error) {
             console.error("Failed to fetch prev odometer:", error)
             setPrevOdometer(null)
+            form.setValue("prevOdometer", "")
           } finally {
             setIsFetchingPrevOdo(false)
           }
         }
       } else {
         setPrevOdometer(null)
+        form.setValue("prevOdometer", "")
       }
     }
 
@@ -274,6 +280,41 @@ export function AddFuelDialog({ open, onOpenChange, onAdd, initialValues }: AddF
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
+                  name="prevOdometer"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-slate-500">Previous Odometer</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          {...field} 
+                          disabled 
+                          placeholder={isFetchingPrevOdo ? "Fetching..." : "No previous record"}
+                          className="bg-slate-50/50 border-slate-200 text-slate-500 font-medium cursor-not-allowed" 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="odometer"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Current Odometer Reading</FormLabel>
+                      <FormControl>
+                        <Input type="number" placeholder="Enter current reading" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
                   name="fuelType"
                   render={({ field }) => (
                     <FormItem>
@@ -295,29 +336,6 @@ export function AddFuelDialog({ open, onOpenChange, onAdd, initialValues }: AddF
                 />
                 <FormField
                   control={form.control}
-                  name="odometer"
-                  render={({ field }) => (
-                    <FormItem>
-                      <div className="flex items-center justify-between">
-                        <FormLabel>Odometer Reading</FormLabel>
-                        {selectedVehicleId && (
-                          <span className="text-[10px] font-bold text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100">
-                            {isFetchingPrevOdo ? "Fetching..." : `Prev: ${prevOdometer || "No record"}`}
-                          </span>
-                        )}
-                      </div>
-                      <FormControl>
-                        <Input type="number" placeholder="45678" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
                   name="ratePerLtr"
                   render={({ field }) => (
                     <FormItem>
@@ -329,6 +347,9 @@ export function AddFuelDialog({ open, onOpenChange, onAdd, initialValues }: AddF
                     </FormItem>
                   )}
                 />
+              </div>
+
+              <div className="grid grid-cols-1">
                 <FormField
                   control={form.control}
                   name="totalAmount"
