@@ -43,10 +43,10 @@ export const rosterService = {
   /**
    * Get assigned attendance policies
    */
-  getAssignedPolicies: async (page = 1, limit = 10): Promise<AttendancePolicyUserResponse> => {
+  getAssignedPolicies: async (page = 1, limit = 10, search = ''): Promise<AttendancePolicyUserResponse> => {
     try {
       const response = await apiClient.get<void, AttendancePolicyUserResponse>(
-        `/roster/assign-attendance-policy?page=${page}&limit=${limit}`
+        `/roster/assign-attendance-policy?page=${page}&limit=${limit}${search ? `&search=${search}` : ''}`
       );
       return response;
     } catch (error: unknown) {

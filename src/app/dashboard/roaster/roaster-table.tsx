@@ -236,8 +236,6 @@ export function RoasterTable({ data, isLoading, pagination, onPaginationChange, 
       columns={columns}
       data={data}
       isLoading={isLoading}
-      searchKey="name"
-      searchPlaceholder="Search by employee name..."
       pagination={pagination}
       onPaginationChange={onPaginationChange}
       totalItems={totalItems}

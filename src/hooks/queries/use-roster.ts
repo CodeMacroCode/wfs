@@ -16,10 +16,10 @@ export function useRostersQuery() {
 /**
  * Hook to fetch assigned attendance policies
  */
-export function useAssignAttendancePolicyQuery(page = 1, limit = 10) {
+export function useAssignAttendancePolicyQuery(page = 1, limit = 10, search = '') {
   return useQuery({
-    queryKey: [...QUERY_KEYS.rosters.all, 'assigned-policies', page, limit],
-    queryFn: () => rosterService.getAssignedPolicies(page, limit),
+    queryKey: [...QUERY_KEYS.rosters.all, 'assigned-policies', page, limit, search],
+    queryFn: () => rosterService.getAssignedPolicies(page, limit, search),
   });
 }
 
