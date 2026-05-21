@@ -39,7 +39,7 @@ export const salaryService = {
    */
   deleteSalary: async (userId: string): Promise<void> => {
     try {
-      await apiClient.delete<void, void>(`/delete/${userId}`);
+      await apiClient.delete<void, void>(`/employee-salary/delete/${userId}`);
       toast.success('Salary configuration deleted');
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to delete salary';
