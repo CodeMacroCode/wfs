@@ -50,7 +50,7 @@ import { useDebounce } from "@/hooks/use-debounce"
 const formSchema = z.object({
   companyId: z.string().optional(),
   employeeIds: z.array(z.string()).min(1, "Select at least one employee"),
-  shiftId: z.string().min(1, "Select a shift"),
+  shiftId: z.string().optional(),
   startDate: z.string().min(1, "Select start date"),
   endDate: z.string().min(1, "Select end date"),
   is24HourShift: z.boolean(),
@@ -232,9 +232,18 @@ export function RoasterForm({ onSubmit, isLoading, initialValues, initialEmploye
     }
   }
 
+  const handleSubmit = (values: z.infer<typeof formSchema>) => {
+    const { shiftId, ...rest } = values
+    const payload = {
+      ...rest,
+      ...(shiftId && shiftId !== "none" ? { shiftId } : {})
+    }
+    onSubmit(payload as AssignRosterDto & { is24HourShift: boolean })
+  }
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         {/* Company Selection */}
         <FormField
           control={form.control}
@@ -406,6 +415,7 @@ export function RoasterForm({ onSubmit, isLoading, initialValues, initialEmploye
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent className="rounded-xl">
+                  <SelectItem value="none" className="rounded-lg font-medium text-slate-500">None / No Shift (Optional)</SelectItem>
                   {policiesData?.policies.map((policy) => (
                     <SelectItem key={policy._id} value={policy._id} className="rounded-lg">
                       {policy.name} ({policy.shiftInTime} - {policy.shiftOutTime})
