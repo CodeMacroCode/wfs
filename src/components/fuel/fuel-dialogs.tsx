@@ -129,7 +129,9 @@ export function AddFuelDialog({ open, onOpenChange, onAdd, initialValues, editId
   const parsedOdo = parseFloat(odometerVal || "0")
   const parsedPrev = parseFloat(prevOdometerVal || "0")
   const parsedTotalFuel = parseFloat(totalFuelVal || "0")
-  const displayAverage = parsedTotalFuel > 0 && parsedOdo > parsedPrev && prevOdometerVal !== "" && prevOdometerVal !== undefined ? ((parsedOdo - parsedPrev) / parsedTotalFuel).toFixed(2) : ""
+  const displayAverage = parsedTotalFuel > 0 && parsedOdo > parsedPrev && prevOdometerVal !== "" && prevOdometerVal !== undefined 
+    ? ((parsedOdo - parsedPrev) / parsedTotalFuel).toFixed(2) 
+    : (initialValues?.average || "")
 
   // Auto-calculate totalAmount based on ratePerLtr and totalFuel
   React.useEffect(() => {
@@ -143,21 +145,36 @@ export function AddFuelDialog({ open, onOpenChange, onAdd, initialValues, editId
   // Fetch previous odometer when vehicle changes
   React.useEffect(() => {
     const fetchPrevOdometer = async () => {
-      if (selectedVehicleId && !editId) {
+      if (selectedVehicleId) {
         const vehicle = vehicles.find(v => v._id === selectedVehicleId)
         if (vehicle) {
           setIsFetchingPrevOdo(true)
           try {
             const res = await fuelService.getAll({ 
               search: vehicle.vehicleNo, 
-              limit: 1, 
-              sortBy: 'createdAt', 
+              limit: 50, 
+              sortBy: 'odometer', 
               sortOrder: 'desc' 
             })
-            if (res.data.length > 0) {
-              form.setValue("prevOdometer", res.data[0].odometer.toString())
+            if (editId) {
+              const currentIndex = res.data.findIndex((item: any) => item._id === editId)
+              if (currentIndex !== -1 && currentIndex < res.data.length - 1) {
+                form.setValue("prevOdometer", res.data[currentIndex + 1].odometer.toString())
+              } else {
+                const currentOdo = parseFloat(odometerVal || "0")
+                const prev = res.data.find((item: any) => item.odometer < currentOdo && item._id !== editId)
+                if (prev) {
+                  form.setValue("prevOdometer", prev.odometer.toString())
+                } else {
+                  form.setValue("prevOdometer", "")
+                }
+              }
             } else {
-              form.setValue("prevOdometer", "")
+              if (res.data.length > 0) {
+                form.setValue("prevOdometer", res.data[0].odometer.toString())
+              } else {
+                form.setValue("prevOdometer", "")
+              }
             }
           } catch (error) {
             console.error("Failed to fetch prev odometer:", error)
