@@ -34,6 +34,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 import { useDebounce } from "@/hooks/use-debounce"
 import { useEmployeesDropdownInfiniteQuery } from "@/hooks/queries/use-employees-query"
@@ -433,45 +434,82 @@ export function MarkManualAttendanceDialog({
                   <FormLabel className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
                     <Clock className="h-3 w-3" /> Punch In
                   </FormLabel>
-                  <div className="flex gap-2">
+                  
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled
+                    className="h-10 w-full pl-3 text-left font-normal rounded-lg border-slate-200 bg-slate-50/50 text-slate-400 text-xs cursor-not-allowed select-none"
+                  >
+                    {form.getValues("date") ? format(form.getValues("date"), "dd MMM yyyy") : format(new Date(), "dd MMM yyyy")}
+                    <CalendarIcon className="ml-auto h-3 w-3 opacity-30" />
+                  </Button>
+
+                  <div className="flex items-center gap-1.5 h-10 rounded-lg border border-slate-200 bg-white/50 px-3 focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500 transition-all">
                     <FormField
                       control={form.control}
                       name="punchInHour"
                       render={({ field }) => (
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <SelectTrigger className="h-10 rounded-lg border-slate-200 bg-white/50">
-                            <SelectValue placeholder="Hr" />
-                          </SelectTrigger>
-                          <SelectContent className="max-h-[200px]">
-                            {HOURS_12.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
+                        <Input
+                          type="text"
+                          maxLength={2}
+                          placeholder="HH"
+                          className="w-8 border-none bg-transparent p-0 text-center text-sm font-semibold focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-slate-300 shadow-none h-auto"
+                          value={field.value || ""}
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/\D/g, "")
+                            if (val === "" || (parseInt(val) >= 0 && parseInt(val) <= 12)) {
+                              field.onChange(val)
+                            }
+                          }}
+                          onBlur={(e) => {
+                            const val = e.target.value
+                            if (val && val.length === 1) {
+                              field.onChange(val.padStart(2, "0"))
+                            }
+                          }}
+                        />
                       )}
                     />
+                    <span className="text-slate-400 font-bold select-none">:</span>
                     <FormField
                       control={form.control}
                       name="punchInMinute"
                       render={({ field }) => (
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <SelectTrigger className="h-10 rounded-lg border-slate-200 bg-white/50 w-[70px]">
-                            <SelectValue placeholder="Min" />
-                          </SelectTrigger>
-                          <SelectContent className="max-h-[200px]">
-                            {MINUTES.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
+                        <Input
+                          type="text"
+                          maxLength={2}
+                          placeholder="MM"
+                          className="w-8 border-none bg-transparent p-0 text-center text-sm font-semibold focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-slate-300 shadow-none h-auto"
+                          value={field.value || ""}
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/\D/g, "")
+                            if (val === "" || (parseInt(val) >= 0 && parseInt(val) <= 59)) {
+                              field.onChange(val)
+                            }
+                          }}
+                          onBlur={(e) => {
+                            const val = e.target.value
+                            if (val && val.length === 1) {
+                              field.onChange(val.padStart(2, "0"))
+                            } else if (val === "") {
+                              field.onChange("00")
+                            }
+                          }}
+                        />
                       )}
                     />
+                    <div className="h-4 w-[1px] bg-slate-200 mx-1" />
                     <FormField
                       control={form.control}
                       name="punchInPeriod"
                       render={({ field }) => (
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <SelectTrigger className="h-10 rounded-lg border-slate-200 bg-white/50 w-[70px]">
+                          <SelectTrigger className="border-none bg-transparent h-auto p-0 focus:ring-0 text-xs font-bold text-slate-600 w-[45px] shadow-none select-none">
                             <SelectValue placeholder="AM/PM" />
                           </SelectTrigger>
-                          <SelectContent>
-                            {PERIODS.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                          <SelectContent className="min-w-[70px] rounded-xl border-slate-100 shadow-xl">
+                            {PERIODS.map(p => <SelectItem key={p} value={p} className="rounded-lg">{p}</SelectItem>)}
                           </SelectContent>
                         </Select>
                       )}
@@ -516,45 +554,71 @@ export function MarkManualAttendanceDialog({
                     )}
                   />
 
-                  <div className="flex gap-2">
+                  <div className="flex items-center gap-1.5 h-10 rounded-lg border border-slate-200 bg-white/50 px-3 focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500 transition-all">
                     <FormField
                       control={form.control}
                       name="punchOutHour"
                       render={({ field }) => (
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <SelectTrigger className="h-10 rounded-lg border-slate-200 bg-white/50">
-                            <SelectValue placeholder="Hr" />
-                          </SelectTrigger>
-                          <SelectContent className="max-h-[200px]">
-                            {HOURS_12.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
+                        <Input
+                          type="text"
+                          maxLength={2}
+                          placeholder="HH"
+                          className="w-8 border-none bg-transparent p-0 text-center text-sm font-semibold focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-slate-300 shadow-none h-auto"
+                          value={field.value || ""}
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/\D/g, "")
+                            if (val === "" || (parseInt(val) >= 0 && parseInt(val) <= 12)) {
+                              field.onChange(val)
+                            }
+                          }}
+                          onBlur={(e) => {
+                            const val = e.target.value
+                            if (val && val.length === 1) {
+                              field.onChange(val.padStart(2, "0"))
+                            }
+                          }}
+                        />
                       )}
                     />
+                    <span className="text-slate-400 font-bold select-none">:</span>
                     <FormField
                       control={form.control}
                       name="punchOutMinute"
                       render={({ field }) => (
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <SelectTrigger className="h-10 rounded-lg border-slate-200 bg-white/50 w-[70px]">
-                            <SelectValue placeholder="Min" />
-                          </SelectTrigger>
-                          <SelectContent className="max-h-[200px]">
-                            {MINUTES.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
+                        <Input
+                          type="text"
+                          maxLength={2}
+                          placeholder="MM"
+                          className="w-8 border-none bg-transparent p-0 text-center text-sm font-semibold focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-slate-300 shadow-none h-auto"
+                          value={field.value || ""}
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/\D/g, "")
+                            if (val === "" || (parseInt(val) >= 0 && parseInt(val) <= 59)) {
+                              field.onChange(val)
+                            }
+                          }}
+                          onBlur={(e) => {
+                            const val = e.target.value
+                            if (val && val.length === 1) {
+                              field.onChange(val.padStart(2, "0"))
+                            } else if (val === "") {
+                              field.onChange("00")
+                            }
+                          }}
+                        />
                       )}
                     />
+                    <div className="h-4 w-[1px] bg-slate-200 mx-1" />
                     <FormField
                       control={form.control}
                       name="punchOutPeriod"
                       render={({ field }) => (
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <SelectTrigger className="h-10 rounded-lg border-slate-200 bg-white/50 w-[70px]">
+                          <SelectTrigger className="border-none bg-transparent h-auto p-0 focus:ring-0 text-xs font-bold text-slate-600 w-[45px] shadow-none select-none">
                             <SelectValue placeholder="AM/PM" />
                           </SelectTrigger>
-                          <SelectContent>
-                            {PERIODS.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                          <SelectContent className="min-w-[70px] rounded-xl border-slate-100 shadow-xl">
+                            {PERIODS.map(p => <SelectItem key={p} value={p} className="rounded-lg">{p}</SelectItem>)}
                           </SelectContent>
                         </Select>
                       )}
