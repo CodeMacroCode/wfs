@@ -164,8 +164,8 @@ export function MarkManualAttendanceDialog({
     isFetchingNextPage: isFetchingNextEmployees,
     isLoading: isLoadingEmployees
   } = useEmployeesDropdownInfiniteQuery(
-    { search: debouncedEmployeeSearch, companyId: selectedCompanyId },
-    open && !!selectedCompanyId
+    { search: debouncedEmployeeSearch, ...(selectedCompanyId ? { companyId: selectedCompanyId } : {}) },
+    open
   )
 
   const employeeList = React.useMemo(() =>
@@ -239,13 +239,6 @@ export function MarkManualAttendanceDialog({
     }
   }, [initialData, open, form])
 
-  // Clear employee when company changes if not from initialData
-  React.useEffect(() => {
-    if (selectedCompanyId && !initialData) {
-      form.setValue("employeeId", "")
-    }
-  }, [selectedCompanyId, form, initialData])
-
   const status = useWatch({
     control: form.control,
     name: "status",
@@ -295,7 +288,12 @@ export function MarkManualAttendanceDialog({
                     <FormControl>
                       <InfiniteScrollSelect
                         value={field.value}
-                        onValueChange={field.onChange}
+                        onValueChange={(val) => {
+                          field.onChange(val)
+                          if (!initialData) {
+                            form.setValue("employeeId", "")
+                          }
+                        }}
                         items={companiesList}
                         loadMore={fetchNextCompanies}
                         hasNextPage={!!hasNextCompanies}
@@ -322,20 +320,39 @@ export function MarkManualAttendanceDialog({
                     <FormControl>
                       <InfiniteScrollSelect
                         value={field.value}
-                        onValueChange={field.onChange}
+                        onValueChange={(val, item) => {
+                          field.onChange(val)
+                          const itemWithCompany = item as EmployeeDropdownItem & {
+                            companyId?: string
+                            company?: string | { _id: string }
+                          }
+                          const empCompanyId =
+                            itemWithCompany.companyId ||
+                            (typeof itemWithCompany.company === "object"
+                              ? itemWithCompany.company?._id
+                              : itemWithCompany.company)
+                          if (empCompanyId && typeof empCompanyId === "string") {
+                            form.setValue("companyId", empCompanyId)
+                          }
+                        }}
                         items={employeeList}
                         loadMore={fetchNextEmployees}
                         hasNextPage={!!hasNextEmployees}
                         isFetchingNextPage={isFetchingNextEmployees}
                         isLoading={isLoadingEmployees}
                         onSearchChange={setEmployeeSearch}
-                        placeholder={selectedCompanyId ? "Select employee" : "Select company first"}
-                        disabled={!selectedCompanyId}
-                        getLabel={(emp: EmployeeDropdownItem) => emp.name}
+                        placeholder="Select employee"
+                        getLabel={(emp: EmployeeDropdownItem) => `${emp.name} (${emp.employeeId})`}
                         getValue={(emp: EmployeeDropdownItem) => emp._id}
                         renderItem={(emp: EmployeeDropdownItem) => (
-                          <div className="flex flex-col gap-0.5">
-                            <span className="font-bold text-slate-700 italic">{emp.name}</span>
+                          <div className="flex flex-col gap-0.5 w-full">
+                            <div className="flex items-center justify-between w-full">
+                              <span className="font-bold text-slate-700 italic">{emp.name}</span>
+                              <span className="text-[10px] font-black text-indigo-600 uppercase tracking-tighter">ID: {emp.employeeId}</span>
+                            </div>
+                            {emp.uniqueId && (
+                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Punch ID: {emp.uniqueId}</span>
+                            )}
                           </div>
                         )}
                         className="h-12 rounded-xl border-slate-200 bg-white/50 focus:ring-indigo-500/20"
