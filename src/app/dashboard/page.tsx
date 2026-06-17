@@ -173,9 +173,13 @@ export default function DashboardPage() {
     { staleTime: 60000 }
   )
 
+  const statsDateStr = useMemo(() => {
+    return statsDate ? format(statsDate, "yyyy-MM-dd") : today
+  }, [statsDate, today])
+
   const { data: attendanceGraphData, isLoading: isAttendanceGraphLoading } = useAttendanceWithSummaryQuery(
-    today,
-    today,
+    statsDateStr,
+    statsDateStr,
     1,
     1,
     undefined,
@@ -920,7 +924,7 @@ export default function DashboardPage() {
             </div>
 
             <Button 
-              onClick={() => router.push(`/dashboard/attendance?companyId=${attendanceGraphCompanyIds.includes("overall") ? "all" : attendanceGraphCompanyIds.join(",")}&date=${today}`)}
+              onClick={() => router.push(`/dashboard/attendance?companyId=${attendanceGraphCompanyIds.includes("overall") ? "all" : attendanceGraphCompanyIds.join(",")}&date=${statsDateStr}`)}
               className="w-full mt-6 bg-slate-50 border border-slate-100 text-slate-500 font-black text-[10px] h-10 shadow-none hover:bg-slate-100 hover:text-slate-700 rounded-xl group transition-all uppercase tracking-wider"
             >
               Detailed View
