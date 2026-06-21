@@ -71,7 +71,7 @@ export const getEmployeeColumns = (
                 </div>
             ),
             meta: {
-                exportValue: (item: Employee) => item.name
+                exportValue: (item: Employee) => item.otherName || item.name
             }
         },
         {
