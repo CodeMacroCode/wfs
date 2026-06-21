@@ -76,6 +76,7 @@ export interface Employee {
   currentAddress: string;
   mobileNo: string;
   documents?: EmployeeDocument[];
+  otherDocuments?: { _id: string; title?: string; file?: string; files?: string[] }[];
   profileImage?: string | File | null;
   profilePicture?: string | File | null;
   employeeObjId?: {

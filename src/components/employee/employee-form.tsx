@@ -40,6 +40,7 @@ import { useDepartmentsQuery, useDesignationsQuery } from "@/hooks/queries/use-o
 import { cn } from "@/lib/utils"
 import { InfiniteScrollSelect } from "@/components/ui/infinite-scroll-select";
 import { useDebounce } from "@/hooks/use-debounce";
+import { docCenterService } from "@/services/doc-center-service";
 
 const emergencyContactSchema = z.object({
   name: z.string().optional(),
@@ -194,7 +195,11 @@ export function EmployeeForm({
       currentAddress: initialValues?.currentAddress || "",
       mobileNo: initialValues?.mobileNo || "",
       notes: initialValues?.notes || "",
-      documents: initialValues?.documents || [],
+      documents: initialValues?.otherDocuments?.map((doc) => ({
+        title: doc.title || "",
+        url: doc.file || "",
+        _id: doc._id
+      })) || initialValues?.documents || [],
       password: "123456",
       createdBy: initialValues?.createdBy || user?.id || "",
     },
@@ -311,6 +316,43 @@ export function EmployeeForm({
   }, [profileImage]);
 
   const displayPreview = typeof profileImage === 'string' ? profileImage : previewUrl;
+
+  const fetchedDocsRef = useRef<Record<string, boolean>>({});
+
+  useEffect(() => {
+    const fetchMissingDocuments = async () => {
+      const otherDocs = initialValues?.otherDocuments || [];
+      if (!otherDocs.length) return;
+
+      for (let index = 0; index < otherDocs.length; index++) {
+        const doc = otherDocs[index];
+        if (doc._id && !fetchedDocsRef.current[doc._id]) {
+          const currentVal = form.getValues(`documents.${index}`);
+          if (currentVal?.title || currentVal?.url) {
+            fetchedDocsRef.current[doc._id] = true;
+            continue;
+          }
+
+          fetchedDocsRef.current[doc._id] = true;
+          try {
+            const fullDoc = await docCenterService.getById(doc._id);
+            if (fullDoc) {
+              form.setValue(`documents.${index}`, {
+                _id: fullDoc._id,
+                title: fullDoc.title || "",
+                url: fullDoc.files?.[0] || "",
+              });
+            }
+          } catch (err) {
+            fetchedDocsRef.current[doc._id] = false;
+            console.error("Failed to fetch document details for id:", doc._id, err);
+          }
+        }
+      }
+    };
+
+    fetchMissingDocuments();
+  }, [initialValues, form]);
 
   const handleFormSubmit = (values: z.infer<typeof formSchema>) => {
     const formData = new FormData();
@@ -914,7 +956,19 @@ export function EmployeeForm({
                           <FormItem className="flex-1">
                             <FormLabel className="text-[10px]">Upload File</FormLabel>
                             <FormControl>
-                              <Input type="file" className="h-9 cursor-pointer file:bg-slate-100 file:border-0 file:rounded-md file:text-[10px] file:font-bold hover:file:bg-slate-200" onChange={(e) => { const file = e.target.files?.[0]; if (file) onChange(file); }} name={fieldProps.name} onBlur={fieldProps.onBlur} ref={fieldProps.ref} />
+                              <div className="space-y-1">
+                                <Input type="file" className="h-9 cursor-pointer file:bg-slate-100 file:border-0 file:rounded-md file:text-[10px] file:font-bold hover:file:bg-slate-200" onChange={(e) => { const file = e.target.files?.[0]; if (file) onChange(file); }} name={fieldProps.name} onBlur={fieldProps.onBlur} ref={fieldProps.ref} />
+                                {(() => {
+                                  const docUrl = form.getValues(`documents.${index}.url`);
+                                  if (!docUrl) return null;
+                                  const fullUrl = docUrl.startsWith("http") ? docUrl : `${(process.env.NEXT_PUBLIC_BASE_URL || "").replace(/\/api$/, "")}${docUrl}`;
+                                  return (
+                                    <div className="text-[10px] text-slate-500 font-medium">
+                                      Current: <a href={fullUrl} target="_blank" rel="noreferrer" className="text-teal-600 hover:underline font-bold">View Document</a>
+                                    </div>
+                                  );
+                                })()}
+                              </div>
                             </FormControl>
                             <FormMessage />
                           </FormItem>

@@ -1,11 +1,13 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Employee } from "@/types/employee";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
-import { FileText, Download, User, ShieldCheck } from "lucide-react";
+import { FileText, Download, User, ShieldCheck, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import { docCenterService } from "@/services/doc-center-service";
+import { toast } from "sonner";
 
 interface DocumentsTabProps {
   employee: Employee;
@@ -20,6 +22,26 @@ export function DocumentsTab({ employee }: DocumentsTabProps) {
 
   // API returns otherDocuments array
   const docs = (employee as unknown as { otherDocuments?: { title: string; file: string; _id: string }[] }).otherDocuments;
+  const [loadingDocId, setLoadingDocId] = useState<string | null>(null);
+
+  const handleView = async (docId: string) => {
+    if (!docId) return;
+    setLoadingDocId(docId);
+    try {
+      const fullDoc = await docCenterService.getById(docId);
+      const filePath = fullDoc.files?.[0];
+      if (filePath) {
+        const fileUrl = filePath.startsWith("http") ? filePath : `${apiBase}${filePath}`;
+        window.open(fileUrl, "_blank", "noreferrer");
+      } else {
+        toast.error("No file associated with this document");
+      }
+    } catch (e) {
+      console.error("Failed to load document", e);
+    } finally {
+      setLoadingDocId(null);
+    }
+  };
 
   return (
     <div className="p-8 bg-slate-50/50 space-y-8">
@@ -84,30 +106,35 @@ export function DocumentsTab({ employee }: DocumentsTabProps) {
           <CardContent className="p-6">
              <div className="space-y-4">
                {docs?.length ? (
-                 docs.map((doc, idx) => (
-                   <div key={doc._id || idx} className="flex items-center justify-between p-4 rounded-xl bg-slate-50 border border-slate-100 transition-hover hover:border-[#2eb88a]/30 group">
-                     <div className="flex items-center gap-4">
-                        <div className="h-10 w-10 rounded-xl bg-white border flex items-center justify-center text-slate-400 shadow-sm group-hover:text-[#2eb88a] transition-colors">
-                          <FileText className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-bold text-slate-700">{doc.title}</p>
-                          <p className="text-[10px] text-slate-400 font-medium">Click to view document</p>
-                        </div>
-                     </div>
-                      <Button variant="ghost" size="sm" asChild disabled={!doc.file}>
-                        <a 
-                          href={doc.file ? (doc.file.startsWith("http") ? doc.file : `${apiBase}${doc.file}`) : "#"} 
-                          target="_blank" 
-                          rel="noreferrer" 
-                          className="text-[#2eb88a] font-bold"
-                          onClick={(e) => !doc.file && e.preventDefault()}
+                 docs.map((doc, idx) => {
+                   const isCurrentLoading = loadingDocId === doc._id;
+                   return (
+                     <div key={doc._id || idx} className="flex items-center justify-between p-4 rounded-xl bg-slate-50 border border-slate-100 transition-hover hover:border-[#2eb88a]/30 group">
+                       <div className="flex items-center gap-4">
+                          <div className="h-10 w-10 rounded-xl bg-white border flex items-center justify-center text-slate-400 shadow-sm group-hover:text-[#2eb88a] transition-colors">
+                            {isCurrentLoading ? (
+                              <Loader2 className="w-5 h-5 animate-spin text-[#2eb88a]" />
+                            ) : (
+                              <FileText className="w-5 h-5" />
+                            )}
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-slate-700">{doc.title || `Statutory Document ${idx + 1}`}</p>
+                            <p className="text-[10px] text-slate-400 font-medium">Click to view document</p>
+                          </div>
+                       </div>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-[#2eb88a] font-bold" 
+                          disabled={isCurrentLoading}
+                          onClick={() => handleView(doc._id)}
                         >
-                          View
-                        </a>
-                      </Button>
-                   </div>
-                 ))
+                          {isCurrentLoading ? "Opening..." : "View"}
+                        </Button>
+                     </div>
+                   );
+                 })
                ) : (
                  <div className="flex flex-col items-center justify-center py-12 text-slate-300">
                    <FileText className="w-12 h-12 mb-2 opacity-20" />
