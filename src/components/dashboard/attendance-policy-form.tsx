@@ -23,6 +23,7 @@ const formSchema = z.object({
   shiftOutTime: z.string().regex(/^([01]\d|2[0-3]):?([0-5]\d)$/, "Invalid time format (HH:MM)"),
   overtimeThresholdMins: z.number().min(0, "Threshold must be at least 0"),
   overtimeHourlyRate: z.number().min(0, "Hourly rate must be at least 0"),
+  attendanceBufferMins: z.number().min(0, "Buffer time must be at least 0"),
 })
 
 
@@ -48,6 +49,7 @@ export function AttendancePolicyForm({
       shiftOutTime: initialValues?.shiftOutTime || "18:00",
       overtimeThresholdMins: initialValues?.overtimeThresholdMins ?? 30,
       overtimeHourlyRate: initialValues?.overtimeHourlyRate ?? 100,
+      attendanceBufferMins: initialValues?.attendanceBufferMins ?? 15,
     },
   })
 
@@ -101,7 +103,7 @@ export function AttendancePolicyForm({
             name="overtimeThresholdMins"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Buffer Time (Mins)</FormLabel>
+                <FormLabel>OT Threshold (Mins)</FormLabel>
                 <FormControl>
                   <Input
                     type="number"
@@ -131,6 +133,23 @@ export function AttendancePolicyForm({
             )}
           />
         </div>
+        <FormField
+          control={form.control}
+          name="attendanceBufferMins"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Attendance Buffer (Mins)</FormLabel>
+              <FormControl>
+                <Input
+                  type="number"
+                  {...field}
+                  onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <div className="flex justify-end gap-2 pt-4">
           <Button type="submit" className="bg-[#2eb88a] hover:bg-[#259b74]" disabled={isLoading}>
             {isLoading ? "Saving..." : isEdit ? "Update Policy" : "Create Policy"}

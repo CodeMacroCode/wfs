@@ -90,6 +90,7 @@ export function EditAttendancePolicyDialog({ policy, open, onOpenChange }: EditA
             shiftOutTime: policy.shiftOutTime,
             overtimeThresholdMins: policy.overtimeThresholdMins,
             overtimeHourlyRate: policy.overtimeHourlyRate,
+            attendanceBufferMins: policy.attendanceBufferMins,
           }}
           onSubmit={onSubmit}
           isLoading={isPending}

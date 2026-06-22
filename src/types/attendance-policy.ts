@@ -5,6 +5,7 @@ export interface AttendancePolicy {
   shiftOutTime: string;
   overtimeThresholdMins: number;
   overtimeHourlyRate: number;
+  attendanceBufferMins: number;
   createdBy: {
     _id: string;
     name: string;
@@ -21,6 +22,7 @@ export interface CreateAttendancePolicyDto {
   shiftOutTime: string;
   overtimeThresholdMins: number;
   overtimeHourlyRate: number;
+  attendanceBufferMins: number;
 }
 
 export interface AttendancePoliciesResponse {

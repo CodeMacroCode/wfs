@@ -75,6 +75,15 @@ export function AttendancePolicyTable({ data, isLoading }: AttendancePolicyTable
       ),
     },
     {
+      accessorKey: "attendanceBufferMins",
+      header: "Buffer Time",
+      cell: ({ row }: CellContext<AttendancePolicy, unknown>) => (
+        <Badge variant="secondary" className="bg-slate-100 text-slate-600 font-black px-2.5 py-1 rounded-lg border-none">
+          {row.original.attendanceBufferMins || 0} Mins
+        </Badge>
+      ),
+    },
+    {
       accessorKey: "overtimeHourlyRate",
       header: "OT Hourly Rate",
       cell: ({ row }: CellContext<AttendancePolicy, unknown>) => (
