@@ -124,8 +124,29 @@ export function AttendanceTab({ employeeId, onLeaveClick }: AttendanceTabProps) 
 
   const leaves = leavesData?.data || [];
 
+  const stats = useMemo(() => {
+    if (!attendanceData?.data) {
+      return { present: 0, absent: 0, late: 0, halfDay: 0, onLeave: 0 };
+    }
+    let present = 0;
+    let absent = 0;
+    let late = 0;
+    let halfDay = 0;
+    let onLeave = 0;
+
+    attendanceData.data.forEach(item => {
+      if (item.status === "Present") present++;
+      else if (item.status === "Absent") absent++;
+      else if (item.status === "Late") late++;
+      else if (item.status === "Half-Day") halfDay++;
+      else if (item.status === "On Leave") onLeave++;
+    });
+
+    return { present, absent, late, halfDay, onLeave };
+  }, [attendanceData]);
+
   return (
-    <div className="p-8 bg-slate-50/50 min-h-[600px] flex flex-col gap-8">
+    <div className="p-8 bg-slate-50/50 min-h-[600px] flex flex-col gap-6">
       {/* Calendar Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-6 rounded-2xl border shadow-sm">
         <div className="flex items-center gap-6">
@@ -188,6 +209,24 @@ export function AttendanceTab({ employeeId, onLeaveClick }: AttendanceTabProps) 
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Quick Stats */}
+      <div className="grid grid-cols-2 gap-4 max-w-md">
+        {[
+          { label: "Present", value: stats.present, color: "text-emerald-600", bg: "bg-emerald-50", icon: CheckCircle2 },
+          { label: "Absent", value: stats.absent, color: "text-rose-600", bg: "bg-rose-50", icon: XCircle },
+        ].map((stat) => (
+          <div key={stat.label} className="bg-white p-4 rounded-2xl border shadow-sm flex items-center justify-between">
+            <div>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{stat.label}</p>
+              <p className={cn("text-xl font-black mt-1", stat.color)}>{stat.value}</p>
+            </div>
+            <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs", stat.bg, stat.color)}>
+              <stat.icon className="h-5 w-5" />
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Calendar Grid */}
