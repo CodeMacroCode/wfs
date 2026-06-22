@@ -26,6 +26,7 @@ import { cn } from "@/lib/utils"
 
 const leaveFormSchema = z.object({
   employeeId: z.string().min(1, "Employee ID is required"),
+  name: z.string().min(2, "Name is required"),
   fromDate: z.string().min(1, "Start date is required"),
   toDate: z.string().min(1, "End date is required"),
   reason: z.string().min(5, "Please provide a reason (min 5 chars)"),
@@ -35,12 +36,14 @@ type LeaveFormValues = z.infer<typeof leaveFormSchema>
 
 export default function ApplyForLeavePage() {
   const [isLoading, setIsLoading] = React.useState(false)
+  const [docId] = React.useState(() => Math.random().toString(36).substring(7).toUpperCase())
   const router = useRouter()
 
   const form = useForm<LeaveFormValues>({
     resolver: zodResolver(leaveFormSchema),
     defaultValues: {
       employeeId: "",
+      name: "",
       fromDate: new Date().toISOString().substring(0, 10),
       toDate: new Date().toISOString().substring(0, 10),
       reason: "",
@@ -54,6 +57,7 @@ export default function ApplyForLeavePage() {
     try {
       const payload = {
         employeeId: values.employeeId,
+        name: values.name,
         fromDate: values.fromDate,
         toDate: values.toDate,
         leaveType: "Sick",
@@ -121,6 +125,29 @@ export default function ApplyForLeavePage() {
                       <Input
                         placeholder="e.g. EMP-001"
                         {...field}
+                        value={field.value ?? ""}
+                        className="rounded-xl border-slate-100 bg-slate-50/50 h-12 md:h-14 px-5 focus:border-[#2eb88a] focus:ring-[#2eb88a]/10 font-bold text-base transition-all"
+                      />
+                    </FormControl>
+                    <FormMessage className="text-[10px] font-bold" />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem className="space-y-1.5">
+                    <FormLabel className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2 mb-1">
+                      <User className="h-3 w-3 text-[#2eb88a]" />
+                      Full Name
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="e.g. Ramesh Kumar"
+                        {...field}
+                        value={field.value ?? ""}
                         className="rounded-xl border-slate-100 bg-slate-50/50 h-12 md:h-14 px-5 focus:border-[#2eb88a] focus:ring-[#2eb88a]/10 font-bold text-base transition-all"
                       />
                     </FormControl>
@@ -228,6 +255,7 @@ export default function ApplyForLeavePage() {
                       <Input
                         placeholder="Why are you taking leave?"
                         {...field}
+                        value={field.value ?? ""}
                         className="rounded-xl border-slate-100 bg-slate-50/50 h-12 md:h-14 px-5 focus:border-[#2eb88a] focus:ring-[#2eb88a]/10 font-bold text-base transition-all"
                       />
                     </FormControl>
@@ -316,6 +344,10 @@ export default function ApplyForLeavePage() {
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Employee ID</p>
                 <p className="text-xl font-bold text-slate-900 border-b-2 border-slate-100 pb-2">{submittedData?.employeeId}</p>
               </div>
+              <div>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Employee Name</p>
+                <p className="text-xl font-bold text-slate-900 border-b-2 border-slate-100 pb-2">{submittedData?.name}</p>
+              </div>
               <div className="grid grid-cols-2 gap-6">
                 <div>
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">From Date</p>
@@ -356,7 +388,7 @@ export default function ApplyForLeavePage() {
 
           <div className="mt-20 pt-10 text-center border-t-2 border-slate-100">
             <p className="text-[9px] font-black text-slate-300 uppercase tracking-[0.5em]">
-              Form Generated via GOEL ENTERPRISES Cloud Terminal • Internal Document ID: {Math.random().toString(36).substring(7).toUpperCase()}
+              Form Generated via GOEL ENTERPRISES Cloud Terminal • Internal Document ID: {docId}
             </p>
           </div>
         </div>

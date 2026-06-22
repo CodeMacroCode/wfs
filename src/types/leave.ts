@@ -14,6 +14,10 @@ export interface Leave {
     name: string;
     email: string;
     uniqueId?: number;
+    departmentId?: {
+      _id: string;
+      name: string;
+    };
   } | null;
   companyId: string;
   fromDate: string;

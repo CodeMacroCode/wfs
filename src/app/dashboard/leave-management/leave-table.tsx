@@ -106,6 +106,18 @@ export function LeaveTable({
       },
     },
     {
+      id: "department",
+      header: "Department",
+      cell: ({ row }: CellContext<Leave, unknown>) => {
+        const dept = row.original.userId?.departmentId
+        return (
+          <span className="font-bold text-slate-600 text-xs italic">
+            {dept?.name || "—"}
+          </span>
+        )
+      },
+    },
+    {
       accessorKey: "leaveType",
       header: "Type",
       cell: ({ row }: CellContext<Leave, unknown>) => (

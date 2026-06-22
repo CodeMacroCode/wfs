@@ -28,7 +28,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { RegisterEmployeeDto, EmergencyContact } from "@/types/employee";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, User, Upload, X } from "lucide-react";
+import { Plus, Trash2, User, Upload, X, Eye, Pencil } from "lucide-react";
 import { format, parseISO, isValid } from "date-fns";
 import { authStorage } from "@/lib/auth";
 import { useAttendancePoliciesQuery } from "@/hooks/queries/use-attendance-policies";
@@ -124,6 +124,197 @@ interface EmployeeFormProps {
   isLoading?: boolean;
   isEdit?: boolean;
 }
+
+interface DocumentRowProps {
+  index: number;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  field: Record<string, any>;
+  remove: (index: number) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  form: ReturnType<typeof useForm<any>>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  append: (value: Record<string, any>) => void;
+}
+
+function DocumentRow({ index, field: _field, remove, form, append }: DocumentRowProps) {
+  const docFile = useWatch({
+    control: form.control,
+    name: `documents.${index}.file`,
+  });
+  const docUrl = useWatch({
+    control: form.control,
+    name: `documents.${index}.url`,
+  });
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (docFile instanceof File && docFile.type.startsWith("image/")) {
+      const objectUrl = URL.createObjectURL(docFile);
+      queueMicrotask(() => setPreview(objectUrl));
+      return () => URL.revokeObjectURL(objectUrl);
+    }
+    queueMicrotask(() => setPreview(null));
+  }, [docFile]);
+
+  const IMAGE_REGEX = /\.(jpeg|jpg|gif|png|webp|svg)(\?.*)?$/i;
+
+  const fullUrl = docUrl
+    ? docUrl.startsWith("http")
+      ? docUrl
+      : `${(process.env.NEXT_PUBLIC_BASE_URL || "").replace(/\/api$/, "")}${docUrl}`
+    : null;
+
+  const isNewImageFile = docFile instanceof File && docFile.type.startsWith("image/");
+  // Treat any server-stored URL as an image (otherDocuments are always images in this app)
+  // but also keep regex as a fallback
+  const isPrefillImage =
+    !isNewImageFile &&
+    typeof docUrl === "string" &&
+    docUrl.length > 0 &&
+    (IMAGE_REGEX.test(docUrl) || docUrl.startsWith("/api/uploads/"));
+  const isImage = isNewImageFile || isPrefillImage;
+
+  const displayUrl = isNewImageFile ? preview : isPrefillImage ? fullUrl : null;
+
+  const handleEditClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  return (
+    <div className="grid grid-cols-2 gap-4 p-4 border rounded-xl bg-slate-50/30">
+      <FormField
+        control={form.control}
+        name={`documents.${index}.title`}
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel className="text-[10px]">Document Title</FormLabel>
+            <FormControl><Input placeholder="e.g. Aadhar Card, Resume" {...field} /></FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <div className="flex gap-2 items-end">
+        <FormField
+          control={form.control}
+          name={`documents.${index}.file`}
+          render={({ field: { onChange, ...fieldProps } }) => (
+            <FormItem className="flex-1">
+              <FormLabel className="text-[10px]">Upload File</FormLabel>
+              <FormControl>
+                <div className="space-y-2">
+                  <input
+                    type="file"
+                    multiple
+                    ref={fileInputRef}
+                    className="hidden"
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files || []);
+                      if (files.length > 0) {
+                        onChange(files[0]);
+                        for (let i = 1; i < files.length; i++) {
+                          append({
+                            title: files[i].name.split('.').slice(0, -1).join('.') || "Document",
+                            file: files[i],
+                            url: ""
+                          });
+                        }
+                      }
+                    }}
+                  />
+
+                  {isImage && displayUrl ? (
+                    <div className="flex items-center gap-3">
+                      <div className="relative w-24 h-16 rounded-lg border border-slate-200 overflow-hidden bg-slate-100 flex-shrink-0 group shadow-sm">
+                        <Image src={displayUrl} alt="Preview" fill className="object-cover" unoptimized />
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity gap-2">
+                          {fullUrl && (
+                            <a
+                              href={fullUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              title="View full image"
+                              className="p-1.5 bg-white/20 hover:bg-white/40 rounded text-white transition-colors"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                            </a>
+                          )}
+                          {!fullUrl && preview && (
+                            <a
+                              href={preview}
+                              target="_blank"
+                              rel="noreferrer"
+                              title="View full image"
+                              className="p-1.5 bg-white/20 hover:bg-white/40 rounded text-white transition-colors"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                            </a>
+                          )}
+                          <button
+                            type="button"
+                            onClick={handleEditClick}
+                            title="Edit / Replace Image"
+                            className="p-1.5 bg-white/20 hover:bg-white/40 rounded text-white transition-colors"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[10px] text-slate-500 font-semibold uppercase">Image Preview</span>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={handleEditClick}
+                          className="h-7 px-2 text-[10px] border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
+                        >
+                          Change Image
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="file"
+                        multiple
+                        className="h-9 cursor-pointer file:bg-slate-100 file:border-0 file:rounded-md file:text-[10px] file:font-bold hover:file:bg-slate-200"
+                        onChange={(e) => {
+                          const files = Array.from(e.target.files || []);
+                          if (files.length > 0) {
+                            onChange(files[0]);
+                            for (let i = 1; i < files.length; i++) {
+                              append({
+                                title: files[i].name.split('.').slice(0, -1).join('.') || "Document",
+                                file: files[i],
+                                url: ""
+                              });
+                            }
+                          }
+                        }}
+                        name={fieldProps.name}
+                        onBlur={fieldProps.onBlur}
+                      />
+                      {fullUrl && (
+                        <div className="text-[10px] text-slate-500 font-medium whitespace-nowrap">
+                          Current: <a href={fullUrl} target="_blank" rel="noreferrer" className="text-teal-600 hover:underline font-bold">View Document</a>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <Button variant="ghost" size="icon" className="text-rose-500" onClick={() => remove(index)}><Trash2 className="h-4 w-4" /></Button>
+      </div>
+    </div>
+  );
+}
+
 
 export function EmployeeForm({
   initialValues,
@@ -935,48 +1126,15 @@ export function EmployeeForm({
                     <Plus className="h-4 w-4 mr-2" /> Add Document
                   </Button>
                 </div>
-                {documentFields.map((field, index) => (
-                  <div key={field.id} className="grid grid-cols-2 gap-4 p-4 border rounded-xl bg-slate-50/30">
-                    <FormField
-                      control={form.control}
-                      name={`documents.${index}.title`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-[10px]">Document Title</FormLabel>
-                          <FormControl><Input placeholder="e.g. Aadhar Card, Resume" {...field} /></FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <div className="flex gap-2 items-end">
-                      <FormField
-                        control={form.control}
-                        name={`documents.${index}.file`}
-                        render={({ field: { onChange, ...fieldProps } }) => (
-                          <FormItem className="flex-1">
-                            <FormLabel className="text-[10px]">Upload File</FormLabel>
-                            <FormControl>
-                              <div className="space-y-1">
-                                <Input type="file" className="h-9 cursor-pointer file:bg-slate-100 file:border-0 file:rounded-md file:text-[10px] file:font-bold hover:file:bg-slate-200" onChange={(e) => { const file = e.target.files?.[0]; if (file) onChange(file); }} name={fieldProps.name} onBlur={fieldProps.onBlur} ref={fieldProps.ref} />
-                                {(() => {
-                                  const docUrl = form.getValues(`documents.${index}.url`);
-                                  if (!docUrl) return null;
-                                  const fullUrl = docUrl.startsWith("http") ? docUrl : `${(process.env.NEXT_PUBLIC_BASE_URL || "").replace(/\/api$/, "")}${docUrl}`;
-                                  return (
-                                    <div className="text-[10px] text-slate-500 font-medium">
-                                      Current: <a href={fullUrl} target="_blank" rel="noreferrer" className="text-teal-600 hover:underline font-bold">View Document</a>
-                                    </div>
-                                  );
-                                })()}
-                              </div>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <Button variant="ghost" size="icon" className="text-rose-500" onClick={() => removeDocument(index)}><Trash2 className="h-4 w-4" /></Button>
-                    </div>
-                  </div>
+                 {documentFields.map((field, index) => (
+                  <DocumentRow
+                    key={field.id}
+                    index={index}
+                    field={field}
+                    remove={removeDocument}
+                    form={form}
+                    append={appendDocument}
+                  />
                 ))}
               </div>
 
