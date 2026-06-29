@@ -3,8 +3,7 @@
 import React from "react";
 import { Employee } from "@/types/employee";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
-import { Package, Shield, Calendar, Tag, ShieldCheck, Info } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Package, Shield, Calendar, Tag, Info } from "lucide-react";
 
 interface AssetsTabProps {
   employee: Employee;
