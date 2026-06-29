@@ -75,10 +75,10 @@ export function DocumentsTab({ employee }: DocumentsTabProps) {
               <div className="space-y-1 mb-8">
                 <h3 className="text-xl font-bold text-slate-900 leading-tight">{employee.name}</h3>
                 <p className="text-sm font-bold text-emerald-600 uppercase tracking-widest">
-                  {employee.designation}
+                  {employee.designation || employee.designationId?.name || "Employee"}
                 </p>
                 <p className="text-xs text-slate-400 font-medium">
-                  {employee.department || "Engineering"}
+                  {employee.department || employee.departmentId?.name || "Engineering"}
                 </p>
               </div>
 

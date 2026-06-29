@@ -47,8 +47,8 @@ export function OverviewTab({ employee }: OverviewTabProps) {
       {/* 2. Employment & Background Section */}
       <ProfileSection icon={Briefcase} title="Employment Profile" color="text-blue-500">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <DataItem label="Designation" value={employee.designation} highlight />
-          <DataItem label="Department" value={employee.department || "General"} />
+          <DataItem label="Designation" value={employee.designation || employee.designationId?.name} highlight />
+          <DataItem label="Department" value={employee.department || employee.departmentId?.name || "General"} />
           <DataItem label="Date of Joining" value={employee.doj ? new Date(employee.doj).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : "-"} icon={Calendar} />
         </div>
         

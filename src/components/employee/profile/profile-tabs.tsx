@@ -6,10 +6,11 @@ import {
   Calendar, 
   FileText, 
   LayoutDashboard, 
-  IdCard 
+  IdCard,
+  Package 
 } from "lucide-react";
 
-export type TabType = "overview" | "attendance" | "leaves" | "documents" | "oleo" | "i-card";
+export type TabType = "overview" | "attendance" | "leaves" | "documents" | "oleo" | "i-card" | "assets";
 
 interface ProfileTabsProps {
   activeTab: TabType;
@@ -21,6 +22,7 @@ const tabs = [
   { id: "attendance", label: "Attendance", icon: Calendar },
   { id: "leaves", label: "Leaves", icon: FileText },
   { id: "documents", label: "Documents", icon: IdCard },
+  { id: "assets", label: "Assets", icon: Package },
 ] as const;
 
 export function ProfileTabs({ activeTab, onChange }: ProfileTabsProps) {

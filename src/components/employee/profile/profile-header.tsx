@@ -72,8 +72,18 @@ export function ProfileHeader({ employee }: ProfileHeaderProps) {
             <div className="flex flex-wrap items-center gap-4 text-slate-500 text-sm font-medium">
               <div className="flex items-center gap-1.5">
                 <Briefcase className="w-4 h-4 text-slate-300" />
-                <span>{employee.designation}</span>
+                <span>{employee.designation || employee.designationId?.name || "Employee"}</span>
               </div>
+              {/* Show department next to designation if available */}
+              {(employee.department || employee.departmentId?.name) && (
+                <>
+                  <div className="text-slate-300">•</div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">Dept:</span>
+                    <span>{employee.department || employee.departmentId?.name}</span>
+                  </div>
+                </>
+              )}
               <div className="text-slate-300">•</div>
               <div className="flex items-center gap-1.5">
                 <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">ID:</span>

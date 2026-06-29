@@ -1,3 +1,5 @@
+import { Asset } from "./asset";
+
 export type EmployeeRole = "user" | "hr" | "admin";
 export type EmployeeStatus = "present" | "absent" | "on-leave" | "not-marked" | "all";
 
@@ -89,6 +91,7 @@ export interface Employee {
   createdAt?: string;
   updatedAt?: string;
   deletedAt?: string;
+  assets?: Asset[];
 }
 
 export interface PaginationInfo {
