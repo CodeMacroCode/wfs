@@ -24,6 +24,7 @@ import {
   Search,
   Bell,
   Fuel,
+  PaperclipIcon,
 } from "lucide-react"
 import Link from "next/link"
 import * as React from "react"
@@ -35,7 +36,7 @@ const items = [
   { title: "Employees", url: "/dashboard/employee", icon: Users },
   { title: "Attendance", url: "/dashboard/attendance", icon: UserCheck },
   { title: "Leave Management", url: "/dashboard/leave-management", icon: CalendarX },
-  // { title: "Document Center", url: "/dashboard/document", icon: PaperclipIcon },
+  { title: "Document Center", url: "/dashboard/document", icon: PaperclipIcon },
   { title: "Employee Salary", url: "/dashboard/employee-salary", icon: Banknote },
   { title: "Payroll Policies", url: "/dashboard/payroll-policies", icon: UserCheck },
   { title: "Attendance Policies", url: "/dashboard/attendance-policies", icon: UserCheck },
