@@ -113,8 +113,15 @@ function EmployeeMasterContent() {
           <DataTableExport
             columns={exportColumns}
             filename="employee_report"
-            fetchData={() => employeeService.getAll({ ...apiParams, limit: "all" } as EmployeeQueryParams)}
-            defaultSelectedColumns={['name', 'uniqueId', 'designation']}
+            fetchData={() => employeeService.getAll({ 
+              ...apiParams, 
+              limit: "all",
+              companyId,
+              departmentId,
+              designationId,
+              gender
+            } as EmployeeQueryParams)}
+            defaultSelectedColumns={['name', 'uniqueId', 'designation', 'doj', 'fatherName']}
           />
           <AvailableEmployeeIdDialog />
           <ExcelUpload 
